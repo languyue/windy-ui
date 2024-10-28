@@ -148,12 +148,31 @@
                             <span slot="label">
                               <i class="el-icon-turn-off" /> 状态
                             </span>
-                            <el-tag
-                              size="mini"
-                              :type="matchStatus(iterationInfo.status).type"
+                            <el-dropdown
+                              size="small"
+                              placement="right-start"
+                              @command="updateIterationStatus"
                             >
-                              {{ matchStatus(iterationInfo.status).name }}
-                            </el-tag>
+                              <el-tag
+                                size="mini"
+                                class="tag-status"
+                                :type="matchStatus(iterationInfo.status).type"
+                              >
+                                {{ matchStatus(iterationInfo.status).name }}
+                                <i class="el-icon-caret-bottom" />
+                              </el-tag>
+                              <el-dropdown-menu slot="dropdown">
+                                <el-dropdown-item
+                                  :command="item.value"
+                                  v-for="(item, index) in statusList"
+                                  :key="index"
+                                >
+                                  <span :style="{ color: item.statusColor }">{{
+                                    item.statusName
+                                  }}</span>
+                                </el-dropdown-item>
+                              </el-dropdown-menu>
+                            </el-dropdown>
                           </el-descriptions-item>
                           <el-descriptions-item>
                             <span slot="label">
@@ -217,7 +236,7 @@
                           <div>
                             <el-input
                               type="textarea"
-                              :autosize="{ minRows: 4, maxRows: 20 }"
+                              :autosize="{ minRows: 2, maxRows: 10 }"
                               placeholder="请输入您对需求的讨论"
                               v-model="commentMsg"
                             >
@@ -239,7 +258,7 @@
                               v-for="(item, index) in comments"
                               :key="index"
                             >
-                              <div class="user-div">
+                              <div class="user-comment-div">
                                 <span><i class="el-icon-s-custom" /></span>
                                 {{ item.userName }}
                                 {{ item.createTime | dateFormat }}
@@ -515,6 +534,7 @@ export default {
       ],
       selectedUser: '',
       filterName: '',
+      statusList: [],
     }
   },
   computed: {
@@ -525,6 +545,36 @@ export default {
     },
   },
   methods: {
+    updateIterationStatus(type) {
+      iterationApi
+        .updateIteration(this.iterationInfo.iterationId, {
+          iterationId: this.iterationInfo.iterationId,
+          status: type,
+        })
+        .then((res) => {
+          if (res.data) {
+            this.$notify({
+              message: `修改迭代【${this.iterationInfo.name}】状态成功`,
+              type: 'success',
+            })
+            iterationApi
+              .getIterationDetail(this.iterationInfo.iterationId)
+              .then((res) => {
+                this.iterationInfo = res.data
+              })
+          } else {
+            this.$notify({
+              message: `修改迭代【${this.iterationInfo.name}】状态失败`,
+              type: 'error',
+            })
+          }
+        })
+    },
+    getIterationStatus() {
+      iterationApi.getIterationStatuses().then((res) => {
+        this.statusList = res.data
+      })
+    },
     querySearchAsync(queryString, cb) {
       userApi.queryUserByName(queryString).then((res) => {
         let array = []
@@ -597,16 +647,14 @@ export default {
       let data = {
         comment: this.commentMsg,
         relativeId: this.iterationInfo.iterationId,
-        userId: 'admin',
-        userName: 'admin',
       }
       CommentApi.createComment(data).then((res) => {
         if (res.data) {
-          this.$message.success('添加评论成功')
+          this.$notify.success('添加评论成功')
           this.getCommentsList()
           this.commentMsg = ''
         } else {
-          this.$message.error('添加评论失败')
+          this.$notify.error('添加评论失败')
         }
       })
     },
@@ -687,11 +735,11 @@ export default {
             .updateIteration(this.iterationForm.iterationId, this.iterationForm)
             .then((res) => {
               if (res.data) {
-                this.$message.success('修改迭代成功')
+                this.$notify.success('修改迭代成功')
                 this.closeIteration()
                 this.getIterationList()
               } else {
-                this.$message.error('修改迭代失败')
+                this.$notify.error('修改迭代失败')
               }
             })
           return
@@ -699,11 +747,11 @@ export default {
 
         iterationApi.createIteration(this.iterationForm).then((res) => {
           if (res.data) {
-            this.$message.success('创建迭代成功')
+            this.$notify.success('创建迭代成功')
             this.closeIteration()
             this.getIterationList()
           } else {
-            this.$message.error('创建迭代失败')
+            this.$notify.error('创建迭代失败')
           }
         })
       })
@@ -817,6 +865,7 @@ export default {
     },
   },
   created() {
+    this.getIterationStatus()
     this.getDemandTags()
   },
 }
@@ -972,6 +1021,9 @@ export default {
   &:hover {
     background-color: #dcdfe6;
   }
+}
+.tag-status {
+  cursor: pointer;
 }
 .card-div {
   .card-title {
@@ -1172,9 +1224,9 @@ export default {
         height: 200px;
 
         .history {
-          margin: 20px;
+          margin: 10px;
         }
-        .user-div {
+        .user-comment-div {
           font-size: 13px;
         }
         .history-content {

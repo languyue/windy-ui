@@ -148,27 +148,27 @@ export default {
     submitMaven() {
       systemApi.updateMavenConfig(this.mavenForm).then((res) => {
         if (res.data) {
-          this.$message.success('修改Maven配置成功')
+          this.$notify.success('修改Maven配置成功')
         } else {
-          this.$message.error('修改Maven配置失败')
+          this.$notify.error('修改Maven配置失败')
         }
       })
     },
     submitGit() {
       systemApi.updateGitConfig(this.systemForm).then((res) => {
         if (res.data) {
-          this.$message.success('修改Git配置成功')
+          this.$notify.success('修改Git配置成功')
         } else {
-          this.$message.error('修改Git配置失败')
+          this.$notify.error('修改Git配置失败')
         }
       })
     },
     submitImage() {
       systemApi.updateRepository(this.repoForm).then((res) => {
         if (res.data) {
-          this.$message.success('修改镜像仓库成功')
+          this.$notify.success('修改镜像仓库成功')
         } else {
-          this.$message.error('修改镜像仓库失败')
+          this.$notify.error('修改镜像仓库失败')
         }
       })
     },

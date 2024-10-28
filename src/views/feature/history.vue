@@ -48,6 +48,7 @@
             <el-button
               type="primary"
               size="mini"
+              v-if="feature"
               @click="startDebug"
               icon="el-icon-video-play"
               >调试</el-button
@@ -133,6 +134,7 @@
 </template>
 <script>
 import featureApi from '../../http/Feature'
+import taskApi from '../../http/Task'
 import PanelList from '../../components/panel-list.vue'
 import textview from '../../components/text-view.vue'
 
@@ -143,11 +145,24 @@ export default {
   },
   props: {
     feature: String,
+    task: String,
   },
   watch: {
-    feature: function (newValue) {
-      this.featureId = newValue
-      this.getFeatureHistory(newValue)
+    feature: {
+      handler(val) {
+        this.featureId = val
+        this.getFeatureHistory(val)
+      },
+      deep: true,
+      immediate: true,
+    },
+    task: {
+      handler(val) {
+        this.taskId = val
+        this.getTaskHistories(val)
+      },
+      deep: true,
+      immediate: true,
     },
   },
   data() {
@@ -164,20 +179,30 @@ export default {
       executeError: 0,
       cleanError: 0,
       selectHistoryId: '',
+      taskId: '',
     }
   },
   methods: {
+    getTaskHistories(recordId) {
+      taskApi.getTaskHistories(recordId).then((res) => {
+        this.historyData = res.data
+      })
+    },
     startDebug() {
       featureApi.startFeature(this.featureId).then((res) => {
         if (res.data) {
-          this.$message.success('开始执行，请查看运行日志')
+          this.$notify.success('开始执行，请查看运行日志')
           this.refreshRecords()
         } else {
-          this.$message.error('执行失败')
+          this.$notify.error('执行失败')
         }
       })
     },
     refreshRecords() {
+      if (this.taskId) {
+        this.getTaskHistories(this.taskId)
+        return
+      }
       this.getFeatureHistory(this.featureId)
     },
     filterRecord() {

@@ -527,10 +527,10 @@ export default {
       }
       templateApi.batchCreateTemplate(data).then((res) => {
         if (res.data) {
-          this.$message.success('添加模版成功')
+          this.$notify.success('添加模版成功')
           this.closeApiGenerate()
         } else {
-          this.$message.error('添加模版失败')
+          this.$notify.error('添加模版失败')
         }
       })
     },
@@ -641,7 +641,7 @@ export default {
     deletePlugin() {
       templateApi.deletePlugin(this.pluginId).then((res) => {
         if (res.data) {
-          this.$message.success('未使用插件，已清理相关数据')
+          this.$notify.success('未使用插件，已清理相关数据')
         } else {
           this.$message.warning('未使用插件，清理数据错误')
         }
@@ -658,13 +658,13 @@ export default {
       }
       templateApi.batchCreateTemplate(data).then((res) => {
         if (res.data) {
-          this.$message.success('添加模版成功')
+          this.$notify.success('添加模版成功')
           this.showUploadDialog = false
           this.parseData = []
           this.pluginId = ''
           this.getTemplatePage()
         } else {
-          this.$message.error('添加模版失败')
+          this.$notify.error('添加模版失败')
         }
       })
     },
@@ -677,11 +677,11 @@ export default {
       formData.append('serviceId', this.serviceId)
       templateApi.upload(formData).then((res) => {
         if (res.data) {
-          this.$message.success('上传文件成功')
+          this.$notify.success('上传文件成功')
           this.parseData = res.data.templateDefines
           this.pluginId = res.data.pluginId
         } else {
-          this.$message.error('上传文件失败')
+          this.$notify.error('上传文件失败')
         }
       })
     },
@@ -730,9 +730,9 @@ export default {
     refreshTemplate(row) {
       templateApi.refresh(row.templateId).then((res) => {
         if (res.data) {
-          this.$message.success('刷新成功')
+          this.$notify.success('刷新成功')
         } else {
-          this.$message.error('刷新失败')
+          this.$notify.error('刷新失败')
         }
       })
     },
@@ -751,10 +751,10 @@ export default {
       }).then(() => {
         templateApi.deleteTemplate(row.templateId).then((res) => {
           if (res.data) {
-            this.$message.success('删除模版成功')
+            this.$notify.success('删除模版成功')
             this.getTemplatePage()
           } else {
-            this.$message.error('删除模版失败')
+            this.$notify.error('删除模版失败')
           }
         })
       })

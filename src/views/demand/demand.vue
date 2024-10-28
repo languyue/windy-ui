@@ -159,16 +159,20 @@
                   v-model="demandFormModel.expectTime"
                   align="right"
                   type="date"
+                  :pickerOptions="pickOption"
                   value-format="timestamp"
                   placeholder="选择日期"
                 >
                 </el-date-picker>
               </el-form-item>
               <el-form-item label="工作量(人/日)" prop="workload">
-                <el-input
+                <el-input-number
+                  style="width: 150px"
+                  :min="1"
+                  :step="1"
                   v-model="demandFormModel.workload"
                   placeholder="请输入工作量"
-                ></el-input>
+                ></el-input-number>
               </el-form-item>
               <el-form-item label="标签">
                 <el-select
@@ -181,7 +185,7 @@
                   <el-option
                     v-for="(item, index) in tagList"
                     :key="index"
-                    :label="item.text"
+                    :label="item.statusName"
                     :value="item.value"
                   >
                   </el-option>
@@ -253,11 +257,7 @@ export default {
       showDemandDialog: false,
       showDemandDetail: false,
       demandTitle: '创建需求',
-      tagList: [
-        { text: '个人需求', value: '个人需求' },
-        { text: '数据分析', value: '数据分析' },
-        { text: '客户定制', value: '客户定制' },
-      ],
+      tagList: [],
       abilityList: ['用户体验', '功能增强', '性能', '可靠性', '安全', '运维'],
       currentPage: 1,
       currentSize: 10,
@@ -287,6 +287,12 @@ export default {
         expectTime: [
           { required: true, message: '请选择期待完成日期', trigger: 'change' },
         ],
+      },
+      pickOption: {
+        disabledDate: (time) => {
+          console.log('time', time)
+          return time.getTime() <= Date.now() - 86400000
+        },
       },
     }
   },
@@ -378,11 +384,11 @@ export default {
         }
         demandApi.createDemand(this.demandFormModel).then((res) => {
           if (res.data) {
-            this.$message.success('创建需求成功')
+            this.$notify.success('创建需求成功')
             this.getDemandList()
             this.closeDemand()
           } else {
-            this.$message.error('创建需求失败')
+            this.$notify.error('创建需求失败')
           }
         })
       })
@@ -412,11 +418,17 @@ export default {
         this.statusList = res.data
       })
     },
+    getDemandTags() {
+      demandApi.getDemandTags().then((res) => {
+        this.tagList = res.data
+      })
+    },
   },
   created() {
     this.spaceId = this.$store.state.spaceId
     this.iterationId = this.iteration
     this.getDemandList()
+    this.getDemandTags()
     this.getstatusList()
   },
 }

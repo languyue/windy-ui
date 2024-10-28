@@ -353,16 +353,16 @@ export default {
     startRun(row) {
       taskApi.runTask(row.taskId).then((res) => {
         if (res.data) {
-          this.$message.success('执行成功,请查看执行记录')
+          this.$notify.success('执行成功,请查看执行记录')
         } else {
-          this.$message.error('任务执行失败')
+          this.$notify.error('任务执行失败')
         }
       })
       this.getTasks(this.taskCurrentPage, this.queryForm.name)
     },
     stopRun(row) {
       taskApi.stopTask(row.recordId).then(() => {
-        this.$message.success('执行成功,请查看执行记录')
+        this.$notify.success('执行成功,请查看执行记录')
       })
       this.getTasks(this.taskCurrentPage, this.queryForm.name)
       this.getTaskRecords(this.recordCurrentPage)
@@ -393,10 +393,10 @@ export default {
       }).then(() => {
         taskApi.deleteTask(row.taskId).then((res) => {
           if (res.data) {
-            this.$message.success('删除成功')
+            this.$notify.success('删除成功')
             this.getTasks(this.taskCurrentPage, this.queryForm.name)
           } else {
-            this.$message.error('删除失败')
+            this.$notify.error('删除失败')
           }
         })
       })
@@ -418,7 +418,7 @@ export default {
             this.closeDialog()
             this.getTasks(1)
             if (res.data == 1) {
-              this.$message.success('修改成功')
+              this.$notify.success('修改成功')
               return
             }
 
@@ -431,7 +431,7 @@ export default {
           this.closeDialog()
           this.getTasks(1)
           if (res.data == 1) {
-            this.$message.success('添加成功')
+            this.$notify.success('添加成功')
             return
           }
 
@@ -487,7 +487,7 @@ export default {
     },
     deleteTaskRecord(row) {
       taskApi.deleteTaskRecord(row.recordId).then(() => {
-        this.$message.success('删除成功')
+        this.$notify.success('删除成功')
         this.getTaskRecords(this.recordCurrentPage)
       })
     },

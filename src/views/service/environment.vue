@@ -270,10 +270,10 @@ export default {
       }).then(() => {
         envApi.deleteEnv(row.envId).then((res) => {
           if (res.data) {
-            this.$message.success('删除环境成功')
+            this.$notify.success('删除环境成功')
             this.getEnvs()
           } else {
-            this.$message.error('删除环境失败')
+            this.$notify.error('删除环境失败')
           }
         })
       })
@@ -333,11 +333,11 @@ export default {
         if (this.isEdit) {
           envApi.updateEnv(data).then((res) => {
             if (res.data) {
-              this.$message.success('修改环境成功')
+              this.$notify.success('修改环境成功')
               this.cancellDialog()
               this.getEnvs()
             } else {
-              this.$message.error('修改环境失败')
+              this.$notify.error('修改环境失败')
             }
           })
           return
@@ -345,11 +345,11 @@ export default {
 
         envApi.createEnv(data).then((res) => {
           if (res.data) {
-            this.$message.success('添加环境成功')
+            this.$notify.success('添加环境成功')
             this.cancellDialog()
             this.getEnvs()
           } else {
-            this.$message.error('添加环境失败')
+            this.$notify.error('添加环境失败')
           }
         })
       })
@@ -396,7 +396,7 @@ export default {
       })
       envApi.checkEnv(this.envForm.envType, data).then((res) => {
         if (res.data) {
-          this.$message.success('环境检查成功')
+          this.$notify.success('环境检查成功')
           this.limited = false
           this.checked = true
         } else {

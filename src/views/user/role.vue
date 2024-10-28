@@ -75,7 +75,7 @@
     >
       <el-form :model="resourceForm" label-width="80px" size="mini">
         <el-form-item label="角色ID">
-          <el-input v-model="resourceForm.relationId" />
+          {{ resourceForm.relationId }}
         </el-form-item>
         <el-form-item label="角色名称">
           <el-input
@@ -146,14 +146,16 @@ export default {
       this.resourceForm.resourceIds = this.resourceIds
       resourceApi.bindResource(this.resourceForm).then((res) => {
         if (res.data) {
-          this.$message.success('资源绑定成功')
+          this.$notify.success('资源绑定成功')
           this.closeResourceDialog()
         } else {
-          this.$message.error('资源绑定失败')
+          this.$notify.error('资源绑定失败')
         }
       })
     },
     showBind(row) {
+      this.title = '角色绑定资源'
+      this.isEdit = false
       this.resourceForm = row
       this.resourceForm.relationId = row.roleId
       this.showBindResource = true
@@ -194,22 +196,22 @@ export default {
         if (this.isEdit) {
           roleApi.updateRole(this.roleForm).then((res) => {
             if (res.data) {
-              this.$message.success('修改角色成功')
+              this.$notify.success('修改角色成功')
               this.getRoleList()
               this.closeRoleDialog()
             } else {
-              this.$message.error('修改角色失败')
+              this.$notify.error('修改角色失败')
             }
           })
           return
         }
         roleApi.createRole(this.roleForm).then((res) => {
           if (res.data) {
-            this.$message.success('创建角色成功')
+            this.$notify.success('创建角色成功')
             this.getRoleList()
             this.closeRoleDialog()
           } else {
-            this.$message.error('创建角色失败')
+            this.$notify.error('创建角色失败')
           }
         })
       })
@@ -222,10 +224,10 @@ export default {
     deleteRole(row) {
       roleApi.deleteRole(row.roleId).then((res) => {
         if (res.data) {
-          this.$message.success('删除角色成功')
+          this.$notify.success('删除角色成功')
           this.getRoleList()
         } else {
-          this.$message.error('删除角色失败')
+          this.$notify.error('删除角色失败')
         }
       })
     },

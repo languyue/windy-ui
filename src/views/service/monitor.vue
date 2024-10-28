@@ -14,6 +14,7 @@
           type="primary"
           icon="el-icon-refresh"
           size="mini"
+          :loading="isLoading"
           @click="refresh"
         >
           刷新状态</el-button
@@ -112,6 +113,7 @@ export default {
     return {
       clientData: [],
       masterData: [],
+      isLoading: false,
     }
   },
   methods: {
@@ -119,6 +121,7 @@ export default {
       this.getMonitor()
     },
     getMonitor() {
+      this.isLoading = true
       systemApi.getMonitor().then((res) => {
         this.clientData = []
         if (res.data.clients) {
@@ -140,6 +143,7 @@ export default {
             }
           })
         }
+        this.isLoading = false
       })
     },
   },

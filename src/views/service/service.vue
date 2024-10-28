@@ -104,6 +104,7 @@
             placeholder="请输入服务描述"
           ></el-input>
         </el-form-item>
+
         <el-form-item label="服务git地址" prop="gitUrl">
           <el-input
             v-model="serviceForm.gitUrl"
@@ -145,6 +146,22 @@
           </div>
         </el-form-item>
         <el-collapse accordion>
+          <el-collapse-item title="服务配置">
+            <el-form-item label="部署方式" prop="deployType">
+              <el-radio-group v-model="contextForm.deployType">
+                <el-radio :label="2">Kubernetes部署</el-radio>
+                <el-radio :label="1">SSH部署</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item label="开发语言" prop="code">
+              <el-radio-group v-model="contextForm.code">
+                <el-radio label="Java">Java</el-radio>
+                <!-- <el-radio label="Go">Go</el-radio>
+                <el-radio label="Python">Python</el-radio>
+                <el-radio label="Vue">Vue</el-radio> -->
+              </el-radio-group>
+            </el-form-item>
+          </el-collapse-item>
           <el-collapse-item>
             <template slot="title">
               Git配置
@@ -448,6 +465,7 @@ export default {
       selectedUser: null,
       showPop: false,
       gitForm: {},
+      contextForm: {},
       gitOwner: '',
     }
   },
@@ -562,6 +580,7 @@ export default {
       this.gitOwner = config.gitAccessInfo.owner
       this.deploymentName = config.appName
       this.gitForm = config.gitAccessInfo ? config.gitAccessInfo : {}
+      this.contextForm = config.serviceContext ? config.serviceContext : {}
       if (!config) {
         return
       }
@@ -589,7 +608,7 @@ export default {
       }).then(() => {
         serviceApi.deleteService(row.serviceId).then((res) => {
           if (res.data == 1) {
-            this.$message.success('删除服务成功')
+            this.$notify.success('删除服务成功')
             this.closeDialog()
             this.getServices(1)
             return
@@ -605,12 +624,16 @@ export default {
       this.dialogTitle = '添加服务'
       this.isEdit = false
       this.showServiceDialog = true
-      this.serviceForm = {}
+      this.contextForm = {
+        deployType: 2,
+        code: 'Java',
+      }
     },
     closeDialog() {
       this.isEdit = false
       this.showServiceDialog = false
       this.gitForm = {}
+      this.contextForm = {}
       this.envList = [{}]
       this.portList = [{}]
       this.volumeList = [{}]
@@ -647,6 +670,7 @@ export default {
         }
         let config = {
           gitAccessInfo: git,
+          serviceContext: this.contextForm,
           envParams: this.envList,
           ports: this.portList,
           volumes: this.volumeList,
@@ -663,14 +687,14 @@ export default {
         this.serviceForm.serviceConfig = config
         if (this.isEdit) {
           serviceApi.updateService(this.serviceForm).then(() => {
-            this.$message.success('修改成功！')
+            this.$notify.success('修改成功！')
             this.closeDialog()
             this.getServices(1)
           })
           return
         }
         serviceApi.createService(this.serviceForm).then(() => {
-          this.$message.success('添加成功！')
+          this.$notify.success('添加成功！')
           this.closeDialog()
           this.getServices(1)
         })

@@ -35,7 +35,7 @@
         <el-menu
           default-active="1"
           @select="selectMenu"
-          background-color="#122037"
+          background-color="#303133"
           text-color="#fff"
           active-text-color="#ffd04b"
           :collapse="isCollapse"
@@ -157,7 +157,7 @@ export default {
     overflow: visible;
     position: relative;
     // height: auto;
-    background-color: #122037;
+    background-color: #303133;
   }
 }
 

@@ -205,6 +205,9 @@
           <!-- 流水线运行描述信息开始 -->
           <div class="pipeline-detail">
             <el-descriptions title="流水线日志" :column="3" size="medium">
+              <el-descriptions-item label="流水线ID">
+                {{ currentPipeline.pipelineId }}</el-descriptions-item
+              >
               <el-descriptions-item label="git分支">
                 {{ history.branch }}</el-descriptions-item
               >
@@ -269,6 +272,7 @@
               <el-table-column fixed="right" label="操作" width="100">
                 <template slot-scope="scope">
                   <el-button
+                    :disabled="history.pipelineStatus == 4"
                     @click="removePublish(scope.row)"
                     type="text"
                     size="small"
@@ -399,7 +403,7 @@
             v-model="approvalForm.message"
           />
         </el-form-item>
-        <el-form-item>
+        <el-form-item v-auth="'m10020'">
           <el-button
             size="mini"
             type="primary"
@@ -428,6 +432,12 @@
           <el-input
             v-model="publishForm.tagName"
             placeholder="请输入发布的tag名称"
+          />
+        </el-form-item>
+        <el-form-item label="发布版本号">
+          <el-input
+            v-model="publishForm.version"
+            placeholder="请输入发布的版本号，不配置则使用默认版本规则"
           />
         </el-form-item>
       </el-form>
@@ -571,19 +581,18 @@ export default {
             config = {}
           }
 
-          config.paramList = { tagName: this.publishForm.tagName }
+          config.paramList = this.publishForm
           let item = {
             pipelineId: this.currentPipeline.pipelineId,
             pipelineConfig: JSON.stringify(config),
           }
-          console.log(item)
           pipelineApi
             .updatePipeline(this.serviceId, item.pipelineId, item)
             .then((res) => {
               if (res.data) {
                 this.startPipeline()
               } else {
-                this.$message.error('添加tag失败，运行流水线失败')
+                this.$notify.error('添加tag失败，运行流水线失败')
               }
             })
         }
@@ -635,12 +644,15 @@ export default {
           if (res.data) {
             this.$notify({
               title: '流水线审批',
-              message: status == 1 ? '审批通过' : '审批不通过，流水线停止',
-              type: status == 1 ? 'success' : 'warning',
+              message:
+                this.approvalForm.status == 1
+                  ? '审批通过'
+                  : '审批不通过，流水线停止',
+              type: this.approvalForm.status == 1 ? 'success' : 'warning',
             })
             this.approvalClose()
           } else {
-            this.$message.error('审批失败，请重试')
+            this.$notify.error('审批失败，请重试')
             return
           }
         })
@@ -667,10 +679,10 @@ export default {
           }
           publishApi.createPublish(data).then((res) => {
             if (res.data) {
-              this.$message.success('推送发布成功，请去发布流水线查看')
+              this.$notify.success('推送发布成功，请去发布流水线查看')
               this.closePublishMsg()
             } else {
-              this.$message.error('推送发布失败')
+              this.$notify.error('推送发布失败')
             }
           })
         }
@@ -679,10 +691,10 @@ export default {
     removePublish(row) {
       publishApi.deletePublish(row.publishId).then((res) => {
         if (res.data) {
-          this.$message.success('删除成功')
+          this.$notify.success('删除成功')
           this.getServicePublishes()
         } else {
-          this.$message.error('删除失败')
+          this.$notify.error('删除失败')
         }
       })
     },
@@ -698,6 +710,7 @@ export default {
             this.currentPipeline.pipelineName = res.data.pipelineName
             this.currentPipeline.pipelineType = res.data.pipelineType
             this.currentPipeline.pipelineId = res.data.pipelineId
+            this.currentPipeline.pipelineStatus = res.data.pipelineStatus
             this.currentPipeline.context = JSON.parse(res.data.pipelineConfig)
             this.uuid++
           })
@@ -867,9 +880,9 @@ export default {
       pipelineApi.pausePipeline(this.history.historyId).then((res) => {
         this.isRunning = false
         if (res.data) {
-          this.$message.success('停止流水线成功')
+          this.$notify.success('停止流水线成功')
         } else {
-          this.$message.error('停止流水线失败')
+          this.$notify.error('停止流水线失败')
         }
       })
     },
@@ -907,10 +920,10 @@ export default {
 
       pipelineApi.startPipeline(this.currentPipeline.pipelineId).then((res) => {
         if (res.data == '' || res.data == null) {
-          this.$message.error('运行流水线失败')
+          this.$notify.error('运行流水线失败')
           return
         }
-        this.$message.success('开始运行流水线')
+        this.$notify.success('开始运行流水线')
         this.getLatestHistory(this.currentPipeline.pipelineId)
         this.isRunning = true
         this.showPublishDialog = false
@@ -971,10 +984,11 @@ export default {
         this.currentPipeline.pipelineType = res.data.pipelineType
         this.currentPipeline.executeType = res.data.executeType
         this.currentPipeline.pipelineId = item.pipelineId
+        this.currentPipeline.pipelineStatus = res.data.pipelineStatus
         this.currentPipeline.context = JSON.parse(res.data.pipelineConfig)
         this.pipelineId = item.pipelineId
         this.uuid++
-
+        console.log('dddd', this.currentPipeline)
         this.checkBindBranch()
 
         if (this.currentPipeline.pipelineType == 1) {

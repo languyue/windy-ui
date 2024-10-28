@@ -1,9 +1,6 @@
 <template>
   <div class="content">
     <div class="video-background">
-      <video autoplay="autoplay" loop="loop" muted="muted">
-        <source src="../../assets/background.mp4" type="video/mp4" />
-      </video>
       <div class="login-div">
         <div class="title">Windy</div>
 
@@ -94,7 +91,7 @@ export default {
   .login-div {
     position: absolute;
     top: 10%;
-    right: 10%;
+    left: 10%;
     height: 60%;
     min-height: 400px;
     width: 400px;
@@ -137,6 +134,8 @@ export default {
     width: 100%;
     height: 100vh; /* 或任意你希望的高度 */
     overflow: hidden;
+    background-size: cover;
+    background-image: url('../../assets/background.png');
   }
 
   .video-background video {

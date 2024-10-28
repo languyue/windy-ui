@@ -9,7 +9,7 @@
                 class="el-icon-edit-outline edit-name-icon"
                 @click="startEditCase"
               />
-              <testview :text="caseName" :len="20"></testview>
+              <testview :text="caseName" :len="8"></testview>
             </span>
           </el-page-header>
         </div>
@@ -18,16 +18,19 @@
           <div class="service-panel">
             <div class="op">
               <div>辅助工具</div>
-              <i class="item el-icon-video-play" @click="startDebug">调试</i>
+              <i class="item el-icon-video-play" @click="startDebug"
+                >批量调试</i
+              >
               <el-tooltip
                 effect="dark"
-                content="设置全局变量"
+                content="设置当前测试集的全局变量"
                 placement="top-start"
               >
                 <i class="item el-icon-setting" @click="showGlobalEnv"
                   >全局变量</i
                 >
               </el-tooltip>
+              <i class="el-icon-tickets" @click="showBatchHistory">历史记录</i>
             </div>
             <div class="search">
               <el-input
@@ -74,6 +77,7 @@
             node-key="featureId"
             @node-click="treeNodeClick"
             @node-drop="dragNodeEvent"
+            :allow-drop="allowDrop"
             :default-expanded-keys="expendList"
             :data="caseFeatures"
             :filter-node-method="filterNode"
@@ -461,6 +465,62 @@
       </span>
     </el-dialog>
     <!-- 编辑测试集结束 -->
+    <!-- 查看批量执行历史开始 -->
+    <el-dialog
+      :visible.sync="batchHistoryVisiable"
+      width="60%"
+      title="批量执行任务"
+    >
+      <el-table :data="taskRecordList" height="600px">
+        <el-table-column label="执行名称" prop="taskName"></el-table-column>
+        <el-table-column label="执行状态" prop="status">
+          <template slot-scope="scope">
+            <el-tag :type="scope.row.status | statusFormat">{{
+              scope.row.status | statusName
+            }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="执行时间">
+          <template slot-scope="scope">
+            {{ scope.row.createTime | dateFormat }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="200">
+          <template slot-scope="scope">
+            <el-button
+              @click="queryFeatureHistoryies(scope.row)"
+              type="text"
+              size="small"
+              icon="el-icon-view"
+              >查看详情</el-button
+            >
+            <el-button
+              @click="deleteRecord(scope.row)"
+              type="text"
+              size="small"
+              icon="el-icon-delete"
+              >删除</el-button
+            >
+          </template>
+        </el-table-column>
+      </el-table>
+      <el-pagination
+        @size-change="handleRecordSizeChange"
+        @current-change="handleRecordPageChange"
+        :current-page.sync="recordPage"
+        :page-sizes="[10, 20, 50, 100]"
+        :page-size="recordSize"
+        layout="sizes, prev, pager, next"
+        :total="recordTotal"
+      >
+      </el-pagination>
+    </el-dialog>
+    <!-- 查看批量执行历史结束 -->
+    <!-- 查询任务的用例历史开始 -->
+    <el-dialog :visible.sync="historyVisiable" title="用例执行历史">
+      <history :task="selectRecordId" />
+    </el-dialog>
+    <!-- 查询任务的用例历史结束 -->
   </div>
 </template>
 <script>
@@ -468,6 +528,7 @@ import history from './history.vue'
 import FeatureConfig from './comp/feature-config.vue'
 import testview from '../../components/text-view.vue'
 import featureApi from '../../http/Feature'
+import taskApi from '../../http/Task'
 import testCaseApi from '../../http/TestCase'
 export default {
   components: {
@@ -482,6 +543,9 @@ export default {
   },
   data() {
     return {
+      recordTotal: 0,
+      recordSize: 10,
+      recordPage: 1,
       showCaseDialog: false,
       caseDetail: {},
       infoForm: null,
@@ -529,9 +593,48 @@ export default {
           { required: true, message: '请输入详细描述', trigger: 'blur' },
         ],
       },
+      batchHistoryVisiable: false,
+      taskRecordList: [],
+      historyList: [],
+      historyVisiable: false,
+      selectRecordId: '',
     }
   },
   methods: {
+    handleRecordSizeChange(size) {
+      this.recordSize = size
+      this.getCaseBatchHistories()
+    },
+    handleRecordPageChange(page) {
+      this.recordPage = page
+      this.getCaseBatchHistories()
+    },
+    deleteRecord(row) {
+      taskApi.deleteTaskRecord(row.recordId).then((res) => {
+        if (res.data) {
+          this.$notify.success('删除记录成功')
+          this.getCaseBatchHistories()
+        } else {
+          this.$notify.error('删除记录失败')
+        }
+      })
+    },
+    queryFeatureHistoryies(row) {
+      this.historyVisiable = true
+      this.selectRecordId = row.recordId
+    },
+    showBatchHistory() {
+      this.batchHistoryVisiable = true
+      this.getCaseBatchHistories()
+    },
+    getCaseBatchHistories() {
+      taskApi
+        .getTriggerTaskRecords(this.caseId, this.recordPage, this.recordSize)
+        .then((res) => {
+          this.taskRecordList = res.data.data
+          this.recordTotal = res.data.total
+        })
+    },
     submitCase(formName) {
       this.$refs[formName].validate((valid) => {
         if (!valid) {
@@ -539,22 +642,32 @@ export default {
         }
         testCaseApi.updateTestCase(this.caseDetail).then((res) => {
           if (res.data) {
-            this.$message.success('修改测试集成功')
+            this.$notify.success('修改测试集成功')
             this.getCaseDetail()
             this.showCaseDialog = false
             return
           }
-          this.$message.error('修改测试集失败')
+          this.$notify.error('修改测试集失败')
         })
       })
     },
     startEditCase() {
       this.showCaseDialog = true
     },
+    allowDrop(draggingNode, dropEndNode, type) {
+      if (type === 'inner' && dropEndNode.data.featureType == 1) {
+        return false
+      } else {
+        return true
+      }
+    },
     dragNodeEvent(node, endNode, position, event) {
       console.log('event', node, endNode, position, event)
-      if (position == 'inner') {
+      if (position == 'inner' && endNode.data.featureType != 1) {
         node.data.parentId = endNode.data.featureId
+      }
+      if (position != 'inner' && node.data.parentId != endNode.data.parentId) {
+        node.data.parentId = endNode.data.parentId
       }
       console.log('all', this.caseFeatures)
       let array = []
@@ -673,7 +786,7 @@ export default {
             this.uuid = this.$utils.randomString(20)
           })
           .catch((e) => {
-            this.$message.error(e.response.data.message)
+            this.$notify.error(e.response.data.message)
           })
       }
       if (command == 'copyFeature') {
@@ -780,7 +893,7 @@ export default {
     handleSave(row) {
       if (row.configId) {
         testCaseApi.updateConfig(row).then(() => {
-          this.$message.success('修改配置成功')
+          this.$notify.success('修改配置成功')
           this.getTestCaseConfigs()
         })
         return
@@ -788,13 +901,13 @@ export default {
 
       row.unionId = this.caseId
       testCaseApi.addConfigs([row]).then(() => {
-        this.$message.success('添加配置成功')
+        this.$notify.success('添加配置成功')
         this.getTestCaseConfigs()
       })
     },
     handleDelete(row) {
       testCaseApi.deleteConfig(row.configId).then(() => {
-        this.$message.success('删除配置成功')
+        this.$notify.success('删除配置成功')
         this.getTestCaseConfigs()
       })
     },
@@ -860,8 +973,6 @@ export default {
         }
 
         let request = JSON.parse(JSON.stringify(this.featureForm))
-        request.author = '古月澜'
-        request.modify = '古月澜'
         request.featureType = 1
         request.testCaseId = this.caseId
         request.testFeatures = []
@@ -875,7 +986,7 @@ export default {
         request.parentId = this.createData.parentId
         if (this.isEditFeature) {
           featureApi.updateFeature(request).then(() => {
-            this.$message.success(`修改成功`)
+            this.$notify.success(`修改成功`)
             this.showFeatureDialog = !this.showFeatureDialog
             this.requestCaseFeatures(this.caseId)
           })
@@ -883,7 +994,7 @@ export default {
         }
 
         featureApi.createFeature(request).then(() => {
-          this.$message.success(`添加成功`)
+          this.$notify.error(`添加成功`)
           this.showFeatureDialog = !this.showFeatureDialog
           this.requestCaseFeatures(this.caseId)
         })
@@ -892,18 +1003,34 @@ export default {
     startDebug() {
       let res = this.$refs.tree.getCheckedNodes()
       if (res.length == 0) {
-        this.$message.warning('请选择服务与用例～')
+        this.$message.warning('请选择要执行的用例～')
         return
       }
 
-      this.tableData = []
-      featureApi.startFeature(this.infoForm.featureId).then((res) => {
-        if (res.data) {
-          this.$message.success('开始执行，请查看运行日志')
-        } else {
-          this.$message.error('执行失败')
+      if (res.length > 10) {
+        this.$notify.warning('批量执行的用例个数不能超过10个')
+        return
+      }
+
+      console.log(res)
+      let array = []
+      res.forEach((e) => {
+        if (e.featureType == 1) {
+          array.push(e.featureId)
         }
       })
+
+      testCaseApi
+        .startBatchFeatures(this.caseId, {
+          featureIds: array,
+        })
+        .then((res) => {
+          if (res.data) {
+            this.$notify.success('开始执行，请查看运行日志')
+          } else {
+            this.$notify.error('执行失败')
+          }
+        })
     },
     tabChange() {
       if (this.activeName == 'history') {

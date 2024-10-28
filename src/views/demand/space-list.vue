@@ -174,11 +174,11 @@ export default {
             .updateSpace(this.spaceForm.spaceId, this.spaceForm)
             .then((res) => {
               if (res.data) {
-                this.$message.success('修改空间成功')
+                this.$notify.success('修改空间成功')
                 this.handleClose()
                 this.getSpaceList()
               } else {
-                this.$message.error('修改空间失败')
+                this.$notify.error('修改空间失败')
               }
             })
           return
@@ -186,11 +186,11 @@ export default {
 
         spaceApi.createSpace(this.spaceForm).then((res) => {
           if (res.data) {
-            this.$message.success('创建空间成功')
+            this.$notify.success('创建空间成功')
             this.handleClose()
             this.getSpaceList()
           } else {
-            this.$message.error('创建空间失败')
+            this.$notify.error('创建空间失败')
           }
         })
       })

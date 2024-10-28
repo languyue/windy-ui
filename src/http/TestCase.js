@@ -52,6 +52,19 @@ export default {
         })
     })
   },
+  startBatchFeatures(caseId, data) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/feature/cases/${caseId}/batch`
+      http
+        .post(url, data)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
   updateTestCase(testCase) {
     return new Promise((resolve, reject) => {
       let url = `/v1/devops/feature/case`

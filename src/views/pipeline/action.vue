@@ -378,10 +378,10 @@ export default {
       this.$confirm(`确认删除节点【${row.nodeName}】？`).then(() => {
         NodeApi.deleteNode(row.nodeId).then((res) => {
           if (res.data) {
-            this.$message.success('删除节点成功')
+            this.$notify.success('删除节点成功')
             this.getNodes()
           } else {
-            this.$message.error('删除节点失败')
+            this.$notify.error('删除节点失败')
           }
         })
       })
@@ -404,22 +404,22 @@ export default {
         if (this.isEditNode) {
           NodeApi.updateNode(this.nodeForm).then((res) => {
             if (res.data) {
-              this.$message.success('修改节点成功')
+              this.$notify.success('修改节点成功')
               this.getNodes()
               this.closeNodeDialog()
             } else {
-              this.$message.error('修改节点失败')
+              this.$notify.error('修改节点失败')
             }
           })
           return
         }
         NodeApi.createNode(this.nodeForm).then((res) => {
           if (res.data) {
-            this.$message.success('添加节点成功')
+            this.$notify.success('添加节点成功')
             this.getNodes()
             this.closeNodeDialog()
           } else {
-            this.$message.error('添加节点失败')
+            this.$notify.error('添加节点失败')
           }
         })
       })
@@ -456,10 +456,10 @@ export default {
       this.$confirm(`确认删除执行点【${row.actionName}】？`).then(() => {
         ActionApi.deleteAction(row.actionId).then((res) => {
           if (res.data) {
-            this.$message.success('删除执行点成功')
+            this.$notify.success('删除执行点成功')
             this.getActions()
           } else {
-            this.$message.error('删除执行点失败')
+            this.$notify.error('删除执行点失败')
           }
         })
       })
@@ -498,11 +498,11 @@ export default {
         if (this.isEditAction) {
           ActionApi.updateAction(data).then((res) => {
             if (res.data) {
-              this.$message.success('修改执行点成功')
+              this.$notify.success('修改执行点成功')
               this.closeDialog()
               this.getActions()
             } else {
-              this.$message.error('修改执行点失败')
+              this.$notify.error('修改执行点失败')
             }
           })
           return
@@ -510,11 +510,11 @@ export default {
 
         ActionApi.createAction(data).then((res) => {
           if (res.data) {
-            this.$message.success('创建执行点成功')
+            this.$notify.success('创建执行点成功')
             this.closeDialog()
             this.getActions()
           } else {
-            this.$message.error('创建执行点失败')
+            this.$notify.error('创建执行点失败')
           }
         })
       })

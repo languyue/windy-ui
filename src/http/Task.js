@@ -182,4 +182,17 @@ export default {
         })
     })
   },
+  getTriggerTaskRecords(triggerId, page, size) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/feature/task/${triggerId}/records?page=${page}&size=${size}`
+      http
+        .get(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
 }

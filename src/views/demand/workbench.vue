@@ -398,10 +398,10 @@ export default {
       }).then(() => {
         workTask.deleteTask(item.taskId).then((res) => {
           if (res.data) {
-            this.$message.success('删除成功')
+            this.$notify.success('删除成功')
             this.getTasks()
           } else {
-            this.$message.error('删除失败')
+            this.$notify.error('删除失败')
           }
         })
       })
@@ -479,22 +479,22 @@ export default {
         if (this.isEditTask) {
           workTask.updateTask(this.taskForm).then((res) => {
             if (res.data) {
-              this.$message.success('修改任务成功')
+              this.$notify.success('修改任务成功')
               this.getTasks()
               this.closeTask()
             } else {
-              this.$message.error('修改任务失败')
+              this.$notify.error('修改任务失败')
             }
           })
           return
         }
         workTask.createTask(this.taskForm).then((res) => {
           if (res.data) {
-            this.$message.success('添加任务成功')
+            this.$notify.success('添加任务成功')
             this.getTasks()
             this.closeTask()
           } else {
-            this.$message.error('添加任务失败')
+            this.$notify.error('添加任务失败')
           }
         })
       })
@@ -607,10 +607,10 @@ export default {
       let clipboard = new Clipboard('.copy-icon')
 
       clipboard.on('success', function () {
-        _this.$message.success('复制成功')
+        _this.$notify.success('复制成功')
       })
       clipboard.on('error', function () {
-        _this.$message.error('复制失败')
+        _this.$notify.error('复制失败')
       })
     },
   },

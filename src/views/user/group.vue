@@ -93,11 +93,7 @@
                 >
               </div>
               <div>
-                <el-table
-                  :data="groupRoles"
-                  size="mini"
-                  height="300px"
-                >
+                <el-table :data="groupRoles" size="mini" height="300px">
                   <el-table-column prop="roleId" label="角色ID">
                   </el-table-column>
                   <el-table-column prop="roleName" label="角色名称">
@@ -123,18 +119,27 @@
               </div>
             </el-tab-pane>
             <el-tab-pane label="资源列表">
-              <el-collapse v-model="activeRoleNames" @change="loadRoleResources" accordion>
-                <el-collapse-item v-for="(item,index) in groupRoles" :key="index" :title="item.roleName" :name="item.roleId">
+              <el-collapse
+                v-model="activeRoleNames"
+                @change="loadRoleResources"
+                accordion
+              >
+                <el-collapse-item
+                  v-for="(item, index) in groupRoles"
+                  :key="index"
+                  :title="item.roleName"
+                  :name="item.roleId"
+                >
                   <h4>功能列表:</h4>
-                    <el-checkbox-group v-model="checkList">
-                      <el-checkbox
-                        v-for="(api, num) in item.resources"
-                        :key="num"
-                        :label="api.resourceName"
-                        :checked="true"
-                        disabled
-                      ></el-checkbox>
-                    </el-checkbox-group>
+                  <el-checkbox-group v-model="checkList">
+                    <el-checkbox
+                      v-for="(api, num) in item.resources"
+                      :key="num"
+                      :label="api.resourceName"
+                      :checked="true"
+                      disabled
+                    ></el-checkbox>
+                  </el-checkbox-group>
                 </el-collapse-item>
               </el-collapse>
             </el-tab-pane>
@@ -181,9 +186,12 @@
           <el-input v-model="userForm.nickName" placeholder="请输入用户昵称" />
         </el-form-item>
         <el-form-item label="重置密码">
-          <el-button type="primary" icon="el-icon-refresh" @click="resetPassword"
-              >重置密码</el-button
-            >
+          <el-button
+            type="primary"
+            icon="el-icon-refresh"
+            @click="resetPassword"
+            >重置密码</el-button
+          >
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="submitUser">确认</el-button>
@@ -269,17 +277,17 @@ export default {
       groupUserSize: 10,
       groupUserTotal: 0,
       roleIds: [],
-      activeRoleNames: []
+      activeRoleNames: [],
     }
   },
   methods: {
-    resetPassword(){
-      userApi.resetPassword({userId: this.userForm.userId}).then(res =>{
-        if(res.data){
-            this.$message.success("重置密码成功")
-          }else{
-            this.$message.error("重置密码失败")
-          }
+    resetPassword() {
+      userApi.resetPassword({ userId: this.userForm.userId }).then((res) => {
+        if (res.data) {
+          this.$notify.success('重置密码成功')
+        } else {
+          this.$notify.error('重置密码失败')
+        }
       })
     },
     groupClose() {
@@ -299,7 +307,7 @@ export default {
       if (command == 'delete') {
         groupApi.deleteGroup(data.groupId).then((res) => {
           if (res) {
-            this.$message.success('删除组织成功!')
+            this.$notify.success('删除组织成功!')
             this.getGroups()
           }
         })
@@ -335,7 +343,7 @@ export default {
       this.bindForm.roleIds = this.roleIds
       roleApi.bindRole(this.bindForm).then((res) => {
         if (res) {
-          this.$message.success('绑定角色成功！')
+          this.$notify.success('绑定角色成功！')
           this.getUserOrGroupRoles(this.chooseGroup.groupId, 2)
           this.cancelBind()
         }
@@ -383,7 +391,7 @@ export default {
       if (this.edistUser) {
         userApi.updateUser(this.userForm).then((res) => {
           if (res) {
-            this.$message.success('修改用户成功')
+            this.$notify.success('修改用户成功')
             this.showUserDialog = false
             this.getGroupUsers()
           }
@@ -392,7 +400,7 @@ export default {
       }
       userApi.createUser(this.userForm).then((res) => {
         if (res) {
-          this.$message.success('添加用户成功')
+          this.$notify.success('添加用户成功')
           this.showUserDialog = false
           this.getGroupUsers()
         }
@@ -402,7 +410,7 @@ export default {
     deleteUser(row) {
       userApi.deleteUser(row.userId).then((res) => {
         if (res) {
-          this.$message.success('删除用户成功')
+          this.$notify.success('删除用户成功')
           this.getGroupUsers()
         }
       })
@@ -417,22 +425,22 @@ export default {
           .updateGroup(this.groupForm.groupId, this.groupForm)
           .then((res) => {
             if (res.data) {
-              this.$message.success('修改组织成功')
+              this.$notify.success('修改组织成功')
               this.showDialog = false
               this.getGroups()
             } else {
-              this.$message.error('修改组织失败')
+              this.$notify.error('修改组织失败')
             }
           })
         return
       }
       groupApi.createGroup(this.groupForm).then((res) => {
         if (res) {
-          this.$message.success('添加组织成功')
+          this.$notify.success('添加组织成功')
           this.showDialog = false
           this.getGroups()
         } else {
-          this.$message.error('添加组织失败')
+          this.$notify.error('添加组织失败')
         }
       })
     },
@@ -472,9 +480,9 @@ export default {
       console.log('wwwwwww')
       resourceApi.getRoleResources(roleId).then((res) => {
         console.log(this.groupRoles)
-        let array = [] 
-        this.groupRoles.forEach(e =>{
-          if(e.roleId == roleId){
+        let array = []
+        this.groupRoles.forEach((e) => {
+          if (e.roleId == roleId) {
             e.resources = res.data
           }
           array.push(e)

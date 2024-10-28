@@ -36,9 +36,15 @@ axios.interceptors.response.use(
       if (window.location.href.indexOf('/feature') != -1) {
         //如果正在用例编辑那么就保存当前页面，在新的标签页进行登录
         window.open(gitWinLocHref() + '/#/login?redirect=' + path, '_blank')
+        setTimeout(() => {
+          isRedirecting = false
+        }, 1000)
         return
       }
       window.location.href = gitWinLocHref() + '/#/login?redirect=' + path
+      setTimeout(() => {
+        isRedirecting = false
+      }, 1000)
       return
     }
     if (error.response.data.code) {

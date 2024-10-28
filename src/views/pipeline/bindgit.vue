@@ -123,10 +123,10 @@ export default {
     deleteBind(row) {
       gitBindApi.deleteCodeChange(this.pipelineId, row.bindId).then((res) => {
         if (res.data == 1) {
-          this.$message.success('删除成功')
+          this.$notify.success('删除成功')
           this.getBindBranches()
         } else {
-          this.$message.error('删除失败')
+          this.$notify.error('删除失败')
         }
       })
     },

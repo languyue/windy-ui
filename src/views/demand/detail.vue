@@ -245,10 +245,10 @@ export default {
         }
         DemandApi.updateDemand(this.demandForm).then((res) => {
           if (res.data) {
-            this.$message.success('更新成功')
+            this.$notify.success('更新成功')
             this.isEdit = false
           } else {
-            this.$message.error('更新失败')
+            this.$notify.error('更新失败')
           }
         })
       })
@@ -258,10 +258,10 @@ export default {
       let clipboard = new Clipboard('.copy-icon')
 
       clipboard.on('success', function () {
-        _this.$message.success('复制成功')
+        _this.$notify.success('复制成功')
       })
       clipboard.on('error', function () {
-        _this.$message.success('复制失败')
+        _this.$notify.success('复制失败')
       })
     },
     getDemandDetail() {
@@ -291,7 +291,7 @@ export default {
         demandId: this.demandId,
       }).then((res) => {
         console.log('返回结果', res)
-        this.$message.success('修改状态成功')
+        this.$notify.success('修改状态成功')
       })
     },
     getCommentsList() {
@@ -309,11 +309,11 @@ export default {
       }
       CommentApi.createComment(data).then((res) => {
         if (res.data) {
-          this.$message.success('添加评论成功')
+          this.$notify.success('添加评论成功')
           this.getCommentsList()
           this.commentMsg = ''
         } else {
-          this.$message.error('添加评论失败')
+          this.$notify.error('添加评论失败')
         }
       })
     },

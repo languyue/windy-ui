@@ -152,22 +152,22 @@ export default {
         if (this.isEdit) {
           resourceApi.updateResource(this.resourceForm).then((res) => {
             if (res.data) {
-              this.$message.success('修改资源成功')
+              this.$notify.success('修改资源成功')
               this.getResourceList()
               this.closeResourceDialog()
             } else {
-              this.$message.error('修改资源失败')
+              this.$notify.error('修改资源失败')
             }
           })
           return
         }
         resourceApi.createResource(this.resourceForm).then((res) => {
           if (res.data) {
-            this.$message.success('创建资源成功')
+            this.$notify.success('创建资源成功')
             this.getResourceList()
             this.closeResourceDialog()
           } else {
-            this.$message.error('创建资源失败')
+            this.$notify.error('创建资源失败')
           }
         })
       })
@@ -180,10 +180,10 @@ export default {
     deleteResource(row) {
       resourceApi.deleteResource(row.resourceId).then((res) => {
         if (res.data) {
-          this.$message.success('删除资源成功')
+          this.$notify.success('删除资源成功')
           this.getResourceList()
         } else {
-          this.$message.error('删除资源失败')
+          this.$notify.error('删除资源失败')
         }
       })
     },

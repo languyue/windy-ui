@@ -467,7 +467,7 @@ export default {
         if (res.data == 1) {
           this.removeItem(this.displayList[index])
           this.displayExepoints()
-          this.$message.success('删除执行点成功')
+          this.$notify.success('删除执行点成功')
           return
         }
         this.$message.warning('删除执行点失败')
@@ -487,9 +487,9 @@ export default {
     startDebug() {
       featureApi.startFeature(this.featureId).then((res) => {
         if (res.data) {
-          this.$message.success('开始执行，请查看运行日志')
+          this.$notify.success('开始执行，请查看运行日志')
         } else {
-          this.$message.error('执行失败')
+          this.$notify.error('执行失败')
         }
       })
     },
@@ -551,7 +551,7 @@ export default {
       }
 
       featureApi.updateFeature(data).then(() => {
-        this.$message.success('保存成功')
+        this.$notify.success('保存成功')
         this.isEdit = false
         this.getExecutePoint()
       })
@@ -704,6 +704,7 @@ export default {
         this.getCaseInfo()
         return
       }
+      this.caseInfo.caseType = 2
       if (this.caseInfo.caseType == 2) {
         featureApi.getAllTemplates().then((res) => {
           let array = res.data

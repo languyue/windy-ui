@@ -290,13 +290,13 @@ export default {
 
       featureApi.copyCaseFeature(data).then((res) => {
         if (res.data) {
-          this.$message.success('复制成功！')
+          this.$notify.success('复制成功！')
           this.selectService()
           this.cancellCopy()
           return
         }
 
-        this.$message.error('复制失败！')
+        this.$notify.error('复制失败！')
       })
     },
     handleClose(tag) {
@@ -362,11 +362,11 @@ export default {
         testCaseApi.createTestCase(this.caseForm).then((res) => {
           this.closeDialog()
           if (res.data) {
-            this.$message.success('添加测试集成功')
+            this.$notify.success('添加测试集成功')
             this.getTestCaseList(1)
             return
           }
-          this.$message.error('添加测试集失败')
+          this.$notify.error('添加测试集失败')
         })
       })
     },
@@ -412,7 +412,7 @@ export default {
         type: 'warning',
       }).then(() => {
         testCaseApi.deleteTestCase(row.testCaseId).then(() => {
-          this.$message.success('删除测试集成功')
+          this.$notify.success('删除测试集成功')
           this.getTestCaseList(this.currentPage)
         })
       })

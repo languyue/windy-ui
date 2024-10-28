@@ -103,7 +103,7 @@
               <el-option
                 v-for="(item, index) in tagList"
                 :key="index"
-                :label="item.text"
+                :label="item.statusName"
                 :value="item.value"
               >
               </el-option>
@@ -170,11 +170,7 @@ export default {
       statusList: [],
       isEdit: false,
       bugId: '',
-      tagList: [
-        { text: '个人缺陷', value: '个人缺陷' },
-        { text: '数据分析', value: '数据分析' },
-        { text: '客户定制', value: '客户定制' },
-      ],
+      tagList: [],
       bugRule: {
         bugName: [
           { required: true, message: '请输入缺陷名称', trigger: 'blur' },
@@ -221,6 +217,11 @@ export default {
         this.statusList = res.data
       })
     },
+    getBugTags() {
+      bugApi.getBugTags().then((res) => {
+        this.tagList = res.data
+      })
+    },
     closeBug() {
       this.bugForm = {}
       this.$emit('cancel')
@@ -236,20 +237,20 @@ export default {
         if (this.edit) {
           bugApi.updateBug(this.bugForm).then((res) => {
             if (res.data) {
-              this.$message.success('修改缺陷成功')
+              this.$notify.success('修改缺陷成功')
               this.closeBug()
             } else {
-              this.$message.error('修改缺陷失败')
+              this.$notify.error('修改缺陷失败')
             }
           })
           return
         }
         bugApi.createBug(this.bugForm).then((res) => {
           if (res.data) {
-            this.$message.success('创建缺陷成功')
+            this.$notify.success('创建缺陷成功')
             this.closeBug()
           } else {
-            this.$message.error('创建缺陷失败')
+            this.$notify.error('创建缺陷失败')
           }
         })
       })
@@ -259,6 +260,7 @@ export default {
     this.spaceId = this.$store.state.spaceId
     this.isEdit = this.edit
     this.getstatusList()
+    this.getBugTags()
   },
 }
 </script>

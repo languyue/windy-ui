@@ -914,7 +914,7 @@ export default {
       // 清理临时元素
       document.body.removeChild(textarea)
       // 提示复制成功
-      this.$message.success('复制成功')
+      this.$notify.success('复制成功')
     },
     httpRequest(param) {
       const formData = new FormData()
@@ -925,11 +925,11 @@ export default {
       serviceApi.importApi(formData).then((res) => {
         this.closeLoading()
         if (res.data.apiList) {
-          this.$message.success('导入api成功')
+          this.$notify.success('导入api成功')
           this.showImportDialog = false
           this.selectService()
         } else {
-          this.$message.error('导入api失败')
+          this.$notify.error('导入api失败')
           this.showImportDialog = false
         }
       })
@@ -1013,10 +1013,10 @@ export default {
       if (command == 'delete') {
         serviceApi.deleteApi(data.apiId).then((res) => {
           if (res.data) {
-            this.$message.success('删除成功')
+            this.$notify.success('删除成功')
             this.selectService()
           } else {
-            this.$message.error('删除失败')
+            this.$notify.error('删除失败')
           }
         })
       }
@@ -1089,12 +1089,12 @@ export default {
         this.generateForm.serviceId = this.serviceId
         serviceApi.buildGenerate(this.generateForm).then((res) => {
           if (res.data) {
-            this.$message.success('开始构建')
+            this.$notify.success('开始构建')
             this.showGenerateApi = false
             this.isShowLog = true
             this.queryHistory()
           } else {
-            this.$message.error('触发构建任务失败')
+            this.$notify.error('触发构建任务失败')
           }
         })
       })
@@ -1108,11 +1108,11 @@ export default {
         this.dataForm.serviceId = this.serviceId
         serviceApi.createApi(this.dataForm).then((res) => {
           if (res.data) {
-            this.$message.success('添加成功')
+            this.$notify.success('添加成功')
             this.selectService()
             this.cancelCreate()
           } else {
-            this.$message.error('添加失败')
+            this.$notify.error('添加失败')
           }
         })
       })
@@ -1131,10 +1131,10 @@ export default {
       if (command == 'delete') {
         serviceApi.batchDeleteApi(this.selectNodes).then((res) => {
           if (res.data) {
-            this.$message.success('删除成功')
+            this.$notify.success('删除成功')
             this.selectService()
           } else {
-            this.$message.error('删除失败')
+            this.$notify.error('删除失败')
           }
         })
         return
@@ -1157,7 +1157,7 @@ export default {
       if (this.currentApi != '') {
         serviceApi.updateApi(data).then((res) => {
           if (res.data) {
-            this.$message.success({ showClose: true, message: '修改接口成功' })
+            this.$notify.success({ showClose: true, message: '修改接口成功' })
             this.expendKeys = [data.apiId]
             this.selectService()
             this.updateApi = false
@@ -1167,12 +1167,12 @@ export default {
       }
       serviceApi.createApi(data).then((res) => {
         if (res.data) {
-          this.$message.success('添加接口成功')
+          this.$notify.success('添加接口成功')
           this.updateApi = false
           this.expendKeys = [data.apiId]
           this.selectService()
         } else {
-          this.$message.error('添加接口失败')
+          this.$notify.error('添加接口失败')
         }
       })
     },

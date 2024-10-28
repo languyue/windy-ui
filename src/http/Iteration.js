@@ -39,6 +39,19 @@ export default {
         })
     })
   },
+  getIterationStatuses() {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/iteration/statuses`
+      http
+        .get(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
   getIterationList(spaceId) {
     return new Promise((resolve, reject) => {
       let url = `/v1/devops/${spaceId}/iterations`

@@ -512,7 +512,6 @@ export default {
       })
     },
     exchangeDataValue() {
-      console.log('init exchangeDataValue', this.data)
       if (!this.data.value && this.data.type == 'Boolean') {
         this.data.value = false
       }

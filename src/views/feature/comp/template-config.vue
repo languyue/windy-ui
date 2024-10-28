@@ -360,14 +360,14 @@ export default {
 
         if (!this.isCreate) {
           templateApi.updateTemplate(requestParam).then(() => {
-            this.$message.success({ message: `修改成功`, showClose: true })
+            this.$notify.success({ message: `修改成功`, showClose: true })
             this.$emit('complete')
           })
           return
         }
 
         templateApi.createTemplate(requestParam).then(() => {
-          this.$message.success({ message: `添加成功`, showClose: true })
+          this.$notify.success({ message: `添加成功`, showClose: true })
           this.$emit('complete')
         })
       })
