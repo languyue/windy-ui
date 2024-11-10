@@ -370,7 +370,7 @@ export default {
       operateType: 1,
       startMove: false,
       editPipelines: [],
-      formLabelWidth: '120px',
+      formLabelWidth: '150px',
       nodeForm: {},
       stepOptions: [],
       itemList: [],
@@ -456,7 +456,7 @@ export default {
         if (this.nodeForm.list) {
           this.nodeForm.list.forEach((e) => {
             if (e.configDetail) {
-              let detail = JSON.parse(e.configDetail)
+              let detail = e.configDetail
               config[detail.actionId] = detail
             }
           })
@@ -474,7 +474,7 @@ export default {
             })
 
             this.nodeForm.list.forEach((el) => {
-              let configDetail = JSON.parse(el.configDetail)
+              let configDetail = el.configDetail
               if (e.actionId == configDetail.actionId) {
                 e.nodeId = el.nodeId
               }
@@ -566,9 +566,9 @@ export default {
         let param = utils.exchangeData(this.pipelineForm, this.editPipelines)
         if (param.pipelineType == 2) {
           let corn = `0 0 ${this.pipelineForm.scheduleTime} * * ?`
-          param.pipelineConfig = JSON.stringify({
+          param.pipelineConfig = {
             schedule: corn,
-          })
+          }
         }
 
         //修改流水线
@@ -617,6 +617,7 @@ export default {
       this.selectStep(selectItem.configId)
     },
     chooseStep(item) {
+      console.log('chooseItem', item)
       this.stepConfigs = JSON.parse(JSON.stringify(item.compareResults))
       this.stepConfigs.forEach((e) => {
         this.configForm[e.compareKey] = e.value
@@ -704,7 +705,7 @@ export default {
       pipelineApi.queryPipeline(this.pipelineId).then((res) => {
         this.editPipelines = utils.displayData(res.data.stageList)
         this.pipelineForm = res.data
-        let config = JSON.parse(res.data.pipelineConfig)
+        let config = res.data.pipelineConfig
         if (config) {
           let hour = config.schedule.split(' ')[2]
           //解析表达式 0 0 2 * * ? 获取对应的执行时间点

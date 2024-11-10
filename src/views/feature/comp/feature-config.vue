@@ -55,9 +55,38 @@
                               >{{ executePoint.description }}
                             </span>
                             <i
-                              class="el-icon-document-copy"
+                              class="el-icon-document-copy i-icon"
                               @click="copyExecutePoint(executePoint)"
                             />
+
+                            <el-popover
+                              placement="right-end"
+                              title="关联模版信息"
+                              width="400"
+                              v-if="isShowTemplate(executePoint)"
+                              trigger="click"
+                              @show="showExecutePoint(executePoint)"
+                              @hide="hideTemplate"
+                            >
+                              <el-descriptions :column="1">
+                                <el-descriptions-item label="所属服务">{{
+                                  pointTemplate.service
+                                }}</el-descriptions-item>
+                                <el-descriptions-item label="请求信息">{{
+                                  pointTemplate.request
+                                }}</el-descriptions-item>
+                                <el-descriptions-item label="请求方法">{{
+                                  pointTemplate.method
+                                }}</el-descriptions-item>
+                                <el-descriptions-item label="模版描述">{{
+                                  pointTemplate.description
+                                }}</el-descriptions-item>
+                              </el-descriptions>
+                              <i
+                                slot="reference"
+                                class="el-icon-info i-icon icon-template"
+                              ></i>
+                            </el-popover>
                           </el-col>
                           <el-col :span="4">
                             <i
@@ -195,7 +224,7 @@
                     class="tool-list"
                     @start="startDrag($event, { list: featureItemList })"
                     :list="featureItemList"
-                    :group="{ name: 'api', pull: 'clone' }"
+                    :group="{ name: 'api', pull: 'clone', put: false }"
                     animation="100"
                   >
                     <div
@@ -250,7 +279,7 @@
                           @start="startDrag($event, item)"
                           class="template-list"
                           :list="item.list"
-                          :group="{ name: 'api', pull: 'clone' }"
+                          :group="{ name: 'api', pull: 'clone', put: false }"
                           animation="100"
                         >
                           <div
@@ -285,8 +314,8 @@ import FeatureTemplate from '@/components/feature-template'
 import FeatureTool from '@/components/feature-tool'
 import draggable from 'vuedraggable'
 import featureApi from '../../../http/Feature'
-import testCaseApi from '../..//../http/TestCase'
-import serviceApi from '../..//../http/Service'
+import testCaseApi from '../../../http/TestCase'
+import serviceApi from '../../../http/Service'
 import collapse from '../../../lib/collapse'
 export default {
   props: {
@@ -365,7 +394,7 @@ export default {
         data.list = temp
         return temp.length > 0
       })
-      console.log('aaaa', array)
+
       return array
     },
     templateList() {
@@ -397,9 +426,27 @@ export default {
       testActive: false,
       testShow: false,
       serviceGroup: [],
+      pointTemplate: {},
     }
   },
   methods: {
+    isShowTemplate(point) {
+      return (
+        point.executeType == 1 ||
+        point.executeType == 4 ||
+        point.executeType == 5
+      )
+    },
+    showExecutePoint(point) {
+      console.log('point', point)
+      featureApi.getExecutePointTemplate(point.pointId).then((res) => {
+        this.pointTemplate = res.data
+        console.log('point res', res)
+      })
+    },
+    hideTemplate() {
+      this.pointTemplate = {}
+    },
     closeTemplates(item) {
       item.isActive = !item.isActive
       item.showList = !item.showList
@@ -602,7 +649,7 @@ export default {
       this.uuid = this.$utils.randomString(20)
     },
     refreshValue(update) {
-      console.log('refreshValue', update)
+      // console.log('refreshValue', update)
       //删除添加到if或者for中的执行点
       let removeArray = []
       if (update.data.executePoints) {
@@ -916,6 +963,13 @@ export default {
   cursor: pointer;
   border-radius: 5px;
   margin: 5px;
+}
+.i-icon {
+  margin-left: 10px;
+  font-size: 15px;
+}
+.icon-template {
+  color: #909399;
 }
 </style>
 <style lang="less" scoped>

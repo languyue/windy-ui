@@ -69,6 +69,7 @@ export default {
         if (res.data.token) {
           cookies.set('token', res.data.token, {
             path: '/',
+            expires: 1 / 24,
           })
           let pathUri = '/#/'
           if (this.$route.query.redirect) {

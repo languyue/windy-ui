@@ -147,6 +147,14 @@
     <el-main class="main-bg">
       <router-view></router-view>
     </el-main>
+    <el-drawer
+      title="节点监控"
+      :visible.sync="showDrawer"
+      direction="rtl"
+      size="60%"
+    >
+      <monitor />
+    </el-drawer>
   </el-container>
 </template>
 <script>
@@ -154,11 +162,16 @@ import resourceApi from '../http/Resource'
 import windyTool from '../assets/windy-tool.png'
 import userApi from '../http/User'
 import cookies from 'js-cookie'
+import monitor from './service/monitor.vue'
 export default {
+  components: {
+    monitor,
+  },
   data() {
     return {
       user: {},
       imageUrl: windyTool,
+      showDrawer: false,
     }
   },
   methods: {
@@ -180,6 +193,11 @@ export default {
           'https://plugins.jetbrains.com/plugin/25539-windy/reviews?noRedirect=true',
           '_blank'
         )
+        return
+      }
+
+      if (index == '/monitor') {
+        this.showDrawer = true
         return
       }
       this.$router.push({ path: index })

@@ -37,6 +37,89 @@
         </el-col>
       </el-row>
     </div>
+    <!-- 服务统计开始 -->
+    <div class="container">
+      <div class="logo-text">{{ logoName }}</div>
+      <div class="num-row">
+        <el-row :gutter="20">
+          <el-col :span="6">
+            <el-statistic
+              group-separator=","
+              :precision="0"
+              :value="statics.apiCount"
+              :value-style="{ fontSize: '40px', fontWeight: 900 }"
+              title="服务API总数"
+            ></el-statistic>
+          </el-col>
+          <el-col :span="6">
+            <el-statistic
+              :value="statics.apiCoverage"
+              :value-style="{ fontSize: '40px', fontWeight: 900 }"
+              :precision="0"
+              title="用例覆盖率"
+              suffix="%"
+            >
+              <span slot="suffix">
+                <span> {{ statics.apiCoverage ? '%' : '' }}</span>
+              </span>
+              <template slot="prefix">
+                <span v-if="statics.apiCoverage">
+                  <i
+                    v-if="statics.apiCoverage > 90"
+                    class="el-icon-s-flag"
+                    style="color: #67c23a"
+                  ></i>
+                  <i v-else class="el-icon-s-flag" style="color: #f56c6c"></i>
+                </span>
+              </template>
+            </el-statistic>
+          </el-col>
+          <el-col :span="6">
+            <el-statistic
+              group-separator=","
+              :precision="0"
+              :value="statics.uncoverSize"
+              :value-style="{ fontSize: '40px', fontWeight: 900 }"
+              title="未覆盖接口"
+            >
+              <span slot="suffix">
+                <el-popover placement="right" width="400" trigger="hover">
+                  <el-table
+                    size="mini"
+                    :row-style="{ cursor: 'pointer' }"
+                    :data="statics.notCoveredApi"
+                    height="400"
+                    @row-click="clickApiRow"
+                  >
+                    <el-table-column
+                      width="150"
+                      property="apiName"
+                      label="API名称"
+                    ></el-table-column>
+                    <el-table-column
+                      property="resource"
+                      label="APi路由"
+                    ></el-table-column>
+                    <el-table-column
+                      width="100"
+                      property="method"
+                      label="请求方法"
+                    ></el-table-column>
+                  </el-table>
+                  <div slot="reference">
+                    <i
+                      class="el-icon-s-promotion"
+                      style="margin-left: 20px; cursor: pointer"
+                    />
+                  </div>
+                </el-popover>
+              </span>
+            </el-statistic>
+          </el-col>
+        </el-row>
+      </div>
+    </div>
+    <!-- 服务统计结束 -->
     <!-- 测试集表格开始 -->
     <div class="content">
       <el-table :data="featureData" size="mini">
@@ -249,6 +332,7 @@ export default {
       treeData: [],
       allKeys: [],
       featureForm: {},
+      statics: {},
       rule: {
         testCaseName: [
           { required: true, message: '请输入测试集名称', trigger: 'blur' },
@@ -260,9 +344,30 @@ export default {
           { required: true, message: '请选择关联的服务', trigger: 'select' },
         ],
       },
+      serviceName: '',
     }
   },
+  computed: {
+    logoName() {
+      if (!this.serviceName) {
+        return ''
+      }
+      return this.serviceName.substring(0, 1)
+    },
+  },
   methods: {
+    clickApiRow(row) {
+      var getWinLocHref = function () {
+        var location = window.location.href.split('/')
+        var basePath = location[0] + '//' + location[2]
+        return basePath
+      }
+
+      let url =
+        getWinLocHref() +
+        `/#/service/resource?apiId=${row.apiId}&serviceId=${row.serviceId}`
+      window.open(url, '_black')
+    },
     treeNodeClick(data) {
       featureApi.getFeatureDetail(data.featureId).then((res) => {
         this.featureForm = res.data
@@ -385,7 +490,14 @@ export default {
     },
     selectService() {
       this.$store.commit('UPDATE_SERVICE_ID', this.service)
+      this.serviceList.forEach((e) => {
+        if (e.serviceId == this.service) {
+          this.serviceName = e.serviceName
+        }
+      })
+
       this.getTestCaseList(1)
+      this.getServiceStatic()
     },
     pageChange(page) {
       this.getTestCaseList(page)
@@ -417,6 +529,12 @@ export default {
         })
       })
     },
+    getServiceStatic() {
+      serviceApi.getServiceStatics(this.service).then((res) => {
+        this.statics = res.data
+        this.statics.uncoverSize = res.data.notCoveredApi.length
+      })
+    },
   },
   created() {
     this.service = this.$store.state.serviceId
@@ -424,7 +542,7 @@ export default {
   },
 }
 </script>
-<style scoped>
+<style lang="less" scoped>
 .service {
   margin: 10px 20px;
 }
@@ -447,5 +565,31 @@ export default {
 .tree-list {
   max-height: 600px;
   overflow-y: scroll;
+}
+.container {
+  display: flex;
+  align-items: center;
+
+  .logo-text {
+    display: inline-block;
+    border-radius: 100px;
+    height: 100px;
+    line-height: 100px;
+    width: 100px;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 30px;
+    cursor: pointer;
+    margin-left: 40px;
+    margin-bottom: 20px;
+    color: #909399;
+    font-weight: 800;
+    background-color: #f2f6fc;
+  }
+
+  .num-row {
+    width: 400px;
+    flex-grow: 1;
+  }
 }
 </style>

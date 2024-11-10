@@ -571,7 +571,7 @@
                     </div>
                   </el-tree>
 
-                  <h4 class="title-bar">代码生成配置</h4>
+                  <h4 class="title-bar">二方包代码生成配置</h4>
                   <el-form-item label="文件类名" label-width="120px">
                     <div>
                       <el-input
@@ -596,11 +596,7 @@
                       v-model="apiForm.bodyClass"
                     ></el-input>
                   </el-form-item>
-                  <el-form-item
-                    label="响应体类名"
-                    label-width="120px"
-                    v-if="responseData.length > 0"
-                  >
+                  <el-form-item label="响应体类名" label-width="120px">
                     <el-input
                       placeholder="请输入接口响应类名"
                       v-model="apiForm.resultClass"
@@ -958,8 +954,6 @@ export default {
       if (targetNode.data.apiType != 0) {
         resource.parentId = null
       }
-      resource.requestParams = JSON.parse(resource.requestParams)
-      resource.responseParams = JSON.parse(resource.responseParams)
       serviceApi.updateApi(resource)
     },
     beforeLeave(activeName, oldActiveName) {
@@ -1027,7 +1021,7 @@ export default {
       }
       this.apiForm = JSON.parse(JSON.stringify(data))
       console.log('show item', this.apiForm)
-      this.paramData = JSON.parse(data.requestParams)
+      this.paramData = data.requestParams
       if (!this.paramData) {
         this.paramData = []
       }
@@ -1049,7 +1043,7 @@ export default {
       })
       console.log('show paramData', this.paramData)
 
-      this.responseData = JSON.parse(data.responseParams)
+      this.responseData = data.responseParams
       if (!this.responseData) {
         this.responseData = []
       }
@@ -1316,12 +1310,12 @@ export default {
       serviceApi.getGenerateLog(this.serviceId).then((res) => {
         let array = []
         res.data.forEach((e) => {
-          let params = JSON.parse(e.executeParams)
+          let params = e.generateParams
           params.time = e.updateTime
           params.status = e.status
           params.label = params.version
           params.value = e.recordId
-          params.messageList = JSON.parse(e.result)
+          params.messageList = e.generateResult
           array.push(params)
         })
         this.logVersions = array
@@ -1357,6 +1351,16 @@ export default {
         if (!this.serviceId) {
           this.serviceId = this.serviceList[0].serviceId
         }
+        let apiId = this.$route.query.apiId
+        if (apiId) {
+          this.expendKeys = [apiId]
+          this.$refs.apiTree.setCheckedKeys(this.expendKeys)
+        }
+        let serviceId = this.$route.query.serviceId
+        if (serviceId) {
+          this.serviceId = serviceId
+        }
+
         this.selectService()
       })
     },

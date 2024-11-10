@@ -316,11 +316,18 @@
         }}</el-tag></span
       >
       <el-divider><i class="el-icon-receiving"></i></el-divider>
-      <ul>
-        <li v-for="(item, index) in logForm.messageList" :key="index">
-          <span>{{ item }}</span>
-        </li>
-      </ul>
+      <el-scrollbar>
+        <ul class="log-list">
+          <li
+            class="log-item"
+            v-for="(item, index) in logForm.messageList"
+            :key="index"
+          >
+            <span>{{ item }}</span> <br />
+          </li>
+        </ul>
+      </el-scrollbar>
+
       <div v-if="recordList && recordList.length > 0">
         <el-button type="primary" size="mini" @click="openTaskDetail"
           >查看任务详情</el-button
@@ -553,6 +560,7 @@ export default {
       publishMsgForm: {},
       loopQuery: null,
       approvalForm: { status: 1 },
+      currentRunningNode: '',
       approvalRules: {
         status: [
           { required: true, message: '请选择审批状态', trigger: 'change' },
@@ -575,7 +583,6 @@ export default {
     startRun(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
-          console.log(this.currentPipeline)
           let config = this.currentPipeline.context
           if (!config) {
             config = {}
@@ -584,13 +591,13 @@ export default {
           config.paramList = this.publishForm
           let item = {
             pipelineId: this.currentPipeline.pipelineId,
-            pipelineConfig: JSON.stringify(config),
+            pipelineConfig: config,
           }
           pipelineApi
             .updatePipeline(this.serviceId, item.pipelineId, item)
             .then((res) => {
               if (res.data) {
-                this.startPipeline()
+                this.executePipeline()
               } else {
                 this.$notify.error('添加tag失败，运行流水线失败')
               }
@@ -711,7 +718,7 @@ export default {
             this.currentPipeline.pipelineType = res.data.pipelineType
             this.currentPipeline.pipelineId = res.data.pipelineId
             this.currentPipeline.pipelineStatus = res.data.pipelineStatus
-            this.currentPipeline.context = JSON.parse(res.data.pipelineConfig)
+            this.currentPipeline.context = res.data.pipelineConfig
             this.uuid++
           })
       }
@@ -787,7 +794,7 @@ export default {
             return
           }
           this.approvalNode = node
-          this.showApproval = true
+          this.showApproval = this.currentRunningNode == node.nodeId
           return
         }
 
@@ -913,11 +920,14 @@ export default {
         return
       }
 
-      if (this.currentPipeline.pipelineType == 1 && !this.publishForm.tagName) {
+      if (this.currentPipeline.pipelineType == 1) {
         this.showPublishDialog = true
         return
       }
 
+      this.executePipeline()
+    },
+    executePipeline() {
       pipelineApi.startPipeline(this.currentPipeline.pipelineId).then((res) => {
         if (res.data == '' || res.data == null) {
           this.$notify.error('运行流水线失败')
@@ -985,7 +995,7 @@ export default {
         this.currentPipeline.executeType = res.data.executeType
         this.currentPipeline.pipelineId = item.pipelineId
         this.currentPipeline.pipelineStatus = res.data.pipelineStatus
-        this.currentPipeline.context = JSON.parse(res.data.pipelineConfig)
+        this.currentPipeline.context = res.data.pipelineConfig
         this.pipelineId = item.pipelineId
         this.uuid++
         console.log('dddd', this.currentPipeline)
@@ -1056,7 +1066,7 @@ export default {
         this.customList = []
         res.data.forEach((e) => {
           e.selected = false
-          e.pipelineConfig = JSON.parse(e.pipelineConfig)
+
           if (e.pipelineType == 1) {
             this.publishList.push(e)
           }
@@ -1097,6 +1107,9 @@ export default {
         historyApi.getPipelienStatus(this.history.historyId).then((res) => {
           let item = {}
           res.data.nodeStatusList.forEach((e) => {
+            if (e.status == 4) {
+              this.currentRunningNode = e.nodeId
+            }
             item[e.nodeId] = this.exchangeStatus(e.status)
             if (e.nodeId == this.logForm.nodeId) {
               this.logForm = {
@@ -1262,5 +1275,14 @@ ul {
 .banch-name {
   color: #409eff;
   font-size: 900;
+}
+
+.log-list {
+  background-color: #1e1f22;
+  padding: 10px;
+  border-radius: 5px;
+  color: #bcbec4;
+  height: 500px;
+  overflow-y: scroll;
 }
 </style>

@@ -82,13 +82,12 @@ export default {
   },
   methods: {
     refreshValue(update) {
-      console.log('fffff')
       this.executePoint.params.forEach((p) => {
         if (update.item.paramKey == p.paramKey) {
           p.value = update.item.value
         }
       })
-      console.log('fffff')
+
       this.$emit('refreshData', {
         data: this.executePoint,
       })

@@ -155,6 +155,9 @@
           description="请在左侧选择或创建用例"
         ></el-empty>
         <div v-else class="content">
+          <div class="feature-name-title">
+            用例名称: <span>{{ infoForm.featureName }}</span>
+          </div>
           <el-tabs v-model="activeName" @tab-click="tabChange">
             <el-tab-pane label="用例信息" name="desc">
               <el-descriptions title="用例描述" :column="3" size="small">
@@ -192,6 +195,9 @@
                   <el-tag :key="tag" v-for="tag in dynamicTags" size="mini">
                     {{ tag }}
                   </el-tag>
+                </el-descriptions-item>
+                <el-descriptions-item label="用例描述">
+                  {{ infoForm.description }}
                 </el-descriptions-item>
               </el-descriptions>
               <div v-if="infoForm.featureType == 1">
@@ -257,6 +263,14 @@
           <el-input
             v-model="featureForm.featureName"
             placeholder="请输入名称"
+          />
+        </el-form-item>
+        <el-form-item label="用例描述" prop="description">
+          <el-input
+            type="textarea"
+            :autosize="{ minRows: 2, maxRows: 6 }"
+            v-model="featureForm.description"
+            placeholder="请输入用例描述信息"
           />
         </el-form-item>
         <el-form-item label="用例标签">
@@ -353,7 +367,7 @@
         <el-table
           :data="configData"
           border
-          :key="uuid"
+          :key="randomId"
           size="small"
           default-expand-all
           row-key="configId"
@@ -555,6 +569,7 @@ export default {
       showDebugDialog: false,
       isConnect: false,
       serviceId: '',
+      randomId: '',
       showFeatureDialog: false,
       featureForm: {},
       isEditFeature: false,
@@ -582,6 +597,9 @@ export default {
       featureRule: {
         featureName: [
           { required: true, message: '请输入名称', trigger: 'blur' },
+        ],
+        description: [
+          { max: 256, message: '用例描述最多256个字符', trigger: 'blur' },
         ],
       },
       expendList: [],
@@ -884,10 +902,10 @@ export default {
     },
     startEditParam(row) {
       row.isEdit = true
-      this.uuid = this.$utils.randomString(20)
+      this.randomId = this.$utils.randomString(20)
     },
     cancelEditParam(row) {
-      this.uuid = this.$utils.randomString(20)
+      this.randomId = this.$utils.randomString(20)
       row.isEdit = false
     },
     handleSave(row) {
@@ -994,7 +1012,7 @@ export default {
         }
 
         featureApi.createFeature(request).then(() => {
-          this.$notify.error(`添加成功`)
+          this.$notify.success(`添加成功`)
           this.showFeatureDialog = !this.showFeatureDialog
           this.requestCaseFeatures(this.caseId)
         })
@@ -1074,8 +1092,6 @@ export default {
     },
   },
   created() {
-    console.log(window.location)
-    console.log(this.$route)
     this.caseId = this.$route.query.caseId
     this.getTestCaseConfigs()
     this.getCaseDetail()
@@ -1083,8 +1099,7 @@ export default {
   },
 }
 </script>
-
-<style scoped>
+<style lang="less" scoped>
 .step-line {
   font-size: 14px;
 }
@@ -1103,8 +1118,6 @@ export default {
   margin-left: 10px;
   vertical-align: bottom;
 }
-</style>
-<style scoped>
 .name {
   margin-left: 20px;
 }
@@ -1118,7 +1131,21 @@ export default {
 .content {
   margin: 5px;
   position: relative;
+
+  .feature-name-title {
+    position: absolute;
+    top: 0px;
+    right: 40px;
+    line-height: 40px;
+    font-size: 13px;
+
+    span {
+      font-size: 14px;
+      font-weight: 900;
+    }
+  }
 }
+
 .info-line {
   margin: 20px 10px;
 }

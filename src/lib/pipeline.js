@@ -24,7 +24,7 @@ export default {
         i++
       }
     }
-    
+
     let num = 1
     subNodes.forEach((e) => {
       let index = nodeIndex + num
@@ -423,7 +423,7 @@ export default {
           }
           subNode.push({
             nodeName: e.name,
-            configDetail: JSON.stringify(nodeConfig),
+            configDetail: nodeConfig,
             type: e.group,
             nodeId: e.nodeId,
             stageId: stageId,
@@ -474,7 +474,7 @@ export default {
             status: 'success',
             group: groupId,
             nodeId: ele.nodeId,
-            originData: JSON.parse(ele.configDetail),
+            originData: ele.configDetail,
             next: [],
           })
           preNode.next.push({ index: index, weight: 0 })

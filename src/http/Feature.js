@@ -91,6 +91,32 @@ export default {
         })
     })
   },
+  getExecutePoint(executePointId) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/feature/execute/point/${executePointId}`
+      http
+        .get(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
+  getExecutePointTemplate(executePointId) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/feature/points/${executePointId}/template`
+      http
+        .get(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
   deleteExecutePoint(executePointId) {
     return new Promise((resolve, reject) => {
       let url = `/v1/devops/feature/execute/point/${executePointId}`
@@ -184,7 +210,7 @@ export default {
   },
   deleteHistory(historyId) {
     return new Promise((resolve, reject) => {
-      let url = `/v1/devops//feature/history/${historyId}`
+      let url = `/v1/devops/feature/history/${historyId}`
       http
         .delete(url)
         .then((res) => {

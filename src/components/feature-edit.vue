@@ -91,20 +91,22 @@
 
     <!-- Map数据类型展示开始 -->
     <div v-else-if="data.type == 'Map'">
-      <el-row v-for="(item, num) in paramList" :key="num">
-        <el-col :span="10">
+      <el-row v-for="(item, num) in paramList" :key="num" :gutter="10">
+        <el-col :span="7">
           <el-input
             size="mini"
             :disabled="!isEdit"
             v-model="item.keyName"
             @input="notifyData"
             placeholder="请输入键"
-          ></el-input>
+          >
+            <div style="height: 28; line-height: 28px" slot="suffix">键</div>
+          </el-input>
         </el-col>
-        <el-col :span="2">
+        <el-col :span="1">
           <div class="header-line">-</div>
         </el-col>
-        <el-col :span="9">
+        <el-col :span="7">
           <el-input
             size="mini"
             :disabled="!isEdit"
@@ -112,7 +114,16 @@
             v-model="item.keyValue"
             placeholder="请输入值"
           >
+            <div style="height: 28; line-height: 28px" slot="suffix">值</div>
           </el-input>
+        </el-col>
+        <el-col :span="5" v-if="isEdit">
+          <el-select v-model="item.valueType" placeholder="请选择" size="mini">
+            <el-option label="字符串" value="String"> </el-option>
+            <el-option label="整数" value="Integer"> </el-option>
+            <el-option label="布尔值" value="Boolean"> </el-option>
+            <el-option label="浮点数" value="Float"> </el-option>
+          </el-select>
         </el-col>
         <el-col :span="3">
           <div v-if="isEdit" class="op-icon">
@@ -332,6 +343,7 @@ export default {
   watch: {
     feature(val) {
       this.data = JSON.parse(JSON.stringify(val))
+
       this.exchangeDataValue()
     },
   },
@@ -457,7 +469,16 @@ export default {
       if (this.data.type == 'Map') {
         let item = {}
         this.paramList.forEach((e) => {
-          item[e.keyName] = e.keyValue
+          console.log('value type', e)
+          if (e.valueType == 'Float') {
+            item[e.keyName] = parseFloat(e.keyValue)
+          } else if (e.valueType == 'Integer') {
+            item[e.keyName] = parseInt(e.keyValue)
+          } else if (e.valueType == 'Boolean') {
+            item[e.keyName] = e.keyValue == 'true'
+          } else {
+            item[e.keyName] = e.keyValue
+          }
         })
         data.value = item
         data.paramKey = this.data.paramKey
@@ -476,6 +497,7 @@ export default {
         array.push({
           keyName: '',
           keyValue: '',
+          valueType: 'String',
         })
         return array
       }
@@ -484,6 +506,7 @@ export default {
         array.push({
           keyName: name,
           keyValue: map[name],
+          valueType: 'String',
         })
       }
 
@@ -491,6 +514,7 @@ export default {
         array.push({
           keyName: '',
           keyValue: '',
+          valueType: 'String',
         })
       }
       return array
@@ -588,7 +612,6 @@ export default {
 
     this.pointId = this.point
     this.data = this.feature
-    console.log('create ', JSON.parse(JSON.stringify(this.data)))
     this.exchangeDataValue()
   },
 }

@@ -19,6 +19,7 @@
             :disabled="!isEdit"
             v-model="item.operator"
             placeholder="选择运算符"
+            @change="selectOperator"
             size="mini"
           >
             <el-option
@@ -32,20 +33,37 @@
         </div>
       </el-col>
       <el-col :span="12">
-        <div class="item">
-          <el-input
-            size="mini"
-            :disabled="!isEdit"
-            @input="notifyData"
-            @pointerdown.stop.native
-            v-model="item.expectValue"
-            placeholder="请输入期望值"
+        <el-row :gutter="10">
+          <el-col :span="8" v-if="item.operator == 'array_item_match'">
+            <el-input
+              size="mini"
+              :disabled="!isEdit"
+              @input="notifyData"
+              @pointerdown.stop.native
+              v-model="item.propertyKey"
+              placeholder="比较的属性Key"
+            ></el-input>
+          </el-col>
+          <el-col
+            v-if="item.operator != 'not_null'"
+            :span="item.operator == 'array_item_match' ? 16 : 24"
           >
-            <template slot="append">
-              <i class="el-icon-full-screen" @click="diaplayString(item)" />
-            </template>
-          </el-input>
-        </div>
+            <div>
+              <el-input
+                size="mini"
+                :disabled="!isEdit"
+                @input="notifyData"
+                @pointerdown.stop.native
+                v-model="item.expectValue"
+                placeholder="请输入期望值"
+              >
+                <template slot="append">
+                  <i class="el-icon-full-screen" @click="diaplayString(item)" />
+                </template>
+              </el-input>
+            </div>
+          </el-col>
+        </el-row>
       </el-col>
       <el-col :span="1">
         <div class="delete-div">
@@ -100,6 +118,9 @@ export default {
     }
   },
   methods: {
+    selectOperator() {
+      this.notifyData()
+    },
     closeEditor() {
       this.chooseItem.expectValue = this.$refs.editer.getValue()
     },
@@ -119,8 +140,19 @@ export default {
       this.notifyData()
     },
     notifyData() {
+      let array = JSON.parse(JSON.stringify(this.compareData))
+      array.forEach((item) => {
+        if (item.propertyKey) {
+          item.expectValue =
+            '{' +
+            item.propertyKey +
+            '}' +
+            (item.expectValue ? item.expectValue : '')
+        }
+      })
+
       this.$emit('refreshCompare', {
-        data: this.compareData,
+        data: array,
         pointId: this.pointId,
       })
     },
@@ -132,8 +164,8 @@ export default {
       featureApi.getExecuteOperators().then((res) => {
         res.data.forEach((e) => {
           this.operatorList.push({
-            label: e,
-            value: e,
+            label: e.description,
+            value: e.operator,
           })
         })
       })
@@ -144,13 +176,37 @@ export default {
       }
       return false
     },
+    parseString(str) {
+      const regex = /\{(.*?)\}(.*)/
+      const match = str.match(regex)
+
+      if (match) {
+        const identifier = match[1] // 提取 aa
+        const content = match[2] // 提取 huhu
+        return { identifier, content }
+      } else {
+        return { identifier: '', content: str } // 不符合格式时将整个字符串作为 content
+      }
+    },
   },
   created() {
     this.pointId = this.point
     this.compareData = this.data
+    console.log('compareData', this.compareData)
     if (this.isEmptyArray(this.compareData)) {
       this.compareData = [{}]
+    } else {
+      this.compareData.forEach((e) => {
+        if (e.expectValue && e.operator == 'array_item_match') {
+          console.log('dddddd', e.expectValue)
+          let item = this.parseString(e.expectValue)
+          e.propertyKey = item.identifier
+          e.expectValue = item.content
+        }
+      })
     }
+
+    this.selectOperator()
     this.getOperators()
   },
 }

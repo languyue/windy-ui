@@ -174,8 +174,6 @@ router.beforeEach((to, from, next) => {
   } else {
     next()
   }
-
-  console.log('wwww', to.path, store.state.rbacList)
 })
 
 export default router

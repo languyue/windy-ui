@@ -239,7 +239,7 @@ export default {
         name: e.executePointName,
         executeType: e.executeType,
         testStage: e.testStage,
-        resultList: e.executeResult,
+        resultList: e.recordResult,
         compareResult: e.compareResult,
         show: false,
         status: executeSuccess,

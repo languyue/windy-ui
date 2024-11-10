@@ -154,11 +154,24 @@
               </el-radio-group>
             </el-form-item>
             <el-form-item label="开发语言" prop="code">
-              <el-radio-group v-model="contextForm.code">
+              <el-radio-group
+                v-model="contextForm.code"
+                @change="selectCodeType"
+              >
                 <el-radio label="Java">Java</el-radio>
-                <!-- <el-radio label="Go">Go</el-radio>
-                <el-radio label="Python">Python</el-radio>
+                <el-radio label="Go">Go</el-radio>
+                <!-- <el-radio label="Python">Python</el-radio>
                 <el-radio label="Vue">Vue</el-radio> -->
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item label="语言版本" prop="code">
+              <el-radio-group v-model="contextForm.buildVersion">
+                <el-radio
+                  :label="version"
+                  v-for="(version, index) in codeVersions"
+                  :key="index"
+                  >{{ version }}</el-radio
+                >
               </el-radio-group>
             </el-form-item>
           </el-collapse-item>
@@ -467,9 +480,19 @@ export default {
       gitForm: {},
       contextForm: {},
       gitOwner: '',
+      buildVersions: {},
+      codeVersions: [],
     }
   },
   methods: {
+    selectCodeType(codeType) {
+      if (codeType == 'Java') {
+        this.codeVersions = this.buildVersions.javaVersions
+      }
+      if (codeType == 'Go') {
+        this.codeVersions = this.buildVersions.goVersions
+      }
+    },
     changeGit(type) {
       if (type == 'Gitlab') {
         this.gitOwner = 'oauth2'
@@ -569,6 +592,7 @@ export default {
       })
     },
     startEdit(row) {
+      this.getBuildVersions()
       this.getserviceMember(row.serviceId)
       this.dialogTitle = '修改服务'
       this.isEdit = true
@@ -621,6 +645,7 @@ export default {
       this.getServices(1)
     },
     startCreate() {
+      this.getBuildVersions()
       this.dialogTitle = '添加服务'
       this.isEdit = false
       this.showServiceDialog = true
@@ -709,6 +734,11 @@ export default {
         return true
       }
       return false
+    },
+    getBuildVersions() {
+      serviceApi.getBuildVersions().then((res) => {
+        this.buildVersions = res.data
+      })
     },
     getGitEnv() {
       systemApi.requestGitConfig().then((res) => {
