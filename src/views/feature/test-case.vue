@@ -54,7 +54,11 @@
           <el-col :span="6">
             <el-statistic
               :value="statics.apiCoverage"
-              :value-style="{ fontSize: '40px', fontWeight: 900 }"
+              :value-style="{
+                fontSize: '40px',
+                fontWeight: 900,
+                color: statics.apiCoverage >= 90 ? '#67C23A' : '#F56C6C',
+              }"
               :precision="0"
               title="用例覆盖率"
               suffix="%"
@@ -62,16 +66,6 @@
               <span slot="suffix">
                 <span> {{ statics.apiCoverage ? '%' : '' }}</span>
               </span>
-              <template slot="prefix">
-                <span v-if="statics.apiCoverage">
-                  <i
-                    v-if="statics.apiCoverage > 90"
-                    class="el-icon-s-flag"
-                    style="color: #67c23a"
-                  ></i>
-                  <i v-else class="el-icon-s-flag" style="color: #f56c6c"></i>
-                </span>
-              </template>
             </el-statistic>
           </el-col>
           <el-col :span="6">
@@ -79,11 +73,24 @@
               group-separator=","
               :precision="0"
               :value="statics.uncoverSize"
-              :value-style="{ fontSize: '40px', fontWeight: 900 }"
+              :value-style="{
+                fontSize: '40px',
+                fontWeight: 900,
+                color: statics.uncoverSize >= 0 ? '#E6A23C' : '#909399',
+              }"
               title="未覆盖接口"
             >
               <span slot="suffix">
                 <el-popover placement="right" width="400" trigger="hover">
+                  <el-alert
+                    :closable="false"
+                    title="接口覆盖率统计"
+                    type="info"
+                    show-icon
+                    description="覆盖率是根据当前服务关联的所有测试用例所使用的模版(模版会关联API)和服务对应的API列表来计算百分比,计算公式如下: 覆盖率 = 模版中使用API个数 / 服务API总数 * 100"
+                  >
+                  </el-alert>
+                  <h4>未覆盖API列表</h4>
                   <el-table
                     size="mini"
                     :row-style="{ cursor: 'pointer' }"
@@ -107,10 +114,17 @@
                     ></el-table-column>
                   </el-table>
                   <div slot="reference">
-                    <i
-                      class="el-icon-s-promotion"
-                      style="margin-left: 20px; cursor: pointer"
-                    />
+                    <span>
+                      <el-link
+                        style="
+                          margin-left: 5px;
+                          cursor: pointer;
+                          font-size: 12px;
+                          color: 409EFF;
+                        "
+                        >查看<i class="el-icon-view el-icon--right"></i>
+                      </el-link>
+                    </span>
                   </div>
                 </el-popover>
               </span>

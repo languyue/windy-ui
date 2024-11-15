@@ -424,6 +424,8 @@
                             <el-option label="Integer" value="Integer">
                             </el-option>
                             <el-option label="Float" value="Float"> </el-option>
+                            <el-option label="Object" value="Object">
+                            </el-option>
                             <el-option label="Array" value="Array"> </el-option>
                           </el-select>
                         </el-col>
@@ -479,7 +481,7 @@
                           <el-input
                             size="mini"
                             v-model="data.objectName"
-                            placeholder="请输入Object类名,代码生成使用"
+                            placeholder="输入对象类名,代码生成使用"
                           />
                         </el-col>
                       </el-row>
@@ -564,7 +566,7 @@
                           <el-input
                             size="mini"
                             v-model="data.objectName"
-                            placeholder="请输入Object类名,代码生成使用"
+                            placeholder="请输入对象类名,代码生成使用"
                           />
                         </el-col>
                       </el-row>
@@ -1310,6 +1312,7 @@ export default {
       serviceApi.getGenerateLog(this.serviceId).then((res) => {
         let array = []
         res.data.forEach((e) => {
+          console.log('fake', e)
           let params = e.generateParams
           params.time = e.updateTime
           params.status = e.status

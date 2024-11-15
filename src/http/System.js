@@ -104,4 +104,43 @@ export default {
         })
     })
   },
+  createTool(data) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/system/builds`
+      http
+        .post(url, data)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
+  deleteTool(toolId) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/system/builds/${toolId}`
+      http
+        .delete(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
+  getBuildTools() {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/system/build/versions`
+      http
+        .get(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
 }

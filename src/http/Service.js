@@ -26,19 +26,6 @@ export default {
         })
     })
   },
-  getBuildVersions() {
-    return new Promise((resolve, reject) => {
-      let url = `/v1/devops/service/build/versions`
-      http
-        .get(url)
-        .then((res) => {
-          resolve(res)
-        })
-        .catch((e) => {
-          reject(e)
-        })
-    })
-  },
   getServiceStatics(serviceId) {
     return new Promise((resolve, reject) => {
       let url = `/v1/devops/services/${serviceId}/statics`

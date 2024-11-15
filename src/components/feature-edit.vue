@@ -73,19 +73,40 @@
 
     <!-- Object数据类型展示开始 -->
     <div v-else-if="data.type == 'Object'">
-      <el-row v-for="(obj, index) in paramList" :key="index" class="item-line">
-        <el-col :span="4">
-          <div class="param_name">{{ obj.paramKey }}:</div>
-        </el-col>
-        <el-col :span="15">
-          <FeatureEdit
-            :point="pointId"
-            :feature="obj"
-            :isEdit="isEdit"
-            @refreshData="refreshObjectValue"
-          />
-        </el-col>
-      </el-row>
+      <span v-if="paramList.length > 0">
+        <el-row
+          v-for="(obj, index) in paramList"
+          :key="index"
+          class="item-line"
+        >
+          <el-col :span="4">
+            <div class="param_name">{{ obj.paramKey }}:</div>
+          </el-col>
+          <el-col :span="15">
+            <FeatureEdit
+              :point="pointId"
+              :feature="obj"
+              :isEdit="isEdit"
+              @refreshData="refreshObjectValue"
+            />
+          </el-col>
+        </el-row>
+      </span>
+      <el-input
+        v-else
+        v-model="data.valueString"
+        :key="objId"
+        :disabled="!isEdit"
+        @input="inputJson"
+        @pointerdown.stop.native
+        size="mini"
+        placeholder="请输入body对应的json格式,无需转换json字符串"
+      >
+        <span slot="prepend">JSON内容</span>
+        <!-- <span v-if="!data.verify" style="color: #f56c6c" slot="suffix"
+          >json格式错误</span
+        > -->
+      </el-input>
     </div>
     <!-- Object数据类型展示结束 -->
 
@@ -343,7 +364,6 @@ export default {
   watch: {
     feature(val) {
       this.data = JSON.parse(JSON.stringify(val))
-
       this.exchangeDataValue()
     },
   },
@@ -360,9 +380,25 @@ export default {
       backshow: false,
       contextList: [],
       originString: '',
+      objId: '1',
     }
   },
   methods: {
+    inputJson(data) {
+      let jsonVerify = function (str) {
+        try {
+          JSON.parse(str)
+          return true
+        } catch (e) {
+          return false
+        }
+      }
+      this.data.verify = jsonVerify(data)
+      if (this.data.verify) {
+        this.data.value = JSON.parse(data)
+        this.notifyData()
+      }
+    },
     isValidPlaceholder(str) {
       // 检查是否以 `${` 开始
       if (!str.startsWith('${')) {
@@ -385,7 +421,6 @@ export default {
       if (queryString && this.isValidPlaceholder(queryString)) {
         let filterText = queryString.replace('${', '')
 
-        console.log('clear test ', filterText)
         var restaurants = this.contextList
         var results = filterText
           ? restaurants.filter(this.createFilter(filterText))
@@ -574,15 +609,26 @@ export default {
 
       //====Object数据处理开始====
       if (this.data.type == 'Object') {
+        console.log('xxxxx', JSON.parse(JSON.stringify(this.data)))
         this.data.value = this.data.value ? this.data.value : null
         let objData = JSON.parse(JSON.stringify(this.data))
         this.paramList = []
-        objData.initData.range.forEach((e) => {
-          if (this.data.value) {
-            e.value = this.data.value[e.paramKey]
-          }
-          this.paramList.push(e)
-        })
+        if (objData.initData && objData.initData.range) {
+          objData.initData.range.forEach((e) => {
+            if (this.data.value) {
+              e.value = this.data.value[e.paramKey]
+            }
+            this.paramList.push(e)
+          })
+        } else {
+          console.log('xxxxx', this.data)
+          this.objId = this.$utils.randomString(20)
+          this.$set(
+            this.data,
+            'valueString',
+            this.data.value ? JSON.stringify(this.data.value) : ''
+          )
+        }
       }
       //====Object数据处理结束====
 

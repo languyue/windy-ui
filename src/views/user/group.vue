@@ -180,12 +180,16 @@
           <el-input v-model="userForm.userName" placeholder="请输入用户名称" />
         </el-form-item>
         <el-form-item label="密码">
-          <el-input v-model="userForm.password" placeholder="请输入用户密码" />
+          <el-input
+            v-model="userForm.password"
+            placeholder="请输入用户密码"
+            show-password
+          />
         </el-form-item>
         <el-form-item label="用户昵称">
           <el-input v-model="userForm.nickName" placeholder="请输入用户昵称" />
         </el-form-item>
-        <el-form-item label="重置密码">
+        <el-form-item label="重置密码" v-if="edistUser">
           <el-button
             type="primary"
             icon="el-icon-refresh"

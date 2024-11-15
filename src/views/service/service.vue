@@ -128,7 +128,7 @@
             <el-popover
               placement="right"
               v-model="showPop"
-              width="400"
+              width="200"
               trigger="click"
             >
               <userSearch
@@ -164,13 +164,13 @@
                 <el-radio label="Vue">Vue</el-radio> -->
               </el-radio-group>
             </el-form-item>
-            <el-form-item label="语言版本" prop="code">
+            <el-form-item label="构建版本" prop="code">
               <el-radio-group v-model="contextForm.buildVersion">
                 <el-radio
-                  :label="version"
+                  :label="version.installPath"
                   v-for="(version, index) in codeVersions"
                   :key="index"
-                  >{{ version }}</el-radio
+                  >{{ version.name }}</el-radio
                 >
               </el-radio-group>
             </el-form-item>
@@ -486,12 +486,16 @@ export default {
   },
   methods: {
     selectCodeType(codeType) {
-      if (codeType == 'Java') {
-        this.codeVersions = this.buildVersions.javaVersions
-      }
-      if (codeType == 'Go') {
-        this.codeVersions = this.buildVersions.goVersions
-      }
+      this.codeVersions = []
+      this.buildVersions.forEach((e) => {
+        if (codeType == 'Java' && e.type == 'Maven') {
+          this.codeVersions.push(e)
+        }
+
+        if (codeType == 'Go' && e.type == 'Go') {
+          this.codeVersions.push(e)
+        }
+      })
     },
     changeGit(type) {
       if (type == 'Gitlab') {
@@ -520,19 +524,21 @@ export default {
         cb(array)
       })
     },
-    handleSelect(item) {
-      serviceApi
-        .addServiceMembers({
-          resourceId: this.serviceForm.serviceId,
-          userId: item.userId,
-        })
-        .then((res) => {
-          if (res.data) {
-            this.selectedUser = ''
-            this.showPop = !this.showPop
-            this.getserviceMember(this.serviceForm.serviceId)
-          }
-        })
+    handleSelect(users) {
+      users.forEach((e) => {
+        serviceApi
+          .addServiceMembers({
+            resourceId: this.serviceForm.serviceId,
+            userId: e.userId,
+          })
+          .then((res) => {
+            if (res.data) {
+              this.selectedUser = ''
+              this.getserviceMember(this.serviceForm.serviceId)
+            }
+          })
+      })
+      this.showPop = !this.showPop
     },
     clickNode(row) {
       this.selectNode = row.nodeName
@@ -736,7 +742,7 @@ export default {
       return false
     },
     getBuildVersions() {
-      serviceApi.getBuildVersions().then((res) => {
+      systemApi.getBuildTools().then((res) => {
         this.buildVersions = res.data
       })
     },

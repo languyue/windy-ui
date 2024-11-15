@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="user-content">
     <div
       v-if="!selectList || selectList.length < 1"
       class="show-user-div"
@@ -8,7 +8,7 @@
       <div class="user-add-icon">
         <i class="el-icon-user-solid" />
       </div>
-      <span>处理人</span>
+      <span>选择用户</span>
     </div>
     <div v-else>
       <div
@@ -30,6 +30,7 @@
       title="选择用户"
       :visible.sync="userDialogVisiable"
       append-to-body
+      @close="closeDialog"
     >
       <el-autocomplete
         v-model="selectedUser"
@@ -61,14 +62,19 @@
                 {{ item.name.substring(0, 1) }}
               </div>
               <span>{{ item.name }}</span>
-              <i class="el-icon-delete delete-icon" />
+              <i
+                class="el-icon-delete delete-icon"
+                @click="deleteSelectUser(index)"
+              />
             </li>
           </ul>
         </el-col>
       </el-row>
       <div slot="footer">
         <el-button type="primary" @click="confirm" size="mini"> 确定</el-button>
-        <el-button type="info" size="mini"> 取消</el-button>
+        <el-button type="info" size="mini" @click="closeDialog">
+          取消</el-button
+        >
       </div>
     </el-dialog>
   </div>
@@ -119,6 +125,9 @@ export default {
     }
   },
   methods: {
+    deleteSelectUser(index) {
+      this.selectList.splice(index, 1)
+    },
     confirm() {
       this.$emit('chooseUser', JSON.parse(JSON.stringify(this.selectList)))
       this.closeDialog()
@@ -182,6 +191,9 @@ export default {
 }
 </script>
 <style lang="less" scoped>
+.user-content {
+  width: 200px;
+}
 .show-user-div {
   cursor: pointer;
 

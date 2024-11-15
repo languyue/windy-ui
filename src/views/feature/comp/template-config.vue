@@ -291,6 +291,7 @@ export default {
         { label: 'Float', value: 'Float' },
         { label: 'Double', value: 'Double' },
         { label: 'Boolean', value: 'Boolean' },
+        { label: 'Object', value: 'Object' },
       ],
       httpMethods: [
         { label: 'Post', value: 'Post' },
