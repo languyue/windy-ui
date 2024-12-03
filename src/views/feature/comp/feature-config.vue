@@ -217,6 +217,14 @@
                   size="middle"
                   >调试</el-link
                 >
+                <el-link
+                  icon="el-icon-tickets"
+                  type="info"
+                  :underline="false"
+                  @click="showHistoryDrawer = !showHistoryDrawer"
+                  size="middle"
+                  >历史日志</el-link
+                >
               </div>
               <el-collapse v-model="toolType" accordion>
                 <el-collapse-item title="基础工具" name="1">
@@ -307,9 +315,19 @@
         </el-row>
       </div>
     </div>
+    <!-- 显示历史日志开始 -->
+    <el-drawer
+      title="用例历史日志"
+      size="50%"
+      :visible.sync="showHistoryDrawer"
+    >
+      <history ref="historyComp" :feature="featureId" />
+    </el-drawer>
+    <!-- 显示历史日志结束 -->
   </div>
 </template>
 <script>
+import history from '../history.vue'
 import FeatureTemplate from '@/components/feature-template'
 import FeatureTool from '@/components/feature-tool'
 import draggable from 'vuedraggable'
@@ -325,6 +343,7 @@ export default {
   },
   components: {
     draggable,
+    history,
     FeatureTemplate,
     FeatureTool,
     collapse,
@@ -332,7 +351,9 @@ export default {
   watch: {
     feature: {
       handler(val) {
+        console.log('xxxxxxxxx', val)
         this.featureId = val
+        this.getFeatureInfo()
       },
       deep: true,
       immediate: true,
@@ -418,6 +439,7 @@ export default {
       uuid: '',
       isActive: false,
       featureId: '',
+      featureInfo: {},
       filterName: '',
       serviceId: '',
       caseId: '',
@@ -427,9 +449,15 @@ export default {
       testShow: false,
       serviceGroup: [],
       pointTemplate: {},
+      showHistoryDrawer: false,
     }
   },
   methods: {
+    getFeatureInfo() {
+      featureApi.getFeatureDetail(this.featureId).then((res) => {
+        this.featureInfo = res.data
+      })
+    },
     isShowTemplate(point) {
       return (
         point.executeType == 1 ||
@@ -594,6 +622,7 @@ export default {
       })
       let data = {
         featureId: this.featureId,
+        parentId: this.featureInfo.parentId,
         testFeatures: array,
       }
 
@@ -849,7 +878,6 @@ export default {
 <style scoped>
 .operate {
   margin: 10px;
-  padding-left: 20%;
 }
 .operate a {
   margin-right: 10px;

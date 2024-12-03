@@ -199,7 +199,7 @@ export default {
       this.$refs.tree.filter()
     },
     goBack() {
-      this.$router.go(-1)
+      this.$router.push({ path: '/task' })
     },
     treeNodeClick(data) {
       this.resultList = []

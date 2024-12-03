@@ -157,6 +157,13 @@ export default {
         changeBranch: [
           { required: true, message: '请输入分支名称', trigger: 'blur' },
         ],
+        relationId: [
+          {
+            required: true,
+            message: '请选关联的需求或缺陷',
+            trigger: 'change',
+          },
+        ],
       },
     }
   },

@@ -295,6 +295,9 @@ export default {
       })
     },
     getCommentsList() {
+      if (!this.demandId) {
+        return
+      }
       CommentApi.getComments(this.demandId).then((res) => {
         console.log('list comment ', res)
         this.comments = res.data

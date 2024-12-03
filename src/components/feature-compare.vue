@@ -34,7 +34,13 @@
       </el-col>
       <el-col :span="12">
         <el-row :gutter="10">
-          <el-col :span="8" v-if="item.operator == 'array_item_match'">
+          <el-col
+            :span="8"
+            v-if="
+              item.operator == 'array_item_match' ||
+              item.operator == 'none_item_match'
+            "
+          >
             <el-input
               size="mini"
               :disabled="!isEdit"
@@ -46,7 +52,12 @@
           </el-col>
           <el-col
             v-if="item.operator != 'not_null'"
-            :span="item.operator == 'array_item_match' ? 16 : 24"
+            :span="
+              item.operator == 'array_item_match' ||
+              item.operator == 'none_item_match'
+                ? 16
+                : 24
+            "
           >
             <div>
               <el-input
@@ -197,7 +208,10 @@ export default {
       this.compareData = [{}]
     } else {
       this.compareData.forEach((e) => {
-        if (e.expectValue && e.operator == 'array_item_match') {
+        if (
+          e.expectValue &&
+          (e.operator == 'array_item_match' || e.operator == 'none_item_match')
+        ) {
           console.log('dddddd', e.expectValue)
           let item = this.parseString(e.expectValue)
           e.propertyKey = item.identifier

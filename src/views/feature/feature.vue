@@ -728,6 +728,7 @@ export default {
         featureApi
           .updateFeature({
             featureId: data.featureId,
+            parentId: data.parentId,
             status: 1,
           })
           .then((res) => {
@@ -752,6 +753,7 @@ export default {
         featureApi
           .updateFeature({
             featureId: data.featureId,
+            parentId: data.parentId,
             status: 2,
           })
           .then((res) => {
@@ -800,6 +802,7 @@ export default {
         featureApi
           .deleteFeature(data.featureId)
           .then(() => {
+            this.$notify.success('删除用例成功')
             this.requestCaseFeatures(this.caseId)
             this.uuid = this.$utils.randomString(20)
           })
@@ -1001,7 +1004,6 @@ export default {
         request.testStep = str.substring(0, str.length - 1)
         request.tags = JSON.parse(JSON.stringify(this.dynamicTags))
         request.featureType = this.createData.type
-        request.parentId = this.createData.parentId
         if (this.isEditFeature) {
           featureApi.updateFeature(request).then(() => {
             this.$notify.success(`修改成功`)
@@ -1010,7 +1012,7 @@ export default {
           })
           return
         }
-
+        request.parentId = this.createData.parentId
         featureApi.createFeature(request).then(() => {
           this.$notify.success(`添加成功`)
           this.showFeatureDialog = !this.showFeatureDialog

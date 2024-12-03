@@ -639,6 +639,9 @@ export default {
       }
     },
     getCommentsList() {
+      if (!this.iterationInfo.iterationId) {
+        return
+      }
       CommentApi.getComments(this.iterationInfo.iterationId).then((res) => {
         this.comments = res.data
       })
@@ -727,7 +730,7 @@ export default {
           this.$message.warning('未选择空间，创建迭代失败')
           return
         }
-
+        this.iterationForm.spaceId = this.spaceId
         this.iterationForm.startTime = this.iterationForm.selectedDate[0]
         this.iterationForm.endTime = this.iterationForm.selectedDate[1]
         if (this.isEditIteration) {

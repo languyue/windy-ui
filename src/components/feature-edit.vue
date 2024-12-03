@@ -401,7 +401,7 @@ export default {
     },
     isValidPlaceholder(str) {
       // 检查是否以 `${` 开始
-      if (!str.startsWith('${')) {
+      if (!str.startsWith('$')) {
         return false
       }
       // 获取 `${` 之后的字符串
@@ -416,30 +416,36 @@ export default {
       return betweenBraces.trim().length === 0
     },
     querySearch(queryString, cb) {
-      console.log(queryString)
       this.originString = queryString
       if (queryString && this.isValidPlaceholder(queryString)) {
-        let filterText = queryString.replace('${', '')
+        let filterText = queryString.replace('$', '')
 
-        var restaurants = this.contextList
+        var globalContext = JSON.parse(JSON.stringify(this.contextList))
         var results = filterText
-          ? restaurants.filter(this.createFilter(filterText))
-          : restaurants
+          ? globalContext.filter(this.createFilter(filterText))
+          : globalContext
+        results.push({ value: '$RandomString(6)' })
+        results.push({ value: '$RandomInteger(1,10)' })
         cb(results)
       } else {
         cb([])
       }
     },
     createFilter(queryString) {
-      return (restaurant) => {
+      return (globalString) => {
         return (
-          restaurant.value.toLowerCase().indexOf(queryString.toLowerCase()) ===
-          0
+          globalString.value
+            .toLowerCase()
+            .indexOf(queryString.toLowerCase()) === 0
         )
       }
     },
     handleSelect(item) {
-      this.data.value = '${' + item.value + '}'
+      if (item.value.indexOf('$Random') != -1) {
+        this.data.value = item.value
+      } else {
+        this.data.value = '${' + item.value + '}'
+      }
     },
     closeEditor() {
       this.data.value = this.$refs.editer.getValue()
@@ -473,11 +479,14 @@ export default {
     },
     refreshObjectValue(event) {
       console.log('start obj', event, this.data)
+      this.data.value = this.data.value ? this.data.value : {}
       if (this.data.initData.range) {
         this.data.initData.range.forEach((e) => {
           if (e.paramKey == event.item.paramKey) {
             e.value = event.item.value
           }
+
+          this.data.value[e.paramKey] = e.value
         })
         this.notifyData()
       }
@@ -609,7 +618,6 @@ export default {
 
       //====Object数据处理开始====
       if (this.data.type == 'Object') {
-        console.log('xxxxx', JSON.parse(JSON.stringify(this.data)))
         this.data.value = this.data.value ? this.data.value : null
         let objData = JSON.parse(JSON.stringify(this.data))
         this.paramList = []

@@ -338,7 +338,7 @@
         <el-col :span="1">
           <div class="header-line">-</div>
         </el-col>
-        <el-col :span="2">
+        <el-col :span="4">
           <el-select size="mini" v-model="item.position" placeholder="参数位置">
             <el-option
               v-for="item in positionList"

@@ -5,7 +5,7 @@
         :data="historyData"
         size="mini"
         style="width: 100%"
-        height="500"
+        height="600"
       >
         <el-table-column prop="featureName" label="用例">
           <template slot-scope="scope">
@@ -13,12 +13,10 @@
           </template>
         </el-table-column>
         <el-table-column prop="historyId" label="执行ID"> </el-table-column>
-
-        <el-table-column
-          prop="createTime"
-          label="执行时间"
-          :formatter="dateFormat"
-        >
+        <el-table-column prop="createTime" label="执行时间">
+          <template slot-scope="scope">
+            {{ scope.row.createTime | dateFormat }}
+          </template>
         </el-table-column>
         <el-table-column prop="executeStatus" label="结果" width="100px">
           <template slot-scope="scope">
@@ -36,7 +34,7 @@
             >
           </template>
         </el-table-column>
-        <el-table-column label="操作">
+        <el-table-column label="操作" width="180">
           <template slot="header">
             <el-button
               type="primary"
@@ -267,20 +265,6 @@ export default {
       featureApi.deleteHistory(row.historyId).then(() => {
         this.getFeatureHistory(this.featureId)
       })
-    },
-    changeUser() {},
-    dateFormat(row) {
-      var date = new Date(row.createTime) //时间戳为10位需*1000，时间戳为13位的话不需乘1000
-      var Y = date.getFullYear() + '-'
-      var M =
-        (date.getMonth() + 1 < 10
-          ? '0' + (date.getMonth() + 1)
-          : date.getMonth() + 1) + '-'
-      var D = date.getDate() + ' '
-      var h = date.getHours() + ':'
-      var m = date.getMinutes() + ':'
-      var s = date.getSeconds()
-      return Y + M + D + h + m + s
     },
   },
   created() {

@@ -425,6 +425,9 @@ export default {
       this.$emit('complete')
     },
   },
+  created() {
+    this.changeType(3)
+  },
 }
 </script>
 <style lang="less" scoped>
