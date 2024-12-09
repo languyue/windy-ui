@@ -28,24 +28,34 @@
           >
           </el-input>
         </div>
-        <el-tree
-          node-key="featureId"
-          @node-click="treeNodeClick"
-          :default-expanded-keys="errorList"
-          :data="recordData"
-          :filter-node-method="filterNode"
-          :props="{
-            children: 'children',
-            label: 'featureName',
-          }"
-          ref="tree"
-        >
-          <span slot-scope="{ node, data }">
-            <span class="custom-tree-node" :style="{ color: data.status }">
-              <span v-if="data.skip">[已禁用]</span>{{ node.label }}</span
+        <div class="tree-container">
+          <el-scrollbar wrap-style="max-height: 600px;">
+            <el-tree
+              node-key="featureId"
+              @node-click="treeNodeClick"
+              :default-expanded-keys="errorList"
+              :data="recordData"
+              :filter-node-method="filterNode"
+              :props="{
+                children: 'children',
+                label: 'featureName',
+              }"
+              ref="tree"
             >
-          </span>
-        </el-tree>
+              <span slot-scope="{ node, data }">
+                <span class="custom-tree-node" :style="{ color: data.status }">
+                  <i
+                    v-if="node.isLeaf"
+                    :style="{ color: data.status }"
+                    :class="statusClass(data.executeStatus)"
+                  />
+                  <span v-if="data.skip">[已禁用]</span>
+                  <span class="node-text">{{ node.label }}</span>
+                </span>
+              </span>
+            </el-tree>
+          </el-scrollbar>
+        </div>
       </el-col>
       <el-col :span="18">
         <div class="percent-box">
@@ -194,6 +204,21 @@ export default {
     },
   },
   methods: {
+    statusClass(status) {
+      console.log('status', status)
+      switch (status) {
+        case 1:
+          return 'el-icon-success'
+        case 2:
+          return 'el-icon-error'
+        case 3:
+          return 'el-icon-warning'
+        case 4:
+          return 'el-icon-loading'
+        default:
+          return 'el-icon-info'
+      }
+    },
     chooseStatus() {
       this.displayAll = this.filterStatus != 1
       this.$refs.tree.filter()
@@ -272,14 +297,20 @@ export default {
     displayTreeNode(list) {
       list.forEach((e) => {
         if (e.executeStatus) {
-          e.status = '#67C23A'
-          if (e.executeStatus != 1) {
-            e.status = '#F56C6C'
+          if (e.executeStatus == 1) {
+            this.successCount++
+          } else {
             this.errorCount++
             this.errorList.push(e.featureId)
-            // this.treeNodeClick(e)
-          } else {
-            this.successCount++
+          }
+
+          e.status = '#67C23A'
+          if (e.executeStatus == 2) {
+            e.status = '#F56C6C'
+          } else if (e.executeStatus == 3) {
+            e.status = '#E6A23C'
+          } else if (e.executeStatus == 4) {
+            e.status = '#409EFF'
           }
         }
         if (e.skip) {
@@ -399,5 +430,12 @@ export default {
 }
 .status-box {
   margin: 10px 20px;
+}
+.node-text {
+  margin-left: 5px;
+}
+.tree-container {
+  max-height: 600px; /* 设置滚动区域最大高度 */
+  overflow: hidden;
 }
 </style>

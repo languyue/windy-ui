@@ -246,6 +246,7 @@
         </el-row>
       </div>
       <div style="margin: 20px 40px">
+        <span v-if="filterTagList.length">已过滤标签:</span>
         <el-tag
           :key="index"
           @close="handleClose(tag)"

@@ -219,12 +219,12 @@
             @click="refreshConfig"
             >同步测试集配置</el-button
           >
-          <monaco
+          <codeeditor
             ref="editer"
             :codes="jsonStr"
             @change="dataChange"
             :readonly="false"
-          ></monaco>
+          ></codeeditor>
         </el-form-item>
 
         <!-- <el-form-item label="执行机器">
@@ -258,12 +258,12 @@
   </div>
 </template>
 <script>
-import monaco from '../../components/MonacoEditor.vue'
+import codeeditor from '../../components/CodeEditor.vue'
 import serviceApi from '../../http/Service'
 import testCaseApi from '../../http/TestCase'
 import taskApi from '../../http/Task'
 export default {
-  components: { monaco },
+  components: { codeeditor },
   data() {
     return {
       recordData: [],

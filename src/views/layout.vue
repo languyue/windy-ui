@@ -93,7 +93,7 @@
           </template>
           <el-menu-item index="/case" v-auth="'m10007'">
             <i class="el-icon-cpu"></i>
-            功能测试</el-menu-item
+            功能用例</el-menu-item
           >
           <el-menu-item index="/e2e" v-auth="'m10008'">
             <i class="el-icon-cpu"></i>
@@ -177,7 +177,6 @@ export default {
   methods: {
     getUserMenus() {
       resourceApi.getUserMenuList().then((res) => {
-        console.log(res)
         let array = []
         res.data.forEach((element) => {
           array.push(element.content)

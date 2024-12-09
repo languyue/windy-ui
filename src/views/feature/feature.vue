@@ -255,7 +255,7 @@
         :model="featureForm"
         :rules="featureRule"
         ref="featureForm"
-        size="small"
+        size="mini"
         label-width="80px"
         label-position="top"
       >
@@ -1078,7 +1078,7 @@ export default {
       this.getTestCaseConfigs()
     },
     goBack() {
-      this.$router.go(-1)
+      this.$router.push('/case')
     },
     requestCaseFeatures(caseId) {
       featureApi.getFeatureTree(caseId).then((res) => {

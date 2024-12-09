@@ -86,12 +86,10 @@
         </div>
       </el-col>
     </el-row>
-    <div
-      class="add-line"
-      @click="addItem"
-      v-bind:class="{ 'disable-select': !isEdit }"
-    >
-      <div class="add-button"><i class="el-icon-plus" /> 新增</div>
+    <div class="add-line" v-bind:class="{ 'disable-select': !isEdit }">
+      <div @click="addItem" class="add-button">
+        <i class="el-icon-plus" /> 新增
+      </div>
     </div>
 
     <el-dialog
@@ -100,13 +98,18 @@
       @close="closeEditor"
       width="60%"
     >
-      <monaco ref="editer" :codes="jsonStr" :readonly="false"></monaco>
+      <codeEditor
+        ref="editer"
+        :codes="jsonStr"
+        :readonly="!isEdit"
+        @change="changeEditValue"
+      ></codeEditor>
     </el-dialog>
   </div>
 </template>
 <script>
 import featureApi from '../http/Feature'
-import monaco from '@/components/MonacoEditor.vue'
+import codeEditor from '@/components/CodeEditor.vue'
 export default {
   props: {
     data: Array,
@@ -114,7 +117,7 @@ export default {
     isEdit: Boolean,
   },
   components: {
-    monaco,
+    codeEditor,
   },
   data() {
     return {
@@ -130,6 +133,11 @@ export default {
   },
   methods: {
     selectOperator() {
+      this.notifyData()
+    },
+    changeEditValue() {
+      this.chooseItem.expectValue = this.$refs.editer.getValue()
+      console.log('数据变更', this.chooseItem.expectValue)
       this.notifyData()
     },
     closeEditor() {
@@ -203,7 +211,7 @@ export default {
   created() {
     this.pointId = this.point
     this.compareData = this.data
-    console.log('compareData', this.compareData)
+
     if (this.isEmptyArray(this.compareData)) {
       this.compareData = [{}]
     } else {
@@ -242,6 +250,7 @@ export default {
 }
 .add-line {
   position: relative;
+  height: 30px;
   margin: 10px 20px;
 }
 .line {
@@ -255,6 +264,7 @@ export default {
   cursor: pointer;
   font-size: 16px;
   color: #f56c6c;
+  margin-left: 5px;
 }
 .delete-div {
   height: 30px;

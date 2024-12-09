@@ -98,10 +98,130 @@
           class="if-list"
           v-model="points"
           @add="addPoint"
-          group="api"
-          animation="100"
+          v-bind="dragOptions"
         >
-          <el-collapse accordion :key="uuid">
+          <div
+            v-for="(executePoint, index) in points"
+            :key="executePoint.id"
+            class="content-item"
+          >
+            <!-- 执行点头部开始 -->
+            <div
+              class="content-item-title"
+              :key="uuid"
+              @dblclick="closeDiv(executePoint)"
+            >
+              <el-row :gutter="10">
+                <el-col :span="executePoint.editDesc ? 6 : 13">
+                  <span
+                    @dblclick="
+                      () => {
+                        if (isEdit && !executePoint.editDesc) {
+                          exchangeEditStatus(executePoint)
+                        }
+                      }
+                    "
+                    >{{ executePoint.name }}
+                  </span>
+                  <i
+                    class="el-icon-document-copy i-icon"
+                    @click="copyExecutePoint(executePoint)"
+                  />
+
+                  <!-- <el-popover
+                    placement="right-end"
+                    title="关联模版信息"
+                    width="400"
+                    v-if="isShowTemplate(executePoint)"
+                    trigger="click"
+                    @show="showExecutePoint(executePoint)"
+                    @hide="hideTemplate"
+                  >
+                    <el-descriptions :column="1">
+                      <el-descriptions-item label="所属服务">{{
+                        pointTemplate.service
+                      }}</el-descriptions-item>
+                      <el-descriptions-item label="请求信息">{{
+                        pointTemplate.request
+                      }}</el-descriptions-item>
+                      <el-descriptions-item label="请求方法">{{
+                        pointTemplate.method
+                      }}</el-descriptions-item>
+                      <el-descriptions-item label="模版描述">{{
+                        pointTemplate.description
+                      }}</el-descriptions-item>
+                    </el-descriptions>
+                    <i
+                      slot="reference"
+                      class="el-icon-info i-icon icon-template"
+                    ></i>
+                  </el-popover> -->
+                </el-col>
+                <el-col :span="4">
+                  <el-popconfirm
+                    v-if="isEdit"
+                    title="确认删除用例的执行点？"
+                    icon-color="#F56C6C"
+                    @confirm="deleteExecutePoint(index, executePoint.pointId)"
+                  >
+                    <i slot="reference" class="el-icon-delete delete-point" />
+                  </el-popconfirm>
+
+                  <i
+                    v-if="isEdit && !executePoint.editDesc"
+                    @click="exchangeEditStatus(executePoint)"
+                    class="el-icon-edit-outline delete-point"
+                  />
+                </el-col>
+
+                <el-col :span="8" v-if="executePoint.editDesc && isEdit">
+                  <div>
+                    <el-input
+                      placeholder="输入功能描述"
+                      @pointerdown.stop.native
+                      v-model="executePoint.desc"
+                      size="mini"
+                    />
+                  </div>
+                </el-col>
+                <el-col v-if="executePoint.editDesc" :span="5">
+                  <el-button
+                    size="mini"
+                    @click="exchangeEditStatus(executePoint, true)"
+                    >保存</el-button
+                  >
+                  <el-button
+                    size="mini"
+                    @click="exchangeEditStatus(executePoint)"
+                    >取消</el-button
+                  >
+                </el-col>
+              </el-row>
+              <i
+                :class="{
+                  'el-icon-arrow-down': executePoint.isActive,
+                  'right-icon': true,
+                  'el-icon-arrow-right': !executePoint.isActive,
+                }"
+                @click="closeDiv(executePoint)"
+              />
+            </div>
+            <!-- 执行点头部结束 -->
+
+            <!-- 执行点内容开始 -->
+            <collapse>
+              <div v-show="executePoint.isActive" class="content-item-detail">
+                <FeatureTemplate
+                  :data="executePoint"
+                  :isEdit="isEdit"
+                  :type="executePoint.writeType"
+                  @refreshData="refreshValue"
+                />
+              </div>
+            </collapse>
+            <!-- 执行点内容结束 -->
+          </div>
+          <!-- <el-collapse accordion :key="uuid">
             <el-collapse-item
               v-for="(executePoint, index) in points"
               :key="index"
@@ -126,7 +246,7 @@
                 />
               </div>
             </el-collapse-item>
-          </el-collapse>
+          </el-collapse> -->
         </draggable>
       </div>
       }
@@ -158,7 +278,27 @@ export default {
       operatorList: [],
     }
   },
+  computed: {
+    dragOptions() {
+      return {
+        animation: 100,
+        group: 'api',
+        pull: false,
+        put: true,
+        disabled: !this.isEdit,
+      }
+    },
+  },
   methods: {
+    copyExecutePoint(copyItem) {
+      localStorage.setItem('copyItem', JSON.stringify(copyItem))
+      this.$notify({
+        title: '成功',
+        dangerouslyUseHTMLString: true,
+        message: `执行点<strong>[${copyItem.description}]</strong>已复制`,
+        type: 'success',
+      })
+    },
     notifyCompare() {
       let compareItem = this.compareItem || {} // 确保 compareItem 存在
       let keys = ['compareKey', 'operator', 'propertyKey', 'expectValue']
@@ -192,7 +332,17 @@ export default {
       this.jsonStr = item.expectValue
     },
     addPoint(e) {
-      let index = e.newIndex == 0 ? 0 : e.newIndex - 1
+      let index = e.newIndex
+      let currentElement = this.points[index]
+      if (
+        currentElement.executeType == 2 ||
+        currentElement.executeType == 3 ||
+        currentElement.executeType == 7
+      ) {
+        this.$notify.warning('不支持嵌套if、for、异步组件')
+        this.points.splice(index, 1)
+        return
+      }
       if (!this.points[index].randomId) {
         this.points[index].randomId = this.$utils.randomString(20)
         this.points[index].writeType = '1'
@@ -225,7 +375,7 @@ export default {
             headers: e.headers,
             relatedId: e.relatedId,
           },
-          featureId: this.executeData.pointId,
+          featureId: this.executeData.featureId,
           randomId: e.randomId,
           compareDefine: e.compareDefine,
           variableDefine: e.variableDefine,
@@ -253,15 +403,21 @@ export default {
       })
     },
     deleteExecutePoint(index) {
-      this.$confirm('确认删除用例执行点?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }).then(() => {
-        this.points.splice(index, 1)
-        this.refreshValue()
-        this.uuid = this.$utils.randomString(20)
-      })
+      this.points.splice(index, 1)
+      this.refreshValue()
+      this.uuid = this.$utils.randomString(20)
+    },
+    closeDiv(executePoint) {
+      executePoint.isActive = !executePoint.isActive
+      this.uuid = this.$utils.randomString(20)
+    },
+    exchangeEditStatus(item, isUpdateText) {
+      if (isUpdateText) {
+        item.name = item.desc
+      }
+      item.editDesc = !item.editDesc
+      this.refreshValue()
+      this.uuid = this.$utils.randomString(20)
     },
   },
   created() {
@@ -273,6 +429,8 @@ export default {
         point.executorUnit.randomId = this.$utils.randomString(20)
         let item = point.executorUnit
         item.writeType = '1'
+        item.description = point.description
+        item.executeType = point.executeType
         item.compareDefine = point.compareDefine
         item.variableDefine = point.variableDefine
         this.points.push(item)
@@ -328,6 +486,47 @@ export default {
       font-size: 16px;
       margin-left: 20px;
     }
+  }
+}
+.content-item {
+  background: #ffffff;
+  margin: 10px 20px;
+  border-radius: 5px;
+  width: 90%;
+  padding: 3px 10px;
+  border-bottom: 1px solid #ebeef5;
+  border-top: 1px solid #ebeef5;
+
+  .content-item-title {
+    height: 40px;
+    line-height: 40px;
+    font-size: 14px;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .content-item-detail {
+    font-size: 13px;
+    padding: 10px 10px;
+  }
+
+  .i-icon {
+    margin-left: 10px;
+    font-size: 15px;
+  }
+
+  .icon-template {
+    color: #909399;
+  }
+  .delete-point {
+    font-size: 16px;
+    margin-left: 20px;
+  }
+
+  .right-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
   }
 }
 </style>

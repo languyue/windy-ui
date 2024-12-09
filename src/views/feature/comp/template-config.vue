@@ -294,10 +294,10 @@ export default {
         { label: 'Object', value: 'Object' },
       ],
       httpMethods: [
-        { label: 'Post', value: 'Post' },
-        { label: 'Get', value: 'Get' },
-        { label: 'Put', value: 'Put' },
-        { label: 'Delete', value: 'Delete' },
+        { label: 'POST', value: 'POST' },
+        { label: 'GET', value: 'GET' },
+        { label: 'PUT', value: 'PUT' },
+        { label: 'DELETE', value: 'DELETE' },
       ],
       positionList: [
         { label: 'Body', value: 'Body' },

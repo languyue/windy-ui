@@ -17,7 +17,7 @@
           :loading="isLoading"
           @click="refresh"
         >
-          刷新状态</el-button
+          刷新监控数据</el-button
         >
       </div>
       <el-divider content-position="left">Master节点</el-divider>
@@ -59,6 +59,18 @@
               </el-popover>
             </template>
           </el-table-column>
+          <!-- <el-table-column align="left" label="操作">
+            <template slot-scope="scope">
+              <el-button
+                type="danger"
+                icon="el-icon-refresh-left"
+                plain
+                disabled
+                size="mini"
+                >重启</el-button
+              >
+            </template>
+          </el-table-column> -->
         </el-table>
       </div>
     </div>
@@ -102,6 +114,18 @@
             </el-popover>
           </template>
         </el-table-column>
+        <!-- <el-table-column align="left" label="操作">
+          <template slot-scope="scope">
+            <el-button
+              type="danger"
+              icon="el-icon-refresh-left"
+              plain
+              disabled
+              size="mini"
+              >重启</el-button
+            >
+          </template>
+        </el-table-column> -->
       </el-table>
     </div>
   </div>

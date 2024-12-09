@@ -17,12 +17,12 @@
       </FeatureIF>
     </div>
     <div v-if="executePoint.executeType == 6">
-      <monaco
+      <codeeditor
         :codes="executePoint.service"
         @change="dataChange"
         language="javascript"
         :readonly="!isEdit"
-      ></monaco>
+      ></codeeditor>
     </div>
     <div v-if="executePoint.executeType == 7">
       <FeatureAsync
@@ -38,7 +38,7 @@
 import FeatureFor from '@/components/feature-for'
 import FeatureIF from '@/components/feature-if'
 import FeatureAsync from '@/components/feature-async'
-import monaco from '@/components/MonacoEditor.vue'
+import codeeditor from '@/components/CodeEditor.vue'
 export default {
   props: {
     data: Object,
@@ -47,7 +47,7 @@ export default {
   components: {
     FeatureFor,
     FeatureIF,
-    monaco,
+    codeeditor,
     FeatureAsync,
   },
   watch: {

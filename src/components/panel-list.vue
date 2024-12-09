@@ -84,14 +84,9 @@
                         "
                       >
                         比较错误：
-                        <span
-                          style="
-                            color: #f56c6c;
-                            font-size: 16px;
-                            font-weight: 900;
-                          "
-                          >{{ result.compareResult.description }}</span
-                        >
+                        <div class="compare-info">
+                          {{ result.compareResult.description }}
+                        </div>
                       </div>
                       <div>
                         <div class="request-list">
@@ -163,10 +158,9 @@
                     "
                   >
                     比较错误：
-                    <span
-                      style="color: #f56c6c; font-size: 16px; font-weight: 900"
-                      >{{ result.compareResult.description }}</span
-                    >
+                    <div class="compare-info">
+                      {{ result.compareResult.description }}
+                    </div>
                   </div>
                   <div>
                     <div class="request-list">
@@ -294,5 +288,13 @@ export default {
 }
 .primary {
   color: #409eff;
+}
+.compare-info {
+  color: #f56c6c;
+  font-size: 16px;
+  font-weight: 900;
+  white-space: normal; /* 允许文字自动换行 */
+  word-wrap: break-word; /* 长单词自动换行 */
+  overflow-wrap: break-word; /* 兼容性更好的换行方式 */
 }
 </style>

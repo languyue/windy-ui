@@ -1,10 +1,5 @@
 <template>
   <div>
-    <!-- <div
-      ref="container"
-      style="height: 300px; width: 100%"
-      class="monaco-editor"
-    ></div> -->
     <codemirror
       ref="codemirror"
       v-model="content"
@@ -84,7 +79,6 @@ export default {
   },
   methods: {
     getValue() {
-      console.log(this.content)
       return this.content
     },
     // handleVisibilityChange() {
@@ -121,10 +115,3 @@ export default {
   // },
 }
 </script>
-
-<style scoped>
-.monaco-editor {
-  min-height: 400px;
-  text-align: left;
-}
-</style>

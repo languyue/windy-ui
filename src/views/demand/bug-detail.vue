@@ -235,24 +235,34 @@ export default {
         this.bugForm.spaceId = this.spaceId
         this.bugForm.iterationId = this.iterationId
         if (this.edit) {
-          bugApi.updateBug(this.bugForm).then((res) => {
-            if (res.data) {
-              this.$notify.success('修改缺陷成功')
-              this.closeBug()
-            } else {
-              this.$notify.error('修改缺陷失败')
-            }
-          })
+          bugApi
+            .updateBug(this.bugForm)
+            .then((res) => {
+              if (res.data) {
+                this.$notify.success('修改缺陷成功')
+                this.closeBug()
+              } else {
+                this.$notify.error('修改缺陷失败')
+              }
+            })
+            .catch(() => {
+              this.getBug()
+            })
           return
         }
-        bugApi.createBug(this.bugForm).then((res) => {
-          if (res.data) {
-            this.$notify.success('创建缺陷成功')
-            this.closeBug()
-          } else {
-            this.$notify.error('创建缺陷失败')
-          }
-        })
+        bugApi
+          .createBug(this.bugForm)
+          .then((res) => {
+            if (res.data) {
+              this.$notify.success('创建缺陷成功')
+              this.closeBug()
+            } else {
+              this.$notify.error('创建缺陷失败')
+            }
+          })
+          .catch(() => {
+            this.getBug()
+          })
       })
     },
   },

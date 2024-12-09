@@ -775,6 +775,9 @@
     <!-- 构建二方包结束 -->
     <el-dialog title="三方API导入" :visible.sync="showImportDialog">
       <el-form v-model="importForm" size="mini" :rules="importRule">
+        <el-form-item label="服务名称">
+          {{ importForm.serviceName }}
+        </el-form-item>
         <el-form-item label="导入类型" prop="type">
           <el-select v-model="importForm.type" placeholder="请选择">
             <el-option label="Yapi-JSON文件" value="Yapi"> </el-option>
@@ -1120,6 +1123,13 @@ export default {
       }
 
       if (command == 'import') {
+        let serviceName = ''
+        this.serviceList.forEach((e) => {
+          if ((e.serviceId = this.serviceId)) {
+            serviceName = e.serviceName
+          }
+        })
+        this.importForm.serviceName = serviceName
         this.showImportDialog = true
         return
       }

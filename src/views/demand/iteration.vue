@@ -562,6 +562,7 @@ export default {
               .then((res) => {
                 this.iterationInfo = res.data
               })
+            this.getIterationList()
           } else {
             this.$notify({
               message: `修改迭代【${this.iterationInfo.name}】状态失败`,
@@ -1234,6 +1235,7 @@ export default {
         }
         .history-content {
           padding: 10px 20px;
+          font-size: 13px;
         }
       }
       &:hover {

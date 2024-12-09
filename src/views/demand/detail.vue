@@ -59,6 +59,7 @@
             <span>{{ demandForm.customerValue }}</span>
           </el-form-item>
           <el-form-item label="需求描述">
+            <!-- <richText :disable="!isEdit" content="11111"></richText> -->
             <el-input
               type="textarea"
               :disabled="!isEdit"
@@ -150,7 +151,6 @@
           <el-form-item label="需求状态">
             <el-select
               v-model="demandForm.status"
-              :disabled="!isEdit"
               @change="statusChange"
               placeholder="请选择状态"
             >
@@ -175,6 +175,7 @@ import Clipboard from 'clipboard'
 import DemandApi from '../../http/DemandApi'
 import CommentApi from '../../http/Comment'
 import userSearch from '../../components/user-search.vue'
+// import richText from '../../components/RichText.vue'
 export default {
   props: {
     demand: {
@@ -183,6 +184,7 @@ export default {
   },
   components: {
     userSearch,
+    // richText,
   },
   watch: {
     demand: {
@@ -214,7 +216,6 @@ export default {
   },
   methods: {
     validAcceptor(rule, value, callback) {
-      console.log('触发回掉')
       if (!this.demandForm.acceptor || !this.demandForm.acceptorName) {
         callback(new Error('请选择需求负责人'))
       } else {
@@ -285,14 +286,18 @@ export default {
       })
     },
     statusChange() {
-      console.log(this.demandForm.status, this.demandId)
-      DemandApi.updateDemandStatus({
+      DemandApi.updateDemand({
         status: this.demandForm.status,
         demandId: this.demandId,
-      }).then((res) => {
-        console.log('返回结果', res)
-        this.$notify.success('修改状态成功')
       })
+        .then((res) => {
+          if (res.data) {
+            this.$notify.success('修改状态成功')
+          }
+        })
+        .catch(() => {
+          this.getDemandDetail()
+        })
     },
     getCommentsList() {
       if (!this.demandId) {

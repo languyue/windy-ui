@@ -48,7 +48,7 @@
               <el-collapse v-model="activePipelines">
                 <el-collapse-item name="1">
                   <template slot="title">
-                    <i class="el-icon-s-promotion title-icon" />
+                    <i class="el-icon-s-check title-icon" />
                     发布流水线
                   </template>
                   <div
@@ -75,7 +75,7 @@
                 </el-collapse-item>
                 <el-collapse-item name="2">
                   <template slot="title">
-                    <i class="el-icon-cpu title-icon" /> 定时流水线
+                    <i class="el-icon-timer title-icon" /> 定时流水线
                   </template>
                   <div
                     v-for="(item, index) in buildList"
@@ -101,7 +101,7 @@
                 </el-collapse-item>
                 <el-collapse-item name="3">
                   <template slot="title">
-                    <i class="el-icon-s-custom title-icon" />
+                    <i class="el-icon-coffee-cup title-icon" />
                     自定义流水线
                   </template>
                   <div
@@ -1282,7 +1282,7 @@ ul {
   padding: 10px;
   border-radius: 5px;
   color: #bcbec4;
-  height: 500px;
+  max-height: 500px;
   overflow-y: scroll;
 }
 </style>

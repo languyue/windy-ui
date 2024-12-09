@@ -71,17 +71,26 @@ export default {
             path: '/',
             expires: 1 / 24,
           })
-          let pathUri = '/#/'
-          if (this.$route.query.redirect) {
-            pathUri += this.$route.query.redirect
-          }
-          this.$store.commit('UPDATE_SERVICE_ID', '')
-          this.getUserMenus(() => {
-            window.location.href = window.location.origin + pathUri
-          })
+          this.redirectPage()
         }
       })
     },
+    redirectPage() {
+      let pathUri = '/#/'
+      if (this.$route.query.redirect) {
+        pathUri += this.$route.query.redirect
+      }
+      this.$store.commit('UPDATE_SERVICE_ID', '')
+      this.getUserMenus(() => {
+        window.location.href = window.location.origin + pathUri
+      })
+    },
+  },
+  created() {
+    let cookie = cookies.get('token')
+    if (cookie) {
+      this.redirectPage()
+    }
   },
 }
 </script>

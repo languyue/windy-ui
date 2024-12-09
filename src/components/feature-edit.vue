@@ -7,7 +7,7 @@
           ><i class="el-icon-circle-plus-outline" /> 新增</span
         >
       </div>
-      <div v-if="data.initData.rangeType == 'Object'">
+      <div v-if="data.initData.rangeType == 'Object'" :key="editId">
         <div
           class="array-show-box"
           v-for="(valueItem, order) in data.value"
@@ -342,13 +342,18 @@
       @close="closeEditor"
       width="60%"
     >
-      <monaco ref="editer" :codes="jsonStr" :readonly="!isEdit"></monaco>
+      <codeeditor
+        ref="editer"
+        :codes="jsonStr"
+        :readonly="!isEdit"
+        @change="changeEditValue"
+      ></codeeditor>
     </el-dialog>
   </div>
 </template>
 <script>
 import FeatureEdit from '@/components/feature-edit'
-import monaco from '@/components/MonacoEditor.vue'
+import codeeditor from '@/components/CodeEditor.vue'
 export default {
   name: 'FeatureEdit',
   props: {
@@ -359,12 +364,12 @@ export default {
   },
   components: {
     FeatureEdit,
-    monaco,
+    codeeditor,
   },
   watch: {
-    feature(val) {
-      this.data = JSON.parse(JSON.stringify(val))
-      this.exchangeDataValue()
+    feature() {
+      // this.data = JSON.parse(JSON.stringify(val))
+      // this.exchangeDataValue()
     },
   },
   data() {
@@ -381,6 +386,7 @@ export default {
       contextList: [],
       originString: '',
       objId: '1',
+      editId: '1',
     }
   },
   methods: {
@@ -447,8 +453,12 @@ export default {
         this.data.value = '${' + item.value + '}'
       }
     },
-    closeEditor() {
+    changeEditValue() {
+      this.notifyData()
       this.data.value = this.$refs.editer.getValue()
+    },
+    closeEditor() {
+      this.showDetail = false
     },
     deleteArray(index) {
       this.data.value.splice(index, 1)
@@ -470,8 +480,7 @@ export default {
           content: '',
         })
       }
-
-      this.$forceUpdate()
+      // this.$forceUpdate()
     },
     deleteList(index) {
       this.paramList.splice(index, 1)
@@ -501,7 +510,7 @@ export default {
     },
     refreshArrayValue(event, index) {
       console.log('start', event)
-      this.data.value[index][event.item.paramKey] = event.item.value
+      this.$set(this.data.value[index], event.item.paramKey, event.item.value)
       this.notifyData()
     },
     diaplayString(str) {
@@ -533,7 +542,7 @@ export default {
         item: data,
         pointId: this.pointId,
       })
-      this.$forceUpdate()
+      // this.$forceUpdate()
     },
     matchMap(map) {
       let array = []
@@ -605,8 +614,10 @@ export default {
       ) {
         let rangList = this.data.initData.range
         this.data.value.forEach((e) => {
+          e.rangeList = []
           rangList.forEach((ele) => {
-            ele.value = e[ele.paramKey]
+            let item = e[ele.paramKey]
+            ele.value = item ? item : ''
           })
           e.rangeList = JSON.parse(JSON.stringify(rangList))
         })
