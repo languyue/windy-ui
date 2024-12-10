@@ -41,7 +41,7 @@
           :collapse="isCollapse"
         >
           <el-menu-item index="1">
-            <i class="el-icon-s-shop"></i>
+            <i class="el-icon-camera-solid"></i>
             <span slot="title">需求</span>
           </el-menu-item>
           <el-menu-item index="2">

@@ -744,6 +744,9 @@ export default {
     getBuildVersions() {
       systemApi.getBuildTools().then((res) => {
         this.buildVersions = res.data
+        if (this.contextForm.code) {
+          this.selectCodeType(this.contextForm.code)
+        }
       })
     },
     getGitEnv() {

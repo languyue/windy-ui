@@ -477,8 +477,49 @@
         ref="publishMsgForm"
         :rules="publishRule"
         size="mini"
-        label-width="80px"
+        label-position="left"
+        label-width="100px"
       >
+        <el-form-item label="推送分支">
+          {{ pipelineBindBranch }}
+        </el-form-item>
+        <el-form-item label="分支提交信息">
+          <el-popover
+            placement="right"
+            width="600"
+            trigger="click"
+            @show="getBranchCommits"
+          >
+            <el-table :data="commitData" max-height="500px" size="mini">
+              <el-table-column property="shortId" label="提交ID">
+                <template slot-scope="scope">
+                  <i class="el-icon-document" /> {{ scope.row.shortId }}
+                </template>
+              </el-table-column>
+              <el-table-column property="message" label="提交描述">
+                <template slot-scope="scope">
+                  <textView :len="40" :text="scope.row.message" />
+                </template>
+              </el-table-column>
+              <el-table-column property="commitTime" label="提交时间">
+                <template slot-scope="scope">
+                  {{ scope.row.commitTime | dateFormat }}
+                </template>
+              </el-table-column>
+              <el-table-column
+                width="100"
+                property="commitUser"
+                label="提交人"
+              ></el-table-column>
+            </el-table>
+            <el-button
+              slot="reference"
+              type="primary"
+              icon="el-icon-document-checked"
+              >点击查看提交记录</el-button
+            >
+          </el-popover>
+        </el-form-item>
         <el-form-item label="发布内容" prop="message">
           <el-input
             type="textarea"
@@ -543,6 +584,8 @@ export default {
       approvalNode: {},
       showApproval: false,
       bindGit: false,
+      pipelineBindBranch: '',
+      commitData: [],
       recordList: [],
       taskRecordId: '',
       publishForm: {},
@@ -576,6 +619,15 @@ export default {
     }
   },
   methods: {
+    getBranchCommits() {
+      this.commitData = []
+      pipelineApi
+        .getBranchCommits(this.serviceId, this.pipelineBindBranch)
+        .then((res) => {
+          console.log('获取到提交记录', res)
+          this.commitData = res.data
+        })
+    },
     closePublishMsg() {
       this.showPushMessage = false
       this.publishMsgForm = {}
@@ -672,7 +724,6 @@ export default {
       })
     },
     showPushMessageDialog() {
-      console.log('sssss')
       this.showPushMessage = true
       this.publishMsgForm = {}
     },
@@ -998,7 +1049,6 @@ export default {
         this.currentPipeline.context = res.data.pipelineConfig
         this.pipelineId = item.pipelineId
         this.uuid++
-        console.log('dddd', this.currentPipeline)
         this.checkBindBranch()
 
         if (this.currentPipeline.pipelineType == 1) {
@@ -1148,6 +1198,7 @@ export default {
       gitBindApi.gitbindList(this.currentPipeline.pipelineId).then((res) => {
         res.data.forEach((e) => {
           if (e.isChoose) {
+            this.pipelineBindBranch = e.gitBranch
             this.bindGit = true
           }
         })

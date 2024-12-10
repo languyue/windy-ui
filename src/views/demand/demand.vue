@@ -4,16 +4,18 @@
       <el-form :inline="true" v-model="queryForm" size="mini">
         <el-form-item label="需求名称">
           <el-input
+            class="search-input"
             v-model="queryForm.name"
-            placeholder="输入需求名称查询"
+            placeholder="需求名称查询"
             clearable
           />
         </el-form-item>
         <el-form-item label="状态">
           <el-select
             v-model="queryForm.status"
+            class="search-input"
             clearable
-            placeholder="请选择需求状态"
+            placeholder="需求状态"
           >
             <el-option
               v-for="(item, index) in statusList"
@@ -24,11 +26,46 @@
             </el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="处理人">
+          <el-select
+            v-model="queryForm.acceptor"
+            clearable
+            :remote-method="querySearchAsync"
+            filterable
+            placeholder="处理人"
+          >
+            <el-option
+              v-for="item in userList"
+              :key="item.userId"
+              :label="item.nickName"
+              :value="item.userId"
+            >
+            </el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="queryDemands">查询</el-button>
         </el-form-item>
       </el-form>
       <div class="demand-div">
+        <el-dropdown @command="selectQueryCommand" size="small">
+          <span class="view-mode"
+            ><i class="el-icon-view" />查看:
+            {{ queryTypeList[commandIndex].label }}
+            <i class="el-icon-arrow-down el-icon--right"></i
+          ></span>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item
+              :command="index + 1"
+              v-for="(item, index) in queryTypeList"
+              :key="index"
+            >
+              <span
+                ><i :class="item.icon" />{{ item.label }}</span
+              ></el-dropdown-item
+            >
+          </el-dropdown-menu>
+        </el-dropdown>
         <el-button
           icon="el-icon-plus"
           type="primary"
@@ -54,7 +91,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="tag" label="需求标签"> </el-table-column>
-        <el-table-column fixed="right" label="操作" width="100">
+        <el-table-column label="操作" width="100">
           <template slot-scope="scope">
             <el-button type="text" @click="viewDemand(scope.row)" size="small"
               >查看</el-button
@@ -212,6 +249,7 @@
 </template>
 <script>
 import demandApi from '../../http/DemandApi'
+import userApi from '../../http/User'
 import detail from './detail.vue'
 import userSearch from '../../components/user-search.vue'
 export default {
@@ -247,9 +285,11 @@ export default {
     return {
       spaceId: '',
       tableData: [],
+      searchUser: '',
       queryForm: {
         name: '',
         status: '',
+        type: 1,
       },
       statusList: [],
       demandFormModel: {},
@@ -288,6 +328,13 @@ export default {
           { required: true, message: '请选择期待完成日期', trigger: 'change' },
         ],
       },
+      userList: [],
+      queryTypeList: [
+        { icon: 'el-icon-house', label: '所有' },
+        { icon: 'el-icon-thumb', label: '我负责' },
+        { icon: 'el-icon-zoom-in', label: '我创建' },
+      ],
+      commandIndex: 0,
       pickOption: {
         disabledDate: (time) => {
           console.log('time', time)
@@ -297,6 +344,33 @@ export default {
     }
   },
   methods: {
+    selectQueryCommand(command) {
+      this.queryForm.type = command
+      console.log('查询dddd', command)
+      this.commandIndex = command - 1
+      this.getDemandList()
+    },
+    querySearchAsync(queryString) {
+      console.log('查询用户', queryString)
+      this.userList = []
+      userApi.queryUserByName('').then((res) => {
+        if (!queryString) {
+          this.userList = res.data
+          return
+        }
+
+        this.userList = res.data.filter((item) => {
+          return (
+            item.label.toLowerCase().indexOf(queryString.toLowerCase()) > -1
+          )
+        })
+      })
+    },
+    handleSelect(item) {
+      console.log(item)
+      //tem.nickName ? item.nickName : item.userName
+      this.queryForm.acceptor = item.userId
+    },
     validAcceptor(rule, value, callback) {
       if (
         !this.demandFormModel.acceptor ||
@@ -333,6 +407,7 @@ export default {
       return statusName
     },
     queryDemands() {
+      this.queryForm.type = ''
       this.getDemandList()
     },
     viewDemand(row) {
@@ -395,7 +470,6 @@ export default {
     },
     getDemandList() {
       if (!this.spaceId) {
-        console.log('dddddd-----', this.spaceId, 'ooooo')
         return
       }
       demandApi
@@ -405,7 +479,9 @@ export default {
           this.queryForm.name,
           this.queryForm.status,
           this.spaceId,
-          this.iterationId ? this.iterationId : ''
+          this.iterationId ? this.iterationId : '',
+          this.queryForm.type ? this.queryForm.type : '',
+          this.queryForm.acceptor ? this.queryForm.acceptor : ''
         )
         .then((res) => {
           console.log(res)
@@ -430,10 +506,11 @@ export default {
     this.getDemandList()
     this.getDemandTags()
     this.getstatusList()
+    this.querySearchAsync('')
   },
 }
 </script>
-<style scoped>
+<style lang="less" scoped>
 .content {
   /* padding: 10px; */
   position: relative;
@@ -449,5 +526,16 @@ export default {
 }
 .query-line {
   margin-left: 5px;
+  .search-input {
+    width: 120px;
+  }
+}
+.view-mode {
+  margin-right: 20px;
+  cursor: pointer;
+
+  i {
+    margin-right: 5px;
+  }
 }
 </style>

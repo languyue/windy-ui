@@ -142,24 +142,10 @@ export default {
   .video-background {
     position: relative;
     width: 100%;
-    height: 100vh; /* 或任意你希望的高度 */
+    height: 100vh;
     overflow: hidden;
     background-size: cover;
     background-image: url('../../assets/background.png');
-  }
-
-  .video-background video {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    min-width: 100%;
-    min-height: 100%;
-    width: auto;
-    height: auto;
-    transform: translateX(-50%) translateY(-50%);
-    z-index: -1;
-    background-size: cover;
-    transition: 1s opacity;
   }
 }
 </style>
