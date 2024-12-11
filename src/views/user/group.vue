@@ -307,7 +307,6 @@ export default {
       this.getGroupUsers()
     },
     handleCommand(command, data) {
-      console.log(command, data)
       if (command == 'delete') {
         groupApi.deleteGroup(data.groupId).then((res) => {
           if (res) {
@@ -481,9 +480,7 @@ export default {
       })
     },
     loadRoleResources(roleId) {
-      console.log('wwwwwww')
       resourceApi.getRoleResources(roleId).then((res) => {
-        console.log(this.groupRoles)
         let array = []
         this.groupRoles.forEach((e) => {
           if (e.roleId == roleId) {

@@ -456,7 +456,6 @@ export default {
   watch: {
     space: {
       handler(val) {
-        console.log('space', val)
         this.spaceId = val
         this.getIterationList()
       },
@@ -673,7 +672,6 @@ export default {
       this.getserviceMember(row.iterationId)
     },
     selectCommand(event, row) {
-      console.log(event, row)
       if (event == 'edit') {
         this.iterationForm = JSON.parse(JSON.stringify(row))
         this.iterationForm.selectedDate = [row.startTime, row.endTime]
@@ -722,7 +720,6 @@ export default {
     },
     submitIteration(formName) {
       this.$refs[formName].validate((valid) => {
-        console.log(this.iterationForm)
         if (!valid) {
           return false
         }
@@ -774,7 +771,6 @@ export default {
       item.showPop = false
     },
     handleClick(tab) {
-      console.log('tab', tab)
       if (tab.name == 'card') {
         this.cardCommand('demand')
       }
@@ -823,7 +819,6 @@ export default {
     },
     getBugCard() {
       BugApi.getIterationBugs(this.iterationInfo.iterationId).then((res) => {
-        console.log(res.data)
         res.data.forEach((e) => {
           let item = {
             name: e.bugName,
@@ -846,7 +841,6 @@ export default {
     getDemandCard() {
       DemandApi.getIterationDemandList(this.iterationInfo.iterationId).then(
         (res) => {
-          console.log(res.data)
           res.data.forEach((e) => {
             let item = {
               name: e.demandName,

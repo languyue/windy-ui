@@ -54,7 +54,6 @@ export default {
   methods: {
     getUserMenus(callback) {
       resourceApi.getUserMenuList().then((res) => {
-        console.log(res)
         let array = []
         res.data.forEach((element) => {
           array.push(element.content)

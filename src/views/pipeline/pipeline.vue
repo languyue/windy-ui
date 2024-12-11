@@ -624,7 +624,6 @@ export default {
       pipelineApi
         .getBranchCommits(this.serviceId, this.pipelineBindBranch)
         .then((res) => {
-          console.log('获取到提交记录', res)
           this.commitData = res.data
         })
     },
@@ -856,7 +855,6 @@ export default {
           return
         }
 
-        console.log('ddd', res)
         let nodeType = res.data.executeType
         historyApi.getPipelienStatus(this.history.historyId).then((res) => {
           res.data.nodeStatusList.forEach((e) => {
@@ -885,9 +883,6 @@ export default {
     openTaskDetail() {
       let array = window.location.href.split('//')
       let domain = array[1].split('/')[0]
-      console.log(
-        `${array[0]}//${domain}/#/record/detail?recordId=${this.taskRecordId}`
-      )
       window.open(
         `${array[0]}//${domain}/#/record/detail?recordId=${this.taskRecordId}`,
         '_blank'

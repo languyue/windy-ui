@@ -47,7 +47,6 @@ export default {
     },
     readonly: {
       handler(val) {
-        console.log('controll', val)
         this.options.readOnly = val
         this.$nextTick(() => {
           this.refreshEditor()

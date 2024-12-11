@@ -103,7 +103,6 @@ export default {
   watch: {
     service: {
       handler(val) {
-        console.log('service', val)
         if (val) {
           this.serviceId = val
           this.getService()
@@ -113,7 +112,6 @@ export default {
     },
     pipeline: {
       handler(val) {
-        console.log('pipeline', val)
         if (val) {
           this.pipelineId = val
           this.getBindBranches()

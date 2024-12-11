@@ -209,7 +209,6 @@ export default {
   },
   methods: {
     copyExecutePoint(copyItem) {
-      console.log('copppppy', copyItem)
       localStorage.setItem('copyItem', JSON.stringify(copyItem))
       this.$notify({
         title: '成功',
@@ -228,7 +227,6 @@ export default {
 
       let index = e.newIndex
       let currentElement = this.forFeatures[index]
-      console.log(this.forFeatures)
       if (
         currentElement.executeType == 2 ||
         currentElement.executeType == 3 ||
@@ -252,7 +250,6 @@ export default {
       this.refreshValue()
     },
     refreshList(item) {
-      console.log('list updatecccc', item, this.forFeatures)
       this.forFeatures.forEach((e) => {
         if (item.data && e.randomId == item.data.randomId) {
           e = item.data
@@ -330,11 +327,6 @@ export default {
         this.forFeatures.push(item)
       })
     }
-    console.log(
-      'init',
-      JSON.parse(JSON.stringify(this.forFeatures)),
-      JSON.parse(JSON.stringify(this.forData))
-    )
   },
 }
 </script>

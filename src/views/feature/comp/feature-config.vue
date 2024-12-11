@@ -29,7 +29,6 @@
                       ref="child"
                       class="drag-box"
                       v-bind="dragOptions"
-                      @change="onDragChange"
                       @end="dragEnd"
                       @add="addItem"
                     >
@@ -370,7 +369,6 @@ export default {
   watch: {
     feature: {
       handler(val) {
-        console.log('xxxxxxxxx', val)
         this.featureId = val
         this.getFeatureInfo()
       },
@@ -486,10 +484,8 @@ export default {
       )
     },
     showExecutePoint(point) {
-      console.log('point', point)
       featureApi.getExecutePointTemplate(point.pointId).then((res) => {
         this.pointTemplate = res.data
-        console.log('point res', res)
       })
     },
     hideTemplate() {
@@ -519,7 +515,6 @@ export default {
     pasteExecutePoint() {
       let copyString = localStorage.getItem('copyItem')
       let pasteItem = JSON.parse(copyString)
-      console.log('pasteItem', pasteItem)
       if (pasteItem && pasteItem.randomId) {
         pasteItem.randomId = this.$utils.randomString(20)
         pasteItem.writeType = '1'
@@ -667,12 +662,6 @@ export default {
     clickEdit() {
       this.isEdit = !this.isEdit
     },
-    onDragChange(event) {
-      const { removed } = event
-      if (removed) {
-        console.log('Removed from:', removed, event)
-      }
-    },
     dragEnd() {
       //每当拖拽的时候，整理下所有执行点的顺序，重新排序时不会错乱
       let array = JSON.parse(JSON.stringify(this.allPoints))
@@ -703,10 +692,8 @@ export default {
       this.isEdit = true
       this.displayExepoints()
       this.uuid = this.$utils.randomString(20)
-      console.log('ddddd', e)
     },
     refreshValue(update) {
-      // console.log('refreshValue', update)
       //删除添加到if或者for中的执行点
       let removeArray = []
       if (update.data.executePoints) {

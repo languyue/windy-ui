@@ -487,7 +487,6 @@ export default {
       this.refreshList()
     },
     refreshObjectValue(event) {
-      console.log('start obj', event, this.data)
       this.data.value = this.data.value ? this.data.value : {}
       if (this.data.initData.range) {
         this.data.initData.range.forEach((e) => {
@@ -509,7 +508,6 @@ export default {
       this.notifyData()
     },
     refreshArrayValue(event, index) {
-      console.log('start', event)
       this.$set(this.data.value[index], event.item.paramKey, event.item.value)
       this.notifyData()
     },
@@ -522,7 +520,6 @@ export default {
       if (this.data.type == 'Map') {
         let item = {}
         this.paramList.forEach((e) => {
-          console.log('value type', e)
           if (e.valueType == 'Float') {
             item[e.keyName] = parseFloat(e.keyValue)
           } else if (e.valueType == 'Integer') {
@@ -537,7 +534,6 @@ export default {
         data.paramKey = this.data.paramKey
       }
 
-      console.log('update', data)
       this.$emit('refreshData', {
         item: data,
         pointId: this.pointId,
@@ -640,7 +636,6 @@ export default {
             this.paramList.push(e)
           })
         } else {
-          console.log('xxxxx', this.data)
           this.objId = this.$utils.randomString(20)
           this.$set(
             this.data,

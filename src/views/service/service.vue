@@ -555,7 +555,6 @@ export default {
       this.showChooseNode = true
       this.deployEnvList = []
       envApi.getAllEnvs().then((res) => {
-        console.log(res)
         res.data.forEach((e) => {
           this.deployEnvList.push({
             label: e.envName,

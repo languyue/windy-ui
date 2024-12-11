@@ -24,11 +24,46 @@
             </el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="处理人">
+          <el-select
+            v-model="queryForm.acceptor"
+            clearable
+            :remote-method="querySearchAsync"
+            filterable
+            placeholder="处理人"
+          >
+            <el-option
+              v-for="item in userList"
+              :key="item.userId"
+              :label="item.nickName"
+              :value="item.userId"
+            >
+            </el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="queryBugs">查询</el-button>
         </el-form-item>
       </el-form>
       <div class="bug-div">
+        <el-dropdown @command="selectQueryCommand" size="small">
+          <span class="view-mode"
+            ><i class="el-icon-view" />查看:
+            {{ queryTypeList[commandIndex].label }}
+            <i class="el-icon-arrow-down el-icon--right"></i
+          ></span>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item
+              :command="index + 1"
+              v-for="(item, index) in queryTypeList"
+              :key="index"
+            >
+              <span
+                ><i :class="item.icon" />{{ item.label }}</span
+              ></el-dropdown-item
+            >
+          </el-dropdown-menu>
+        </el-dropdown>
         <el-button
           icon="el-icon-plus"
           type="primary"
@@ -102,6 +137,7 @@
 <script>
 import TextView from '../../components/text-view.vue'
 import bugApi from '../../http/BugApi'
+import userApi from '../../http/User'
 import bugDetail from './bug-detail.vue'
 export default {
   props: {
@@ -140,6 +176,7 @@ export default {
       queryForm: {
         name: '',
         status: '',
+        type: 1,
       },
       statusList: [],
       bugForm: {},
@@ -160,9 +197,39 @@ export default {
           { required: true, message: '请选择缺陷优先级', trigger: 'change' },
         ],
       },
+      userList: [],
+      queryTypeList: [
+        { icon: 'el-icon-house', label: '所有' },
+        { icon: 'el-icon-thumb', label: '我负责' },
+        { icon: 'el-icon-zoom-in', label: '我创建' },
+      ],
+      commandIndex: 0,
     }
   },
   methods: {
+    selectQueryCommand(command) {
+      this.queryForm.type = command
+      if (this.queryForm.type != '1') {
+        this.$set(this.queryForm, 'acceptor', '')
+      }
+      this.commandIndex = command - 1
+      this.getBugList()
+    },
+    querySearchAsync(queryString) {
+      this.userList = []
+      userApi.queryUserByName('').then((res) => {
+        if (!queryString) {
+          this.userList = res.data
+          return
+        }
+
+        this.userList = res.data.filter((item) => {
+          return (
+            item.label.toLowerCase().indexOf(queryString.toLowerCase()) > -1
+          )
+        })
+      })
+    },
     exchangeStatusName(status) {
       let statusName = '-'
       this.statusList.forEach((e) => {
@@ -225,10 +292,12 @@ export default {
         .getBugList(
           this.currentPage,
           this.currentSize,
-          this.queryForm.name,
-          this.queryForm.status,
+          this.queryForm.name ? this.queryForm.name : '',
+          this.queryForm.status ? this.queryForm.status : '',
           this.spaceId,
-          this.iterationId ? this.iterationId : ''
+          this.iterationId ? this.iterationId : '',
+          this.queryForm.type ? this.queryForm.type : '',
+          this.queryForm.acceptor ? this.queryForm.acceptor : ''
         )
         .then((res) => {
           this.tableData = res.data.data
@@ -246,10 +315,11 @@ export default {
     this.iterationId = this.iteration
     this.getBugList()
     this.getstatusList()
+    this.querySearchAsync()
   },
 }
 </script>
-<style scoped>
+<style lang="less" scoped>
 .content {
   position: relative;
   width: 100%;
@@ -261,5 +331,13 @@ export default {
 }
 .query-line {
   margin-left: 5px;
+}
+.view-mode {
+  margin-right: 20px;
+  cursor: pointer;
+
+  i {
+    margin-right: 5px;
+  }
 }
 </style>

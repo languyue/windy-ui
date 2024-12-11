@@ -199,7 +199,6 @@ export default {
       resourceApi
         .getResources(this.resourcePage, this.resourceSize)
         .then((res) => {
-          console.log('xxxx', res)
           this.resourceTable = res.data.data
           this.resourceTotal = res.data.total
         })

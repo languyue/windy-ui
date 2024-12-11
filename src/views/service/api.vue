@@ -1025,7 +1025,6 @@ export default {
         return
       }
       this.apiForm = JSON.parse(JSON.stringify(data))
-      console.log('show item', this.apiForm)
       this.paramData = data.requestParams
       if (!this.paramData) {
         this.paramData = []
@@ -1046,7 +1045,6 @@ export default {
           e.objectName = ''
         }
       })
-      console.log('show paramData', this.paramData)
 
       this.responseData = data.responseParams
       if (!this.responseData) {
@@ -1199,7 +1197,6 @@ export default {
         this.headerData = []
         this.bodyData = []
         this.traverseTree(this.paramData)
-        console.log('this.paramData', this.paramData)
         this.paramData.forEach((e) => {
           if (e.position == 'Path' || e.position == 'Query') {
             this.pathData.push(e)
@@ -1211,7 +1208,6 @@ export default {
             this.bodyData.push(e)
           }
         })
-        console.log(this.bodyData)
         this.previewRes = JSON.parse(JSON.stringify(this.responseData))
         this.traverseTree(this.previewRes)
         this.$forceUpdate()
@@ -1322,7 +1318,6 @@ export default {
       serviceApi.getGenerateLog(this.serviceId).then((res) => {
         let array = []
         res.data.forEach((e) => {
-          console.log('fake', e)
           let params = e.generateParams
           params.time = e.updateTime
           params.status = e.status

@@ -146,7 +146,6 @@ export default {
     },
     bug: {
       handler(val) {
-        console.log('val', val)
         this.bugId = val
         this.bugForm = {}
         this.getBug()
@@ -188,7 +187,6 @@ export default {
   },
   methods: {
     selectUser(userList) {
-      console.log('dddsssss', userList)
       this.bugForm.acceptor = userList[0].userId
       this.bugForm.acceptorName = userList[0].name
       this.$nextTick(() => {

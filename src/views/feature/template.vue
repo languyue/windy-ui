@@ -556,7 +556,6 @@ export default {
       this.showBatchDialog = false
     },
     handleTabClick(tab) {
-      console.log(tab)
       if (tab.name == 'template') {
         this.getTemplatePage()
       }
@@ -611,13 +610,11 @@ export default {
       this.previewData.splice(index, 1)
     },
     showTemplate(row) {
-      console.log('show log', row)
       this.isEdit = false
       this.infoForm = row
       this.showDialog = true
     },
     genarateApi() {
-      console.log()
       serviceApi
         .generateTemplate({
           serviceId: this.serviceId,

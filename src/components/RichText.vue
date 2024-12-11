@@ -43,11 +43,9 @@ export default Vue.extend({
   },
   watch: {
     content(val) {
-      console.log('watch content', val)
       this.html = val
     },
     disable(val) {
-      console.log('watch disable', val)
       if (val) {
         this.editor.disable()
       } else {

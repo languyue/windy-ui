@@ -137,7 +137,6 @@ export default {
     },
     changeEditValue() {
       this.chooseItem.expectValue = this.$refs.editer.getValue()
-      console.log('数据变更', this.chooseItem.expectValue)
       this.notifyData()
     },
     closeEditor() {
@@ -220,7 +219,6 @@ export default {
           e.expectValue &&
           (e.operator == 'array_item_match' || e.operator == 'none_item_match')
         ) {
-          console.log('dddddd', e.expectValue)
           let item = this.parseString(e.expectValue)
           e.propertyKey = item.identifier
           e.expectValue = item.content

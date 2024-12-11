@@ -223,7 +223,6 @@ export default {
       }
     },
     selectUser(userList) {
-      console.log('dddsssss', userList)
       this.demandForm.acceptor = userList[0].userId
       this.demandForm.acceptorName = userList[0].name
       this.demandForm.acceptorUser = userList
@@ -304,7 +303,6 @@ export default {
         return
       }
       CommentApi.getComments(this.demandId).then((res) => {
-        console.log('list comment ', res)
         this.comments = res.data
       })
     },

@@ -172,7 +172,6 @@ export default {
       })
     },
     handleSelect(item) {
-      console.log(item)
       this.addSelectUser({
         userId: item.userId,
         name: item.nickName ? item.nickName : item.userName,

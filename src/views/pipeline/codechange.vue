@@ -170,7 +170,6 @@ export default {
   methods: {
     querySearchAsync(text, cb) {
       requestApi.relationList(text).then((res) => {
-        console.log('res', res)
         let array = []
         res.data.forEach((e) => {
           e.value = e.name
@@ -200,7 +199,6 @@ export default {
       this.getCodeChangeList()
     },
     selectBranchType(value) {
-      console.log(value, value == 'default')
       if (value == 'default') {
         let branchName = 'develop_'
         var today = new Date()

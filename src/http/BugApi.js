@@ -13,9 +13,9 @@ export default {
         })
     })
   },
-  getBugList(page, size, name, status, spaceId, iterationId) {
+  getBugList(page, size, name, status, spaceId, iterationId, type, acceptor) {
     return new Promise((resolve, reject) => {
-      let url = `/v1/devops/bugs?page=${page}&size=${size}&name=${name}&status=${status}&spaceId=${spaceId}&iterationId=${iterationId}`
+      let url = `/v1/devops/bugs?page=${page}&size=${size}&name=${name}&status=${status}&spaceId=${spaceId}&iterationId=${iterationId}&type=${type}&acceptor=${acceptor}`
       http
         .get(url)
         .then((res) => {

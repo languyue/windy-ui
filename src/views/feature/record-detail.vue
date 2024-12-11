@@ -205,7 +205,6 @@ export default {
   },
   methods: {
     statusClass(status) {
-      console.log('status', status)
       switch (status) {
         case 1:
           return 'el-icon-success'

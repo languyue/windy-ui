@@ -74,7 +74,6 @@ export default {
   },
   created() {
     this.executePoint = this.data
-    console.log(this.executePoint)
   },
 }
 </script>

@@ -265,10 +265,10 @@
           :model="taskForm"
           ref="taskForm"
           label-width="120px"
-          :rules="taskRule"
+          :rules="taskRules"
           size="mini"
         >
-          <el-form-item label="任务名称">
+          <el-form-item label="工作项名称" prop="taskName">
             <el-input
               v-model="taskForm.taskName"
               placeholder="请输入任务名称"
@@ -285,7 +285,7 @@
               </el-option>
             </el-select>
           </el-form-item>
-          <el-form-item label="任务描述">
+          <el-form-item label="工作项描述">
             <el-input
               type="textarea"
               :autosize="{ minRows: 4, maxRows: 20 }"
@@ -294,7 +294,7 @@
             >
             </el-input>
           </el-form-item>
-          <el-form-item label="关联ID">
+          <el-form-item label="关联ID" prop="relationId">
             <el-autocomplete
               style="width: 100%"
               v-model="selectItem.name"
@@ -314,7 +314,7 @@
               </template>
             </el-autocomplete>
           </el-form-item>
-          <el-form-item label="完成时间" prop="expectTime">
+          <el-form-item label="完成时间" prop="completeTime">
             <el-date-picker
               v-model="taskForm.completeTime"
               align="right"
@@ -373,7 +373,25 @@ export default {
       bugStatus: [],
       demandStatus: [],
       showTaskDialog: false,
-      taskRules: [],
+      taskRules: {
+        taskName: [
+          { required: true, message: '请输入工作项名称', trigger: 'blur' },
+        ],
+        relationId: [
+          {
+            required: true,
+            message: '请选择关联的需求、缺陷',
+            trigger: 'change',
+          },
+        ],
+        expectTime: [
+          {
+            required: true,
+            message: '请选择工作项完成时间',
+            trigger: 'change',
+          },
+        ],
+      },
       taskForm: {},
       relatedType: 1,
       taskTotal: 0,
@@ -381,7 +399,6 @@ export default {
       taskSize: 10,
       taskData: [],
       isEditTask: false,
-      taskRule: {},
       taskStatus: [],
       workTitle: '',
       selectItem: {},
@@ -436,7 +453,6 @@ export default {
       })
     },
     selectData(item) {
-      console.log('selectData', item)
       if (item.relationType == 1) {
         this.demandId = item.relationId
         this.showDemandDetail = true
@@ -455,6 +471,7 @@ export default {
     },
     handleSelect(item) {
       this.selectItem = item
+      this.taskForm.relationId = item.relationId
     },
     showEditWork(row) {
       this.getAllData(() => {
@@ -464,7 +481,7 @@ export default {
           }
         })
       })
-      this.workTitle = '编辑任务'
+      this.workTitle = '编辑工作项'
       this.showTaskDialog = true
       this.isEditTask = true
       this.taskForm = JSON.parse(JSON.stringify(row))
@@ -506,7 +523,7 @@ export default {
       this.getTasks()
     },
     showTaskView() {
-      this.workTitle = '创建任务'
+      this.workTitle = '创建工作项'
       this.showTaskDialog = true
       this.isEditTask = false
       this.getAllData()
@@ -545,9 +562,6 @@ export default {
     showDemand(row) {
       this.demandId = row.demandId
       this.showDemandDetail = true
-    },
-    handleClick(tab) {
-      console.log(tab)
     },
     handleSizeChange(size, type) {
       if (type == 'demand') {

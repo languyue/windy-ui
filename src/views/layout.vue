@@ -185,8 +185,7 @@ export default {
         this.$store.commit('UPDATE_RBAC_LIST', array)
       })
     },
-    handleSelect(index, indexPath) {
-      console.log(index, indexPath)
+    handleSelect(index) {
       if (index == 'plugin') {
         window.open(
           'https://plugins.jetbrains.com/plugin/25539-windy/reviews?noRedirect=true',
@@ -202,10 +201,8 @@ export default {
       this.$router.push({ path: index })
     },
     handleClick(command) {
-      console.log('command', command)
       if (command == 'logout') {
-        userApi.logout().then((res) => {
-          console.log('logout', res)
+        userApi.logout().then(() => {
           cookies.remove('token')
           this.$store.commit('UPDATE_SERVICE_ID', '')
           this.$router.push({ path: '/login' })

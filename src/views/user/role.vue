@@ -241,7 +241,6 @@ export default {
     },
     getRoleList() {
       roleApi.getRoles(this.rolePage, this.roleSize).then((res) => {
-        console.log('xxxx', res)
         this.roleTable = res.data.data
         this.roleTotal = res.data.total
       })

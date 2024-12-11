@@ -101,7 +101,6 @@ export default {
   },
   methods: {
     selecteSpace(space) {
-      console.log('spacexxx', space)
       this.spaceName = space.spaceName
       this.spaceId = space.spaceId
       this.showPop = false

@@ -202,7 +202,6 @@ export default {
     },
   },
   created() {
-    console.log('ssss', this.spaceId)
     this.getSpaceList()
   },
 }

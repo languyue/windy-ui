@@ -679,15 +679,13 @@ export default {
         return true
       }
     },
-    dragNodeEvent(node, endNode, position, event) {
-      console.log('event', node, endNode, position, event)
+    dragNodeEvent(node, endNode, position) {
       if (position == 'inner' && endNode.data.featureType != 1) {
         node.data.parentId = endNode.data.featureId
       }
       if (position != 'inner' && node.data.parentId != endNode.data.parentId) {
         node.data.parentId = endNode.data.parentId
       }
-      console.log('all', this.caseFeatures)
       let array = []
       this.loadItemFromTree(this.caseFeatures, array)
 
@@ -696,7 +694,6 @@ export default {
         e.sortOrder = index
         index++
       })
-      console.log('drag array ', array, array.length)
       featureApi.batchUpdateFeatures({ featureOrders: array }).then((res) => {
         if (res) {
           this.$notify({
@@ -1031,8 +1028,6 @@ export default {
         this.$notify.warning('批量执行的用例个数不能超过10个')
         return
       }
-
-      console.log(res)
       let array = []
       res.forEach((e) => {
         if (e.featureType == 1) {

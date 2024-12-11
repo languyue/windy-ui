@@ -306,7 +306,6 @@ export default {
       let condition = keys
         .map((key) => `[${compareItem[key] || ''}]`) // 如果值不存在则设置为空字符串
         .join('')
-      console.log('notify compare', condition)
       this.executeData.service = condition
       this.notifyData()
       this.$forceUpdate()

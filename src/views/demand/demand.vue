@@ -337,7 +337,6 @@ export default {
       commandIndex: 0,
       pickOption: {
         disabledDate: (time) => {
-          console.log('time', time)
           return time.getTime() <= Date.now() - 86400000
         },
       },
@@ -346,12 +345,13 @@ export default {
   methods: {
     selectQueryCommand(command) {
       this.queryForm.type = command
-      console.log('查询dddd', command)
+      if (this.queryForm.type != '1') {
+        this.$set(this.queryForm, 'acceptor', '')
+      }
       this.commandIndex = command - 1
       this.getDemandList()
     },
     querySearchAsync(queryString) {
-      console.log('查询用户', queryString)
       this.userList = []
       userApi.queryUserByName('').then((res) => {
         if (!queryString) {
@@ -367,7 +367,6 @@ export default {
       })
     },
     handleSelect(item) {
-      console.log(item)
       //tem.nickName ? item.nickName : item.userName
       this.queryForm.acceptor = item.userId
     },
@@ -382,7 +381,6 @@ export default {
       }
     },
     selectUser(userList) {
-      console.log('dddsssss', userList)
       this.demandFormModel.acceptor = userList[0].userId
       this.demandFormModel.acceptorName = userList[0].name
       this.demandFormModel.acceptorUser = userList
@@ -407,7 +405,6 @@ export default {
       return statusName
     },
     queryDemands() {
-      this.queryForm.type = ''
       this.getDemandList()
     },
     viewDemand(row) {
@@ -476,15 +473,14 @@ export default {
         .getDemandList(
           this.currentPage,
           this.currentSize,
-          this.queryForm.name,
-          this.queryForm.status,
+          this.queryForm.name ? this.queryForm.name : '',
+          this.queryForm.status ? this.queryForm.status : '',
           this.spaceId,
           this.iterationId ? this.iterationId : '',
           this.queryForm.type ? this.queryForm.type : '',
           this.queryForm.acceptor ? this.queryForm.acceptor : ''
         )
         .then((res) => {
-          console.log(res)
           this.tableData = res.data.data
           this.total = res.data.total
         })

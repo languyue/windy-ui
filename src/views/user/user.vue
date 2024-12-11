@@ -159,7 +159,6 @@ export default {
     },
     getUserInfo() {
       userApi.getUserDetail().then((res) => {
-        console.log(res)
         this.userForm = res.data
       })
     },

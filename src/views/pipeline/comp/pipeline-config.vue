@@ -617,7 +617,6 @@ export default {
       this.selectStep(selectItem.configId)
     },
     chooseStep(item) {
-      console.log('chooseItem', item)
       this.stepConfigs = JSON.parse(JSON.stringify(item.compareResults))
       this.stepConfigs.forEach((e) => {
         this.configForm[e.compareKey] = e.value

@@ -78,7 +78,6 @@ export default {
   },
   methods: {
     addPoint(e) {
-      console.log('添加。。。。', e)
       let index = e.newIndex == 0 ? 0 : e.newIndex - 1
       if (!this.points[index].randomId) {
         this.points[index].randomId = this.$utils.randomString(20)
@@ -123,7 +122,6 @@ export default {
       let data = JSON.parse(JSON.stringify(this.executeData))
       data.method = this.condition
       data.executePoints = JSON.parse(JSON.stringify(array))
-      console.log('async ', 'refreshData', data)
       this.$emit('refreshData', {
         data: data,
       })
