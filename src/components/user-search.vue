@@ -34,6 +34,7 @@
     >
       <el-autocomplete
         v-model="selectedUser"
+        size="mini"
         prefix-icon="el-icon-search"
         :fetch-suggestions="querySearchAsync"
         placeholder="请输入用户名称搜索"

@@ -10,7 +10,7 @@
     </el-form-item>
     <el-form-item label="动作触发地址">
       <el-input
-        placeholder="请输入执行点名称"
+        placeholder="请输入Action名称"
         v-model="dataForm.actionUrl"
         @input="notifyParam"
       />
@@ -76,7 +76,8 @@
         循环查询条件
         <el-tooltip placement="top">
           <div slot="content">
-            配置循环查询条件可一直轮训执行结果<br />直到轮训条件不满足时退出查询
+            任务触发后windy会查询任务状态,查询结果后根据期望值与状态接口返回值比较，以此来确认任务执行状态。<br />
+            如果不希望只查询一次可通过配置判断判断条件，实现状态轮训的功能。<br />(默认超时时间1小时)
           </div>
           <i class="el-icon-question tip" />
         </el-tooltip>
@@ -216,7 +217,6 @@ import Template from '../../feature/template.vue'
 export default {
   props: {
     form: Object,
-
     Template,
   },
   watch: {
@@ -285,6 +285,9 @@ export default {
     addNewCondition() {
       this.compareList.push({ showCompare: true })
     },
+  },
+  destroyed() {
+    this.paramList = []
   },
   created() {
     this.dataForm = this.form

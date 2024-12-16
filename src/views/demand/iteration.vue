@@ -111,7 +111,7 @@
 
                 <div class="step-line">
                   <div>里程碑</div>
-                  <el-steps :active="5" align-center>
+                  <el-steps :active="-1" align-center>
                     <el-step title="需求评审">
                       <!-- <div slot="description">08-08</div> -->
                     </el-step>
@@ -207,15 +207,20 @@
                               <el-popover
                                 placement="right"
                                 v-model="showPop"
-                                width="400"
+                                width="200"
                                 trigger="click"
                               >
-                                <el-autocomplete
+                                <!-- <el-autocomplete
                                   v-model="selectedUser"
+                                  size="mini"
                                   :fetch-suggestions="querySearchAsync"
                                   placeholder="请输入用户名称"
                                   @select="handleSelect"
-                                ></el-autocomplete>
+                                ></el-autocomplete> -->
+                                <userSearch
+                                  :single="true"
+                                  @chooseUser="handleSelect"
+                                />
                                 <el-button
                                   slot="reference"
                                   type="text"
@@ -437,6 +442,7 @@ import iterationDemand from '../demand/demand.vue'
 import iterationBug from '../demand/bug.vue'
 import iterationApi from '../../http/Iteration'
 import TextView from '../../components/text-view.vue'
+import userSearch from '../../components/user-search.vue'
 import CommentApi from '../../http/Comment'
 import DemandApi from '../../http/DemandApi'
 import BugApi from '../../http/BugApi'
@@ -452,6 +458,7 @@ export default {
     iterationDemand,
     iterationBug,
     TextView,
+    userSearch,
   },
   watch: {
     space: {
@@ -588,14 +595,17 @@ export default {
     handleSelect(item) {
       iterationApi
         .addMembers({
-          resourceId: this.iterationInfo.iterationId,
-          userId: item.userId,
+          iterationId: this.iterationInfo.iterationId,
+          userId: item[0].userId,
         })
         .then((res) => {
           if (res.data) {
+            this.$notify.success('添加成员成功')
             this.selectedUser = ''
             this.showPop = !this.showPop
             this.getserviceMember(this.iterationInfo.iterationId)
+          } else {
+            this.$notify.error('添加成员失败')
           }
         })
     },

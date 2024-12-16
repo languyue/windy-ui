@@ -271,19 +271,37 @@
                 <el-collapse-item title="业务模版" name="2">
                   <div>
                     <el-row :gutter="20">
-                      <el-col :span="20">
+                      <el-col :span="14">
                         <el-input
                           size="mini"
                           clearable
                           v-model="filterName"
-                          placeholder="输入模版名称过滤"
+                          placeholder="过滤模版名称"
                         />
                       </el-col>
-                      <el-col :span="4">
+                      <el-col :span="3">
                         <i
                           class="el-icon-refresh refresh-icon"
                           @click="getCaseInfo"
                         />
+                      </el-col>
+                      <el-col :span="7">
+                        <el-tooltip
+                          effect="dark"
+                          content="关联其他服务模版"
+                          placement="top-start"
+                        >
+                          <span>
+                            <el-link
+                              :underline="false"
+                              @click="startShowRelated"
+                              icon="el-icon-share"
+                              ><span style="font-szie: 12px"
+                                >关联</span
+                              ></el-link
+                            ></span
+                          >
+                        </el-tooltip>
                       </el-col>
                     </el-row>
                   </div>
@@ -342,6 +360,53 @@
       <history ref="historyComp" :feature="featureId" />
     </el-drawer>
     <!-- 显示历史日志结束 -->
+    <el-dialog
+      :visible.sync="showRelatedTemplate"
+      title="关联服务模版"
+      @close="cancelRelatedService"
+    >
+      <el-form size="mini" inline>
+        <el-form-item>
+          <el-input
+            style="width: 300px"
+            v-model="filterText"
+            size="mini"
+            placeholder="请输入服务名称关键字搜索"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button icon="el-icon-refresh" type="primary">刷新服务</el-button>
+        </el-form-item>
+      </el-form>
+
+      <el-table
+        :data="
+          serviceList.filter(
+            (data) =>
+              data.serviceId != service &&
+              (!filterText ||
+                data.serviceName
+                  .toLowerCase()
+                  .includes(filterText.toLowerCase()))
+          )
+        "
+        size="mini"
+        max-height="500px"
+        @selection-change="selectServices"
+        ref="relatedTemplateTable"
+      >
+        <el-table-column type="selection" width="55"> </el-table-column>
+        <el-table-column label="服务ID" prop="serviceId"></el-table-column>
+        <el-table-column label="服务名称" prop="serviceName"></el-table-column>
+        <el-table-column label="服务描述" prop="description"></el-table-column>
+      </el-table>
+      <div slot="footer">
+        <el-button size="mini" @click="cancelRelatedService">取消</el-button>
+        <el-button type="primary" @click="addRelatedService" size="mini"
+          >确定</el-button
+        >
+      </div>
+    </el-dialog>
   </div>
 </template>
 <script>
@@ -468,9 +533,44 @@ export default {
       serviceGroup: [],
       pointTemplate: {},
       showHistoryDrawer: false,
+      showRelatedTemplate: false,
+      filterText: '',
+      relatedServices: [],
     }
   },
   methods: {
+    selectServices(array) {
+      this.relatedServices = []
+      array.forEach((e) => {
+        this.relatedServices.push(e.serviceId)
+      })
+    },
+    startShowRelated() {
+      this.showRelatedTemplate = true
+    },
+    cancelRelatedService() {
+      this.showRelatedTemplate = false
+      this.relatedServices = []
+    },
+    addRelatedService() {
+      if (!this.relatedServices.length) {
+        this.$notify.warning('请先选择关联的服务')
+        return
+      }
+      let item = {
+        serviceId: this.service,
+        relatedServiceIds: this.relatedServices,
+      }
+      featureApi.addRelatedService(item).then((res) => {
+        if (res.data) {
+          this.$notify.success('关联服务成功')
+          this.cancelRelatedService()
+          this.getTemplates()
+        } else {
+          this.$notify.error('关联服务失败')
+        }
+      })
+    },
     getFeatureInfo() {
       featureApi.getFeatureDetail(this.featureId).then((res) => {
         this.featureInfo = res.data
@@ -803,7 +903,7 @@ export default {
         this.getCaseInfo()
         return
       }
-      this.caseInfo.caseType = 2
+
       if (this.caseInfo.caseType == 2) {
         featureApi.getAllTemplates().then((res) => {
           let array = res.data
@@ -824,22 +924,8 @@ export default {
           e.executeType = e.templateType
           e.service = e.service ? e.service : ''
         })
-        // this.exchangeGroup(array)
+        this.exchangeGroup(array)
         this.featureItemList = array
-
-        const serviceObj = {}
-        this.serviceList.forEach((obj) => (serviceObj[obj.serviceId] = obj))
-        let service = serviceObj[this.serviceId]
-        if (service) {
-          this.serviceGroup = [
-            {
-              name: service.serviceName,
-              isActive: false,
-              showList: false,
-              list: array,
-            },
-          ]
-        }
       })
     },
     exchangeGroup(array) {

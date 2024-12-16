@@ -92,7 +92,9 @@
                   v-if="data.apiType == 0"
                   class="el-icon-folder-opened folder-icon"
                 />
-                <span class="api-name">{{ node.label }}</span>
+                <span class="api-name">
+                  <textView :len="15" :text="node.label" />
+                </span>
                 <div class="tree-op-list">
                   <el-dropdown @command="selectItemCommand($event, data)">
                     <span> ... </span>
@@ -312,7 +314,7 @@
                       @change="apiForm.method = ''"
                     >
                       <el-option label="HTTP" value="http"> </el-option>
-                      <el-option label="DUBBO" value="dubbo"> </el-option>
+                      <!-- <el-option label="DUBBO" value="dubbo"> </el-option> -->
                     </el-select>
                   </el-form-item>
                   <el-form-item label="接口定义">
@@ -550,7 +552,7 @@
                           ></el-input>
                         </el-col>
                         <el-col :span="2">
-                          <div class="op-icon" @click="addSubParam(data)">
+                          <div class="op-icon">
                             <i
                               class="el-icon-remove-outline"
                               @click="removeParam(node, data)"
@@ -574,7 +576,7 @@
                   </el-tree>
 
                   <h4 class="title-bar">二方包代码生成配置</h4>
-                  <el-form-item label="文件类名" label-width="120px">
+                  <el-form-item label="Controller名称" label-width="120px">
                     <div>
                       <el-input
                         placeholder="请输入类名"
@@ -591,7 +593,7 @@
                   <el-form-item
                     label="body请求体类名"
                     label-width="120px"
-                    v-if="isHaveBody"
+                    v-if="isHaveBody && apiForm.method != 'GET'"
                   >
                     <el-input
                       placeholder="请输入body请求体类名"
@@ -622,7 +624,7 @@
       >
     </div>
     <el-dialog
-      title="创建目录"
+      :title="apiTitle"
       :visible.sync="showCreateApi"
       width="50%"
       :before-close="cancelCreate"
@@ -685,6 +687,7 @@
       title="构建Maven二方包"
       :visible.sync="showGenerateApi"
       @open="getBuildParam"
+      @close="cancelGenerate"
       width="60%"
     >
       <el-form
@@ -697,25 +700,25 @@
         <el-form-item label="包路径" prop="packageName">
           <el-input
             v-model="generateForm.packageName"
-            placeholder="请输入二方包路径，例如:com.zj.windy"
+            placeholder="请输入二方包路径,例如:com.zj.windy"
           ></el-input>
         </el-form-item>
         <el-form-item label="GroupId" prop="groupId">
           <el-input
             v-model="generateForm.groupId"
-            placeholder="请输入GroupId"
+            placeholder="请输入GroupId,例如: com.zj"
           ></el-input>
         </el-form-item>
         <el-form-item label="ArtifactId" prop="artifactId">
           <el-input
             v-model="generateForm.artifactId"
-            placeholder="请输入ArtifactId"
+            placeholder="请输入ArtifactId,例如: Windy"
           ></el-input>
         </el-form-item>
         <el-form-item label="Version" prop="version">
           <el-input
             v-model="generateForm.version"
-            placeholder="请输入二方包版本号"
+            placeholder="请输入二方包版本号,例如: 1.0.0"
           ></el-input>
         </el-form-item>
       </el-form>
@@ -737,11 +740,19 @@
       :before-close="closeLog"
       @open="openLog"
     >
+      <el-button
+        type="primary"
+        class="refresh-btn"
+        icon="el-icon-refresh"
+        @click="queryHistory"
+        size="mini"
+        >刷新记录</el-button
+      >
       <el-form v-model="logForm" size="mini">
         <el-form-item label="版本">
           <el-select
             v-model="logRecordId"
-            placeholder="请选择历史构建版本"
+            placeholder="历史构建版本"
             @change="selectVersion"
           >
             <el-option
@@ -807,7 +818,11 @@
 </template>
 <script>
 import serviceApi from '../../http/Service'
+import textView from '../../components/text-view.vue'
 export default {
+  components: {
+    textView,
+  },
   data() {
     return {
       logInterval: null,
@@ -819,7 +834,9 @@ export default {
       showGenerateApi: false,
       activeName: 'preview',
       filterText: '',
-      apiForm: {},
+      apiForm: {
+        type: 'http',
+      },
       paramData: [],
       responseData: [],
       apiTreeData: [],
@@ -878,6 +895,7 @@ export default {
       },
       loading: null,
       expendKeys: [],
+      apiTitle: '创建接口',
     }
   },
   watch: {
@@ -1002,10 +1020,12 @@ export default {
     },
     selectItemCommand(command, data) {
       if (command == 'dir') {
+        this.apiTitle = '创建目录'
         this.addFolder(data)
         return
       }
       if (command == 'api') {
+        this.apiTitle = '创建接口'
         this.addApi(data)
         return
       }
@@ -1123,7 +1143,7 @@ export default {
       if (command == 'import') {
         let serviceName = ''
         this.serviceList.forEach((e) => {
-          if ((e.serviceId = this.serviceId)) {
+          if (e.serviceId == this.serviceId) {
             serviceName = e.serviceName
           }
         })
@@ -1133,6 +1153,10 @@ export default {
       }
 
       if (command == 'delete') {
+        if (!this.selectNodes.length) {
+          this.$notify.warning('请先选择要删除的API')
+          return
+        }
         serviceApi.batchDeleteApi(this.selectNodes).then((res) => {
           if (res.data) {
             this.$notify.success('删除成功')
@@ -1142,6 +1166,13 @@ export default {
           }
         })
         return
+      }
+      if (command == 'dir') {
+        this.apiTitle = '创建目录'
+      }
+
+      if (command == 'api') {
+        this.apiTitle = '创建接口'
       }
       this.createDir = command == 'dir'
       this.showCreateApi = true
@@ -1509,5 +1540,10 @@ export default {
   border-radius: 3px;
   margin: 0px;
   min-height: 300px;
+}
+.refresh-btn {
+  position: absolute;
+  right: 20px;
+  z-index: 1000;
 }
 </style>

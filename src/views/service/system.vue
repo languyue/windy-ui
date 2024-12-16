@@ -19,11 +19,11 @@
                 <el-radio label="Gitlab">Gitlab</el-radio>
               </el-radio-group>
             </el-form-item>
-            <el-form-item label="地址" prop="gitDomain">
+            <el-form-item label="Git域名" prop="gitDomain">
               <el-input
                 type="text"
                 v-model="systemForm.gitDomain"
-                placeholder="请输入git访问地址"
+                placeholder="请输入git域名,例如: https://gitlab.cn 或 使用IP+ 端口"
                 show-password
               />
             </el-form-item>

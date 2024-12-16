@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-tabs v-model="activeTab" class="content">
-      <el-tab-pane label="节点列表" name="node">
+      <el-tab-pane label="流水线节点" name="node">
         <!-- 表单查询开始 -->
         <div class="query-div">
           <el-form :inline="true" size="mini" @submit.native.prevent>
@@ -69,15 +69,15 @@
         </div>
         <!-- 节点表格显示结束 -->
       </el-tab-pane>
-      <el-tab-pane label="执行点" name="execute">
+      <el-tab-pane label="执行Action" name="execute">
         <!-- 表单查询开始 -->
         <div class="query-div">
           <el-form :inline="true" size="mini" @submit.native.prevent>
-            <el-form-item label="执行点名称">
+            <el-form-item label="Action名称">
               <el-input
                 clearable
                 v-model="queryName"
-                placeholder="请输入执行点名称"
+                placeholder="请输入Action名称"
               ></el-input>
             </el-form-item>
             <el-form-item>
@@ -91,16 +91,16 @@
                 type="primary"
                 icon="el-icon-circle-plus-outline"
                 @click="createTemplet"
-                >新增执行点</el-button
+                >新增Action</el-button
               >
             </el-form-item>
           </el-form>
         </div>
         <!-- 表单查询结束 -->
-        <!-- 执行点表格显示开始 -->
+        <!-- Action表格显示开始 -->
         <div>
           <el-table :data="actionList" stripe size="mini" style="width: 100%">
-            <el-table-column prop="actionName" label="执行点名称">
+            <el-table-column prop="actionName" label="Action名称">
             </el-table-column>
             <el-table-column prop="description" label="描述"> </el-table-column>
             <el-table-column prop="updateTime" label="创建时间">
@@ -136,7 +136,7 @@
           >
           </el-pagination>
         </div>
-        <!-- 执行点表格显示结束 -->
+        <!-- Action表格显示结束 -->
       </el-tab-pane>
     </el-tabs>
 
@@ -161,11 +161,11 @@
           <el-input
             type="textarea"
             :autosize="{ minRows: 2, maxRows: 4 }"
-            placeholder="请输入执行点描述"
+            placeholder="请输入Action描述"
             v-model="nodeForm.description"
           />
         </el-form-item>
-        <el-form-item label="关联执行点" prop="executors">
+        <el-form-item label="关联Action" prop="executors">
           <el-select
             v-model="nodeForm.executors"
             multiple
@@ -191,7 +191,7 @@
     </el-dialog>
     <!-- 节点弹框结束 -->
 
-    <!-- 执行点弹框开始 -->
+    <!-- Action弹框开始 -->
     <el-dialog
       :title="title"
       :visible.sync="showCreateExecuter"
@@ -205,9 +205,9 @@
         size="small"
         label-width="150px"
       >
-        <el-form-item label="执行点名称" prop="actionName">
+        <el-form-item label="Action名称" prop="actionName">
           <el-input
-            placeholder="请输入执行点名称"
+            placeholder="请输入Action名称"
             v-model="actionForm.actionName"
           />
         </el-form-item>
@@ -215,7 +215,7 @@
           <el-input
             type="textarea"
             :autosize="{ minRows: 2, maxRows: 4 }"
-            placeholder="请输入执行点描述"
+            placeholder="请输入Action描述"
             v-model="actionForm.description"
           />
         </el-form-item>
@@ -273,7 +273,7 @@
         >
       </div>
     </el-dialog>
-    <!-- 执行点弹框结束 -->
+    <!-- Action弹框结束 -->
   </div>
 </template>
 <script>
@@ -304,7 +304,7 @@ export default {
       actionForm: {},
       currentPage: 1,
       totalSize: 0,
-      title: '创建执行点',
+      title: '创建Action',
       isEditAction: false,
 
       //----节点参数配置-----
@@ -327,12 +327,12 @@ export default {
           { required: true, message: '请输入节点名称', trigger: 'blur' },
         ],
         executors: [
-          { required: true, message: '请选择执行点', trigger: 'change' },
+          { required: true, message: '请选择Action', trigger: 'change' },
         ],
       },
       actionRule: {
         actionName: [
-          { required: true, message: '请输入执行点名称', trigger: 'blur' },
+          { required: true, message: '请输入Action名称', trigger: 'blur' },
         ],
         executeType: [
           { required: true, message: '请选择执行类型', trigger: 'blur' },
@@ -442,24 +442,24 @@ export default {
     },
     createTemplet() {
       this.showCreateExecuter = true
-      this.title = '创建执行点'
+      this.title = '创建Action'
       this.actionForm.executeType = 'HTTP'
     },
     editAction(row) {
       this.isEditAction = true
-      this.title = '编辑执行点'
+      this.title = '编辑Action'
       this.showCreateExecuter = true
       this.actionForm = row
       this.executeType = row.executeType
     },
     removeAction(row) {
-      this.$confirm(`确认删除执行点【${row.actionName}】？`).then(() => {
+      this.$confirm(`确认删除Action【${row.actionName}】？`).then(() => {
         ActionApi.deleteAction(row.actionId).then((res) => {
           if (res.data) {
-            this.$notify.success('删除执行点成功')
+            this.$notify.success('删除Action成功')
             this.getActions()
           } else {
-            this.$notify.error('删除执行点失败')
+            this.$notify.error('删除Action失败')
           }
         })
       })
@@ -498,11 +498,11 @@ export default {
         if (this.isEditAction) {
           ActionApi.updateAction(data).then((res) => {
             if (res.data) {
-              this.$notify.success('修改执行点成功')
+              this.$notify.success('修改Action成功')
               this.closeDialog()
               this.getActions()
             } else {
-              this.$notify.error('修改执行点失败')
+              this.$notify.error('修改Action失败')
             }
           })
           return
@@ -510,11 +510,11 @@ export default {
 
         ActionApi.createAction(data).then((res) => {
           if (res.data) {
-            this.$notify.success('创建执行点成功')
+            this.$notify.success('创建Action成功')
             this.closeDialog()
             this.getActions()
           } else {
-            this.$notify.error('创建执行点失败')
+            this.$notify.error('创建Action失败')
           }
         })
       })

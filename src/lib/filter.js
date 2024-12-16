@@ -95,7 +95,7 @@ Vue.filter('deployFormat', function (status) {
 
 Vue.filter('statusName', function (status) {
   if (!status) {
-    return ''
+    return '无'
   }
   switch (status) {
     case 1:
@@ -111,5 +111,5 @@ Vue.filter('statusName', function (status) {
     case 6:
       return '停止运行'
   }
-  return 'info'
+  return '无'
 })

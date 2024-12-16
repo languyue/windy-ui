@@ -205,11 +205,11 @@
                 <el-radio label="Github">Github</el-radio>
               </el-radio-group>
             </el-form-item>
-            <el-form-item label="地址" prop="gitDomain">
+            <el-form-item label="Git域名" prop="gitDomain">
               <el-input
                 type="text"
                 v-model="gitForm.gitDomain"
-                placeholder="请输入git访问地址"
+                placeholder="请输入git域名,例如: https://gitlab.cn 、http://192.168.1.114:8888"
               />
             </el-form-item>
             <el-form-item
@@ -528,7 +528,7 @@ export default {
       users.forEach((e) => {
         serviceApi
           .addServiceMembers({
-            resourceId: this.serviceForm.serviceId,
+            serviceId: this.serviceForm.serviceId,
             userId: e.userId,
           })
           .then((res) => {
@@ -563,7 +563,6 @@ export default {
         })
       })
     },
-    getNodeList() {},
     delPort(index) {
       if (this.portList.length == 1 && index == 0) {
         return

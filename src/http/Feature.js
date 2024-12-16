@@ -145,9 +145,22 @@ export default {
   },
   getServiceTemplates(serviceId) {
     return new Promise((resolve, reject) => {
-      let url = `/v1/devops/feature/${serviceId}/templates`
+      let url = `/v1/devops/feature/${serviceId}/related/templates`
       http
         .get(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
+  addRelatedService(data) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/feature//related/templates`
+      http
+        .post(url, data)
         .then((res) => {
           resolve(res)
         })

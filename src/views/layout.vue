@@ -131,6 +131,15 @@
           >
         </el-submenu>
       </el-menu>
+      <div class="github-icon">
+        <img
+          src="../assets/github-mark.svg"
+          width="25px"
+          height="25px"
+          alt="跳转github"
+          @click="goGithub"
+        />
+      </div>
       <div class="user-icon">
         <el-dropdown szie="mini" @command="handleClick">
           <span class="user-div">
@@ -175,6 +184,9 @@ export default {
     }
   },
   methods: {
+    goGithub() {
+      window.open('https://github.com/zhijianfree/Windy', '__blank')
+    },
     getUserMenus() {
       resourceApi.getUserMenuList().then((res) => {
         let array = []
@@ -264,6 +276,12 @@ body {
 .user-icon {
   position: absolute;
   right: 20px;
+  top: 10px;
+  cursor: pointer;
+}
+.github-icon {
+  position: absolute;
+  right: 150px;
   top: 10px;
   cursor: pointer;
 }
