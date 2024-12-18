@@ -16,14 +16,14 @@
         <el-submenu index="" v-auth="'m10015'">
           <template slot="title">
             <i class="el-icon-s-marketing"></i>
-            <span slot="title">工作台</span>
+            <span slot="title">工作空间</span>
           </template>
           <el-menu-item index="/workbench" v-auth="'m10000'">
             <i class="el-icon-s-platform"></i>
             个人工作台</el-menu-item
           >
           <el-menu-item index="/space" v-auth="'m10001'">
-            <i class="el-icon-s-shop"></i>
+            <i class="el-icon-box"></i>
             空间</el-menu-item
           >
           <el-menu-item index="plugin">

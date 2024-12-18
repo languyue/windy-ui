@@ -178,6 +178,7 @@
       :visible.sync="showUploadDialog"
       title="模版扫描"
       :destroy-on-close="true"
+      @close="closeUpload"
       width="60%"
     >
       <div v-if="parseData.length <= 0">
@@ -194,14 +195,22 @@
       </div>
       <div v-else>
         <h3>扫描结果</h3>
+
         <el-collapse>
           <el-collapse-item
-            name="1"
+            :name="index"
             v-for="(item, index) in parseData"
             :key="index"
           >
             <template slot="title">
               {{ item.name }} - {{ item.description }}
+              <el-tag
+                style="float: right; margin-left: 10px"
+                type="warning"
+                v-if="item.templateId"
+                size="mini"
+                >存在历史插件模版</el-tag
+              >
             </template>
             <TemplateConfig
               :isEdit="isEdit"
@@ -213,11 +222,41 @@
         </el-collapse>
       </div>
 
-      <span slot="footer" class="dialog-footer" v-if="parseData.length > 0">
-        <el-button size="mini" @click="deletePlugin">取消</el-button>
-        <el-button type="primary" size="mini" @click="submitTemplates"
+      <span slot="footer" v-if="parseData.length > 0">
+        <el-button size="mini" @click="closeUpload">取消</el-button>
+        <el-button
+          type="primary"
+          v-if="!existPlugins.length"
+          size="mini"
+          @click="submitTemplates"
           >确定</el-button
         >
+        <el-popover v-else placement="top" width="200" v-model="coverPlugin">
+          <p>导入插件后会覆盖已存在的插件信息，确认导入?</p>
+          <div style="text-align: right; margin: 0">
+            <el-button size="mini" type="text" @click="coverPlugin = false"
+              >取消</el-button
+            >
+            <el-button
+              type="primary"
+              size="mini"
+              @click="
+                () => {
+                  coverPlugin = false
+                  submitTemplates()
+                }
+              "
+              >确定</el-button
+            >
+          </div>
+          <el-button
+            type="primary"
+            size="mini"
+            slot="reference"
+            class="comfirm-btn"
+            >确定</el-button
+          >
+        </el-popover>
       </span>
     </el-dialog>
     <!-- 文件上传结束 -->
@@ -342,7 +381,7 @@
           </el-table-column>
         </el-table>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <span slot="footer">
         <el-button
           type="primary"
           @click="nextStep"
@@ -489,6 +528,7 @@ export default {
       },
       filterText: '',
       chooseService: '',
+      coverPlugin: false,
       previewData: [],
       uploadTemplates: [],
       isCreate: false,
@@ -511,6 +551,7 @@ export default {
         { label: 'Header', value: 'Header' },
       ],
       pluginData: [],
+      existPlugins: [],
     }
   },
   watch: {
@@ -699,6 +740,9 @@ export default {
       })
     },
     deletePlugin() {
+      if (!this.pluginId) {
+        return
+      }
       templateApi.deletePlugin(this.pluginId).then((res) => {
         if (res.data) {
           this.$notify.success('未使用插件，已清理相关数据')
@@ -712,15 +756,29 @@ export default {
       this.$forceUpdate()
     },
     submitTemplates() {
+      this.batchUpdateTemplates()
+    },
+    closeUpload() {
+      this.deletePlugin()
+      this.showUploadDialog = false
+      this.parseData = []
+      this.existPlugins = []
+      this.pluginId = ''
+      this.getTemplatePage()
+      this.getPluginTemplates()
+    },
+    batchUpdateTemplates() {
       let data = {
         templates: this.parseData,
         pluginId: this.pluginId,
+        existPlugins: this.existPlugins,
       }
       templateApi.batchCreateTemplate(data).then((res) => {
         if (res.data) {
           this.$notify.success('添加模版成功')
           this.showUploadDialog = false
           this.parseData = []
+          this.existPlugins = []
           this.pluginId = ''
           this.getTemplatePage()
           this.getPluginTemplates()
@@ -741,6 +799,7 @@ export default {
           this.$notify.success('上传文件成功')
           this.parseData = res.data.templateDefines
           this.pluginId = res.data.pluginId
+          this.existPlugins = res.data.existPlugins
         } else {
           this.$notify.error('上传文件失败')
         }
@@ -872,5 +931,8 @@ export default {
 }
 .param-line {
   margin: 10px;
+}
+.comfirm-btn {
+  margin-left: 10px;
 }
 </style>

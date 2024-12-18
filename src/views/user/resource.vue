@@ -15,7 +15,11 @@
       </el-table-column>
       <el-table-column prop="content" label="资源内容"> </el-table-column>
       <el-table-column prop="operate" label="操作类型"> </el-table-column>
-      <el-table-column prop="description" label="资源描述"> </el-table-column>
+      <el-table-column prop="description" label="资源描述">
+        <template slot-scope="scope">
+          <textView :text="scope.row.description" />
+        </template>
+      </el-table-column>
       <el-table-column prop="gmtCreated" label="创建时间">
         <template slot-scope="scope">
           {{ scope.row.createTime | dateFormat }}
@@ -64,7 +68,7 @@
         </el-form-item>
         <el-form-item label="资源描述">
           <el-input
-            type="testarea"
+            type="textarea"
             :autosize="{ minRows: 2, maxRows: 4 }"
             placeholder="请输入资源描述"
             v-model="resourceForm.description"
@@ -106,7 +110,7 @@
           <el-button type="primary" @click="submitResource('resourceForm')"
             >确认</el-button
           >
-          <el-button type="info">取消</el-button>
+          <el-button @click="closeResourceDialog" type="info">取消</el-button>
         </el-form-item>
       </el-form>
     </el-dialog>
@@ -114,7 +118,11 @@
 </template>
 <script>
 import resourceApi from '../../http/Resource'
+import textView from '../../components/text-view.vue'
 export default {
+  components: {
+    textView,
+  },
   data() {
     return {
       resourceTable: [],

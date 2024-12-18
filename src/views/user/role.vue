@@ -4,7 +4,11 @@
     <el-table :data="roleTable" size="mini" height="500px">
       <el-table-column prop="roleId" label="角色Id"> </el-table-column>
       <el-table-column prop="roleName" label="角色名称"> </el-table-column>
-      <el-table-column prop="description" label="角色描述"> </el-table-column>
+      <el-table-column prop="description" label="角色描述">
+        <template slot-scope="scope">
+          <textView :text="scope.row.description" />
+        </template>
+      </el-table-column>
       <el-table-column prop="gmtCreated" label="创建时间">
         <template slot-scope="scope">
           {{ scope.row.createTime | dateFormat }}
@@ -38,7 +42,7 @@
     <el-dialog
       :title="title"
       :visible.sync="showRoleDialog"
-      width="30%"
+      width="40%"
       :before-close="closeRoleDialog"
     >
       <el-form
@@ -53,8 +57,8 @@
         </el-form-item>
         <el-form-item label="角色描述">
           <el-input
-            type="testarea"
-            :autosize="{ minRows: 2, maxRows: 4 }"
+            type="textarea"
+            :autosize="{ minRows: 2, maxRows: 6 }"
             placeholder="请输入角色描述"
             v-model="roleForm.description"
           />
@@ -63,7 +67,7 @@
           <el-button type="primary" @click="submitRole('roleForm')"
             >确认</el-button
           >
-          <el-button type="info">取消</el-button>
+          <el-button @click="closeRoleDialog" type="info">取消</el-button>
         </el-form-item>
       </el-form>
     </el-dialog>
@@ -85,7 +89,7 @@
         </el-form-item>
         <el-form-item label="角色描述">
           <el-input
-            type="testarea"
+            type="textarea"
             :autosize="{ minRows: 2, maxRows: 4 }"
             placeholder="请输入角色描述"
             v-model="resourceForm.description"
@@ -118,7 +122,11 @@
 <script>
 import roleApi from '../../http/Role'
 import resourceApi from '../../http/Resource'
+import textView from '../../components/text-view.vue'
 export default {
+  components: {
+    textView,
+  },
   data() {
     return {
       roleTable: [],
@@ -254,6 +262,6 @@ export default {
 <style lang="less" scoped>
 .content {
   margin: 20px;
-  width: 70%;
+  width: 100%;
 }
 </style>

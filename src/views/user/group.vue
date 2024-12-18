@@ -1,7 +1,7 @@
 <template>
   <div class="content">
     <el-row :gutter="20">
-      <el-col :span="6">
+      <el-col :span="5">
         <h3>组织列表</h3>
         <div>
           <el-button type="primary" @click="trggerShow" size="mini"
@@ -35,7 +35,7 @@
         </div>
       </el-col>
 
-      <el-col :span="17">
+      <el-col :span="19">
         <el-empty v-if="!chooseGroup" description="请在左侧选择组织"></el-empty>
         <div v-else>
           <h3>
@@ -99,6 +99,9 @@
                   <el-table-column prop="roleName" label="角色名称">
                   </el-table-column>
                   <el-table-column prop="description" label="角色描述">
+                    <template slot-scope="scope">
+                      <textView :text="scope.row.description" />
+                    </template>
                   </el-table-column>
                   <el-table-column prop="createTime" label="创建时间">
                     <template slot-scope="scope">
@@ -256,7 +259,11 @@ import userApi from '../../http/User'
 import groupApi from '../../http/Group'
 import roleApi from '../../http/Role'
 import resourceApi from '../../http/Resource'
+import textView from '../../components/text-view.vue'
 export default {
+  components: {
+    textView,
+  },
   data() {
     return {
       treeList: [],
