@@ -360,6 +360,7 @@
       <history ref="historyComp" :feature="featureId" />
     </el-drawer>
     <!-- 显示历史日志结束 -->
+    <!-- 关联其他服务模版开始 -->
     <el-dialog
       :visible.sync="showRelatedTemplate"
       title="关联服务模版"
@@ -407,6 +408,7 @@
         >
       </div>
     </el-dialog>
+    <!-- 关联其他服务模版结束 -->
   </div>
 </template>
 <script>
@@ -434,24 +436,30 @@ export default {
   watch: {
     feature: {
       handler(val) {
-        this.featureId = val
-        this.getFeatureInfo()
+        if (val != this.featureId) {
+          this.featureId = val
+          this.getFeatureInfo()
+        }
       },
       deep: true,
       immediate: true,
     },
     service: {
       handler(val) {
-        this.serviceId = val
-        this.getExecutePoint()
+        if (val != this.serviceId) {
+          this.serviceId = val
+          this.getExecutePoint()
+        }
       },
       deep: true,
       immediate: true,
     },
     case: {
       handler(val) {
-        this.caseId = val
-        this.getCaseInfo()
+        if (val != this.caseId) {
+          this.caseId = val
+          this.getCaseInfo()
+        }
       },
       deep: true,
       immediate: true,
@@ -832,6 +840,7 @@ export default {
       this.displayExepoints()
     },
     startDrag(event, item) {
+      this.isEdit = !this.isEdit
       this.dragGroupList = item.list
       this.isDrag = true
     },
@@ -893,19 +902,41 @@ export default {
       this.getTemplates()
     },
     getCaseInfo() {
+      if (!this.caseId) {
+        this.caseId = this.$route.query.caseId
+      }
       testCaseApi.getTestCaseDetail(this.caseId).then((res) => {
         this.caseInfo = res.data
         this.getTemplates()
       })
     },
     getTemplates() {
-      if (!this.caseInfo) {
-        this.getCaseInfo()
-        return
-      }
+      this.caseId = this.$route.query.caseId
+      testCaseApi.getTestCaseDetail(this.caseId).then((res) => {
+        this.caseInfo = res.data
+        if (this.caseInfo.caseType == 2) {
+          featureApi.getAllTemplates().then((res) => {
+            let serviceIds = []
+            let array = res.data
+            array.forEach((e) => {
+              e.isTool = e.templateType != 1
+              e.executeType = e.templateType
+              e.service = e.service ? e.service : ''
 
-      if (this.caseInfo.caseType == 2) {
-        featureApi.getAllTemplates().then((res) => {
+              if (serviceIds.indexOf(e.owner) == -1) {
+                serviceIds.push(e.owner)
+              }
+            })
+            const idString = Array.from(serviceIds).join(',')
+            serviceApi.getServicesByIds(idString).then((res) => {
+              this.serviceList = res.data
+              this.exchangeGroup(array)
+              this.featureItemList = array
+            })
+          })
+          return
+        }
+        featureApi.getServiceTemplates(this.serviceId).then((res) => {
           let array = res.data
           array.forEach((e) => {
             e.isTool = e.templateType != 1
@@ -915,54 +946,41 @@ export default {
           this.exchangeGroup(array)
           this.featureItemList = array
         })
-        return
-      }
-      featureApi.getServiceTemplates(this.serviceId).then((res) => {
-        let array = res.data
-        array.forEach((e) => {
-          e.isTool = e.templateType != 1
-          e.executeType = e.templateType
-          e.service = e.service ? e.service : ''
-        })
-        this.exchangeGroup(array)
-        this.featureItemList = array
       })
     },
     exchangeGroup(array) {
-      let map = {}
+      let serviceTemplateMap = {}
       array.forEach((e) => {
-        let list = map[e.owner]
+        let list = serviceTemplateMap[e.owner]
         if (!list) {
           list = []
         }
 
         list.push(e)
-        map[e.owner] = list
+        serviceTemplateMap[e.owner] = list
       })
 
-      const serviceObj = {}
-      this.serviceList.forEach((obj) => (serviceObj[obj.serviceId] = obj))
+      //将服务列表转成新的对象
+      const serviceMap = this.serviceList.reduce((acc, item) => {
+        acc[item.serviceId] = item.serviceName
+        return acc
+      }, {})
 
       let groupList = []
-      for (let key in map) {
+      for (let key in serviceTemplateMap) {
         if (key && key != '') {
-          let service = serviceObj[key]
+          let service = serviceMap[key]
           if (service) {
             groupList.push({
-              name: service.serviceName,
+              name: service,
               isActive: false,
               showList: false,
-              list: map[key],
+              list: serviceTemplateMap[key],
             })
           }
         }
       }
       this.serviceGroup = groupList
-    },
-    getServices() {
-      serviceApi.getServices().then((res) => {
-        this.serviceList = res.data
-      })
     },
     displayExepoints() {
       this.displayList = []
@@ -975,6 +993,11 @@ export default {
       })
       this.displayList = array
       this.$forceUpdate()
+    },
+    getServices() {
+      serviceApi.getServices().then((res) => {
+        this.serviceList = res.data
+      })
     },
   },
   created() {

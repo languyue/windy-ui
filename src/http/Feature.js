@@ -158,7 +158,7 @@ export default {
   },
   addRelatedService(data) {
     return new Promise((resolve, reject) => {
-      let url = `/v1/devops/feature//related/templates`
+      let url = `/v1/devops/feature/related/templates`
       http
         .post(url, data)
         .then((res) => {

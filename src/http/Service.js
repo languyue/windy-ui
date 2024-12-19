@@ -79,6 +79,19 @@ export default {
         })
     })
   },
+  getServicesByIds(idString) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/services/list?serviceIds=${idString}`
+      http
+        .get(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
   createService(data) {
     return new Promise((resolve, reject) => {
       let url = `/v1/devops/services`
