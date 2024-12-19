@@ -120,7 +120,7 @@
 
         <!-- 需求列表开始 -->
         <el-tab-pane label="需求" name="demand">
-          <span slot="label"><i class="el-icon-s-shop"></i> 需求</span>
+          <span slot="label"><i class="el-icon-camera-solid"></i> 需求</span>
           <div class="content-detail">
             <div
               class="bug-div"

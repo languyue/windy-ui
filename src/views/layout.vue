@@ -160,7 +160,7 @@
       title="节点监控"
       :visible.sync="showDrawer"
       direction="rtl"
-      size="60%"
+      size="70%"
     >
       <monitor />
     </el-drawer>

@@ -24,7 +24,6 @@
                 type="text"
                 v-model="systemForm.gitDomain"
                 placeholder="请输入git域名,例如: https://gitlab.cn 或 使用IP+ 端口"
-                show-password
               />
             </el-form-item>
             <el-form-item
@@ -58,7 +57,6 @@
                 type="text"
                 v-model="repoForm.repositoryUrl"
                 placeholder="请输入镜像仓库地址"
-                show-password
               />
             </el-form-item>
             <el-form-item label="用户" prop="userName">
@@ -66,7 +64,6 @@
                 type="text"
                 v-model="repoForm.userName"
                 placeholder="访问镜像仓库的用户"
-                show-password
               />
             </el-form-item>
             <el-form-item label="密码" prop="password">
@@ -82,7 +79,7 @@
             </el-form-item>
           </el-form>
         </el-tab-pane>
-        <el-tab-pane label="Maven配置" name="maven">
+        <el-tab-pane label="二方包Maven配置" name="maven">
           <el-form :model="mavenForm" size="mini" label-width="120px">
             <h5>Maven仓库</h5>
             <el-form-item label="推送远程仓库" prop="mavenUrl">
@@ -90,7 +87,6 @@
                 type="text"
                 v-model="mavenForm.mavenUrl"
                 placeholder="仓库地址"
-                show-password
               />
             </el-form-item>
             <el-form-item label="用户" prop="userName">
@@ -98,7 +94,6 @@
                 type="text"
                 v-model="mavenForm.userName"
                 placeholder="访问镜像仓库的用户"
-                show-password
               />
             </el-form-item>
             <el-form-item label="密码" prop="password">
@@ -152,16 +147,21 @@
               <el-table-column label="描述" prop="description">
               </el-table-column>
               <el-table-column align="right">
-                <template slot="header" slot-scope="scope">
+                <template slot="header">
                   <el-input
                     v-model="searchText"
                     clearable
-                    @input="changeFilter(scope.row)"
                     size="mini"
                     placeholder="输入版本名称搜索"
                   />
                 </template>
                 <template slot-scope="scope">
+                  <el-button
+                    size="mini"
+                    type="primary"
+                    @click="handleEdit(scope.row)"
+                    >编辑</el-button
+                  >
                   <el-button
                     size="mini"
                     type="danger"
@@ -175,6 +175,9 @@
         </el-tab-pane>
       </el-tabs>
     </div>
+    <div class="version-box">
+      ©Windy, 保留所有权利-控制台版本: {{ consoleVersion }}
+    </div>
     <el-dialog
       title="新增语言版本"
       :visible.sync="showVersionDialog"
@@ -183,7 +186,7 @@
       <el-form
         :model="versionForm"
         ref="versionForm"
-        label-width="80px"
+        label-width="120px"
         :rules="versionRules"
         size="mini"
       >
@@ -207,6 +210,24 @@
           <el-input
             v-model="versionForm.description"
             placeholder="请输入版本描述"
+          />
+        </el-form-item>
+        <el-form-item v-if="versionForm.type == 'Maven'" label="maven仓库">
+          <el-input
+            v-model="toolConfig.repositoryUrl"
+            placeholder="请输入maven仓库地址"
+          />
+        </el-form-item>
+        <el-form-item v-if="versionForm.type == 'Maven'" label="仓库用户">
+          <el-input
+            v-model="toolConfig.userName"
+            placeholder="请输入访问仓库的用户"
+          />
+        </el-form-item>
+        <el-form-item v-if="versionForm.type == 'Maven'" label="密码">
+          <el-input
+            v-model="toolConfig.password"
+            placeholder="请输入maven仓库的用户密码"
           />
         </el-form-item>
         <el-form-item>
@@ -245,12 +266,24 @@ export default {
           { max: 100, message: '安装路径长度最多100个字符', trigger: 'blur' },
         ],
       },
+      consoleVersion: '',
+      toolConfig: {},
+      editTool: false,
     }
   },
   methods: {
-    changeFilter() {},
     cancelVersion() {
       this.showVersionDialog = false
+      this.toolConfig = {}
+      this.editTool = false
+    },
+    handleEdit(row) {
+      this.editTool = true
+      this.showVersionDialog = true
+      this.versionForm = row
+      if (row.buildConfig) {
+        this.toolConfig = JSON.parse(row.buildConfig)
+      }
     },
     handleDelete(row) {
       this.$alert(
@@ -283,15 +316,28 @@ export default {
         if (!valid) {
           return false
         }
-        systemApi.createTool(this.versionForm).then((res) => {
-          if (res.data) {
-            this.$notify.success('添加构建工具成功')
-            this.cancelVersion()
-            this.getVersionList()
-          } else {
-            this.$notify.error('添加构建工具失败')
-          }
-        })
+        this.versionForm.buildConfig = JSON.stringify(this.toolConfig)
+        if (!this.editTool) {
+          systemApi.createTool(this.versionForm).then((res) => {
+            if (res.data) {
+              this.$notify.success('添加构建工具成功')
+              this.cancelVersion()
+              this.getVersionList()
+            } else {
+              this.$notify.error('添加构建工具失败')
+            }
+          })
+        } else {
+          systemApi.updateTool(this.versionForm).then((res) => {
+            if (res.data) {
+              this.$notify.success('修改构建工具成功')
+              this.cancelVersion()
+              this.getVersionList()
+            } else {
+              this.$notify.error('修改构建工具失败')
+            }
+          })
+        }
       })
     },
     getVersionList() {
@@ -368,8 +414,14 @@ export default {
         this.getVersionList()
       }
     },
+    getSystemVersion() {
+      systemApi.getSystemVersion().then((res) => {
+        this.consoleVersion = res.data.consoleVersion
+      })
+    },
   },
   created() {
+    this.getSystemVersion()
     this.getGitConfig()
   },
 }
@@ -379,8 +431,18 @@ export default {
   margin: 10px;
   width: 80%;
 }
-.verion-content {
+.content {
   width: 70%;
   padding: 10px;
+}
+.version-box {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+
+  color: #c0c4cc;
+  text-align: center;
+  font-size: 12px;
 }
 </style>

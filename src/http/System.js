@@ -1,5 +1,18 @@
 import http from '../lib/http'
 export default {
+  getSystemVersion() {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/system/version`
+      http
+        .get(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
   updateGitConfig(data) {
     return new Promise((resolve, reject) => {
       let url = `/v1/devops/pipeline/system/config/git`
@@ -109,6 +122,19 @@ export default {
       let url = `/v1/devops/system/builds`
       http
         .post(url, data)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
+  updateTool(data) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/system/build`
+      http
+        .put(url, data)
         .then((res) => {
           resolve(res)
         })

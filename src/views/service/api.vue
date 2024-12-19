@@ -1091,6 +1091,9 @@ export default {
       this.showGenerateApi = false
     },
     getBuildParam() {
+      if (!this.serviceId) {
+        return
+      }
       serviceApi.getGenerate(this.serviceId).then((res) => {
         if (!res.data) {
           return

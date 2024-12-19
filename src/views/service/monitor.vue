@@ -29,6 +29,7 @@
               <span style="margin-left: 10px">{{ scope.row.ip }}</span>
             </template>
           </el-table-column>
+          <el-table-column label="应用版本" prop="version"> </el-table-column>
           <el-table-column label="cpu" prop="cpu"> </el-table-column>
           <el-table-column label="内存" prop="heap"> </el-table-column>
           <el-table-column label="线程数" prop="threads"> </el-table-column>
@@ -84,6 +85,7 @@
             <span style="margin-left: 10px">{{ scope.row.ip }}</span>
           </template>
         </el-table-column>
+        <el-table-column label="应用版本" prop="version"> </el-table-column>
         <el-table-column label="cpu" prop="cpu"> </el-table-column>
         <el-table-column label="内存" prop="heap"> </el-table-column>
         <el-table-column label="线程数" prop="threads"> </el-table-column>
@@ -153,6 +155,7 @@ export default {
             if (e) {
               let item = e.physics
               item.size = e.waitQuerySize
+              item.version = e.version
               this.clientData.push(item)
             }
           })
@@ -163,6 +166,7 @@ export default {
             if (e) {
               let item = e.physics
               item.size = e.taskCount
+              item.version = e.version
               this.masterData.push(item)
             }
           })
