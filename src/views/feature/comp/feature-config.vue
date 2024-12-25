@@ -901,7 +901,7 @@ export default {
       this.displayExepoints()
     },
     startDrag(event, item) {
-      this.isEdit = !this.isEdit
+      this.isEdit = true
       this.dragGroupList = item.list
       this.isDrag = true
     },
