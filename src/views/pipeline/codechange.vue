@@ -55,6 +55,13 @@
                   size="small"
                   >删除</el-button
                 >
+                <el-button
+                  @click="startEdit(scope.row)"
+                  slot="reference"
+                  type="text"
+                  size="small"
+                  >编辑</el-button
+                >
               </template>
             </el-table-column>
           </el-table>
@@ -104,7 +111,7 @@
         <el-form-item label="关联需求/bug" prop="relationId">
           <el-autocomplete
             style="width: 100%"
-            v-model="changeForm.relationId"
+            v-model="selectItem.name"
             :fetch-suggestions="querySearchAsync"
             placeholder="请输入关联的需求、缺陷、任务名称"
             @select="handleSelect"
@@ -126,6 +133,7 @@
         <el-button @click="closeDialog" size="mini">取 消</el-button>
         <el-button
           type="primary"
+          v-clickOnce
           @click="confirmChange('changeForm')"
           size="mini"
           >确 定</el-button
@@ -146,7 +154,7 @@ export default {
       changeForm: {
         branchType: 'custom',
       },
-      selectItem: null,
+      selectItem: {},
       dialogFormVisible: false,
       loading: false,
       disableBranch: false,
@@ -168,6 +176,18 @@ export default {
     }
   },
   methods: {
+    startEdit(row) {
+      this.dialogFormVisible = true
+      this.changeForm = JSON.parse(JSON.stringify(row))
+      this.changeForm.relationId = row.relationId
+      this.querySearchAsync('', (array) => {
+        array.forEach((e) => {
+          if (e.relationId == row.relationId) {
+            this.selectItem = e
+          }
+        })
+      })
+    },
     querySearchAsync(text, cb) {
       requestApi.relationList(text).then((res) => {
         let array = []

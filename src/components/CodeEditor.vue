@@ -1,10 +1,12 @@
 <template>
-  <div>
+  <div class="edit-content">
     <codemirror
       ref="codemirror"
       v-model="content"
       :options="options"
     ></codemirror>
+
+    <div class="tip" v-if="language == 'javascript'">只支持ES5</div>
   </div>
 </template>
 
@@ -80,17 +82,6 @@ export default {
     getValue() {
       return this.content
     },
-    // handleVisibilityChange() {
-    //   if (document.visibilityState === 'visible') {
-    //     this.refreshEditor()
-    //   }
-    // },
-    // handleFocus() {
-    //   // 窗口获取焦点时刷新编辑器并重新设置焦点
-    //   if (this.$refs.codemirror) {
-    //     this.refreshEditor()
-    //   }
-    // },
     refreshEditor() {
       this.$nextTick(() => {
         if (this.$refs.codemirror) {
@@ -100,17 +91,17 @@ export default {
       })
     },
   },
-  // mounted() {
-  //   // window.addEventListener('focus', this.handleFocus)
-  //   // document.addEventListener('visibilitychange', this.handleVisibilityChange)
-  // },
-  // beforeDestroy() {
-  //   // 移除事件监听器
-  //   window.removeEventListener('focus', this.handleFocus)
-  //   document.removeEventListener(
-  //     'visibilitychange',
-  //     this.handleVisibilityChange
-  //   )
-  // },
 }
 </script>
+<style lang="less" scoped>
+.edit-content {
+  position: relative;
+  .tip {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: #fff;
+    opacity: 0.5;
+  }
+}
+</style>

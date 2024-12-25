@@ -376,7 +376,9 @@
                         <el-col :span="4">
                           <el-input
                             size="mini"
-                            :disabled="data.hide"
+                            :disabled="
+                              data.hide || node.parent.data.type == 'Array'
+                            "
                             v-model="data.paramKey"
                             placeholder="请输入参数名称"
                           ></el-input>
@@ -386,7 +388,9 @@
                             v-model="data.position"
                             style="with: 100%"
                             size="mini"
-                            :disabled="data.freezed"
+                            :disabled="
+                              data.freezed || node.parent.data.type == 'Array'
+                            "
                             placeholder="请选择参数位置"
                           >
                             <el-option label="Path" value="Path"> </el-option>

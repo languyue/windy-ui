@@ -80,6 +80,11 @@
             <text-view :text="scope.row.bugName"></text-view>
           </template>
         </el-table-column>
+        <el-table-column prop="scene" label="缺陷描述">
+          <template slot-scope="scope">
+            <text-view :text="scope.row.scene" />
+          </template>
+        </el-table-column>
         <el-table-column prop="acceptorName" label="负责人"> </el-table-column>
         <el-table-column prop="status" label="缺陷状态">
           <template slot-scope="scope">
@@ -91,7 +96,7 @@
             {{ scope.row.createTime | dateFormat }}
           </template>
         </el-table-column>
-        <el-table-column prop="tag" label="缺陷标签"> </el-table-column>
+
         <el-table-column label="操作" width="100">
           <template slot-scope="scope">
             <el-button type="text" @click="viewBug(scope.row)" size="small"
@@ -285,7 +290,6 @@ export default {
       this.showBugDialog = false
       this.bugForm = {}
       this.getBugList()
-      this.$refs.bugForm.resetFields()
     },
     getBugList() {
       bugApi

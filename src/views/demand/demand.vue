@@ -78,6 +78,11 @@
     <div class="table-list">
       <el-table :data="tableData" height="500" size="mini" style="width: 100%">
         <el-table-column prop="demandName" label="需求名称"> </el-table-column>
+        <el-table-column prop="demandContent" label="需求描述">
+          <template slot-scope="scope">
+            <text-view :text="scope.row.demandContent" />
+          </template>
+        </el-table-column>
         <el-table-column prop="proposerName" label="提出人" width="180">
         </el-table-column>
         <el-table-column prop="status" label="需求状态">
@@ -90,7 +95,7 @@
             <i class="el-icon-date" /> {{ scope.row.expectTime | dayFormat }}
           </template>
         </el-table-column>
-        <el-table-column prop="tag" label="需求标签"> </el-table-column>
+
         <el-table-column label="操作" width="100">
           <template slot-scope="scope">
             <el-button type="text" @click="viewDemand(scope.row)" size="small"
@@ -252,6 +257,7 @@ import demandApi from '../../http/DemandApi'
 import userApi from '../../http/User'
 import detail from './detail.vue'
 import userSearch from '../../components/user-search.vue'
+import TextView from '../../components/text-view.vue'
 export default {
   props: {
     space: {
@@ -266,6 +272,7 @@ export default {
   components: {
     detail,
     userSearch,
+    TextView,
   },
   watch: {
     space: {

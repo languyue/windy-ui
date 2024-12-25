@@ -4,6 +4,7 @@
     <span v-else>
       <el-tooltip
         v-if="showpop"
+        popper-class="toptip"
         effect="dark"
         :content="fullText"
         placement="top-start"
@@ -54,8 +55,14 @@ export default {
   },
 }
 </script>
-<style lang="less" scoped>
-.text-content{
+<style>
+.text-content {
   cursor: pointer;
+}
+
+.toptip {
+  white-space: normal;
+  word-break: break-word; /* 可选，防止长单词溢出 */
+  max-width: 200px; /* 可选，设置最大宽度 */
 }
 </style>

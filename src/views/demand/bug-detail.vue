@@ -68,11 +68,25 @@
               placeholder="请输入缺陷环境"
             ></el-input>
           </el-form-item>
-          <el-form-item label="关联需求" prop="demandId">
-            <el-input
-              placeholder="请输入关联的需求ID"
-              v-model="bugForm.demandId"
-            ></el-input>
+          <el-form-item label="关联需求" prop="relationId">
+            <el-autocomplete
+              style="width: 100%"
+              v-model="selectItem.name"
+              :fetch-suggestions="querySearchAsync"
+              placeholder="请输入关联的需求、缺陷、任务名称"
+              @select="handleSelect"
+            >
+              <template slot-scope="{ item }">
+                <div class="query-type demand" v-if="item.relationType == 1">
+                  需求
+                </div>
+                <div class="query-type bug" v-else-if="item.relationType == 2">
+                  缺陷
+                </div>
+                <div class="query-type work" v-else>任务</div>
+                <span>{{ item.value }}</span>
+              </template>
+            </el-autocomplete>
           </el-form-item>
           <el-form-item label="缺陷状态" v-if="edit">
             <el-select v-model="bugForm.status" placeholder="请选择缺陷状态">
@@ -123,6 +137,7 @@
 </template>
 <script>
 import bugApi from '../../http/BugApi'
+import requestApi from '../../http/CodeChange'
 import userSearch from '../../components/user-search.vue'
 export default {
   components: {
@@ -173,7 +188,7 @@ export default {
       bugRule: {
         bugName: [
           { required: true, message: '请输入缺陷名称', trigger: 'blur' },
-          { min: 10, message: '缺陷名称最少10个字符', trigger: 'blur' },
+          { min: 4, message: '缺陷名称最少4个字符', trigger: 'blur' },
         ],
         level: [
           { required: true, message: '请选择缺陷优先级', trigger: 'change' },
@@ -183,9 +198,27 @@ export default {
           { required: true, message: '请选择缺陷负责人', trigger: 'change' },
         ],
       },
+      selectItem: {},
     }
   },
   methods: {
+    querySearchAsync(text, cb) {
+      if (!text) {
+        text = ''
+      }
+      requestApi.relationList(text).then((res) => {
+        let array = []
+        res.data.forEach((e) => {
+          e.value = e.name
+          array.push(e)
+        })
+        cb(array)
+      })
+    },
+    handleSelect(item) {
+      this.selectItem = item
+      this.bugForm.relationId = item.relationId
+    },
     selectUser(userList) {
       this.bugForm.acceptor = userList[0].userId
       this.bugForm.acceptorName = userList[0].name
@@ -207,6 +240,13 @@ export default {
           this.bugForm.acceptorUser = [
             { userId: this.bugForm.acceptor, name: this.bugForm.acceptorName },
           ]
+          this.querySearchAsync('', (array) => {
+            array.forEach((e) => {
+              if (e.relationId == this.bugForm.relationId) {
+                this.selectItem = e
+              }
+            })
+          })
         })
       }
     },
@@ -272,3 +312,28 @@ export default {
   },
 }
 </script>
+<style lang="less" scoped>
+.query-type {
+  margin-top: 10px;
+  margin-right: 10px;
+  display: inline-block;
+  height: 20px;
+  padding: 0 5px;
+  line-height: 20px;
+  font-size: 12px;
+  color: #fff;
+  border-radius: 4px;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.demand {
+  background-color: #409eff;
+}
+.bug {
+  background-color: #f56c6c;
+}
+.work {
+  background-color: #909399;
+}
+</style>

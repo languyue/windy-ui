@@ -130,6 +130,15 @@
               </span>
             </el-statistic>
           </el-col>
+          <el-col :span="6">
+            <el-statistic
+              group-separator=","
+              :precision="0"
+              :value="statics.featureCount"
+              :value-style="{ fontSize: '40px', fontWeight: 900 }"
+              title="用例总数"
+            ></el-statistic>
+          </el-col>
         </el-row>
       </div>
     </div>

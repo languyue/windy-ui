@@ -179,7 +179,7 @@
       ©Windy, 保留所有权利-控制台版本: {{ consoleVersion }}
     </div>
     <el-dialog
-      title="新增语言版本"
+      title="构建版本管理"
       :visible.sync="showVersionDialog"
       @close="cancelVersion"
     >
@@ -212,24 +212,51 @@
             placeholder="请输入版本描述"
           />
         </el-form-item>
-        <el-form-item v-if="versionForm.type == 'Maven'" label="maven仓库">
-          <el-input
-            v-model="toolConfig.repositoryUrl"
-            placeholder="请输入maven仓库地址"
-          />
+        <el-form-item label="仓库配置" v-if="versionForm.type == 'Maven'">
+          <div v-for="(item, index) in repositories" :key="index">
+            <el-row>
+              <el-col :span="22">
+                <el-form
+                  size="mini"
+                  label-width="80px"
+                  label-position="left"
+                  class="form-box"
+                >
+                  <el-form-item label="仓库ID">
+                    <el-input
+                      v-model="item.repositoryId"
+                      placeholder="请输入仓库ID"
+                    />
+                  </el-form-item>
+                  <el-form-item label="仓库地址">
+                    <el-input
+                      v-model="item.repositoryUrl"
+                      placeholder="请输入maven仓库地址"
+                    />
+                  </el-form-item>
+                  <el-form-item label="仓库用户">
+                    <el-input
+                      v-model="item.userName"
+                      placeholder="请输入访问仓库的用户"
+                    />
+                  </el-form-item>
+                  <el-form-item label="密码">
+                    <el-input
+                      v-model="item.password"
+                      placeholder="请输入maven仓库的用户密码"
+                    />
+                  </el-form-item> </el-form
+              ></el-col>
+              <el-col :span="2"
+                ><i
+                  @click="deleteItem(index)"
+                  class="el-icon-delete-solid delete-icon"
+              /></el-col>
+            </el-row>
+          </div>
+          <div class="add-text" @click="addRepository">新增</div>
         </el-form-item>
-        <el-form-item v-if="versionForm.type == 'Maven'" label="仓库用户">
-          <el-input
-            v-model="toolConfig.userName"
-            placeholder="请输入访问仓库的用户"
-          />
-        </el-form-item>
-        <el-form-item v-if="versionForm.type == 'Maven'" label="密码">
-          <el-input
-            v-model="toolConfig.password"
-            placeholder="请输入maven仓库的用户密码"
-          />
-        </el-form-item>
+
         <el-form-item>
           <el-button type="primary" @click="submitVersion('versionForm')"
             >确认</el-button
@@ -267,14 +294,20 @@ export default {
         ],
       },
       consoleVersion: '',
-      toolConfig: {},
       editTool: false,
+      repositories: [],
     }
   },
   methods: {
+    deleteItem(index) {
+      this.repositories.splice(index, 1)
+    },
+    addRepository() {
+      this.repositories.push({})
+    },
     cancelVersion() {
       this.showVersionDialog = false
-      this.toolConfig = {}
+      this.repositories = []
       this.editTool = false
     },
     handleEdit(row) {
@@ -282,7 +315,7 @@ export default {
       this.showVersionDialog = true
       this.versionForm = row
       if (row.buildConfig) {
-        this.toolConfig = JSON.parse(row.buildConfig)
+        this.repositories = JSON.parse(row.buildConfig)
       }
     },
     handleDelete(row) {
@@ -316,7 +349,7 @@ export default {
         if (!valid) {
           return false
         }
-        this.versionForm.buildConfig = JSON.stringify(this.toolConfig)
+        this.versionForm.buildConfig = JSON.stringify(this.repositories)
         if (!this.editTool) {
           systemApi.createTool(this.versionForm).then((res) => {
             if (res.data) {
@@ -444,5 +477,25 @@ export default {
   color: #c0c4cc;
   text-align: center;
   font-size: 12px;
+}
+.form-box {
+  border-left: 4px solid #409eff;
+  padding-left: 5px;
+}
+.delete-icon {
+  margin-left: 20px !important;
+  cursor: pointer;
+}
+.add-text {
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  vertical-align: middle;
+  border: 1px dashed #c0c4cc;
+  margin-top: 20px;
+  width: 200px;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  cursor: pointer;
 }
 </style>

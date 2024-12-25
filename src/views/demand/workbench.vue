@@ -475,8 +475,10 @@ export default {
     },
     showEditWork(row) {
       this.getAllData(() => {
+        console.log('ddddd', this.allData, row)
         this.allData.forEach((e) => {
           if (e.relationId == row.relatedId) {
+            console.log('ddddd', 'hui diao')
             this.selectItem = e
           }
         })
@@ -485,6 +487,7 @@ export default {
       this.showTaskDialog = true
       this.isEditTask = true
       this.taskForm = JSON.parse(JSON.stringify(row))
+      this.taskForm.relationId = row.relatedId
     },
     submitTask(formName) {
       this.$refs[formName].validate((valid) => {

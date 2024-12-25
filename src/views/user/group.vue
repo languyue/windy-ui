@@ -179,8 +179,11 @@
 
     <el-dialog :visible.sync="showUserDialog" :title="userTitle">
       <el-form v-model="userForm" label-width="80px" size="mini">
-        <el-form-item label="用户名称">
+        <el-form-item label="用户名">
           <el-input v-model="userForm.userName" placeholder="请输入用户名称" />
+        </el-form-item>
+        <el-form-item label="用户昵称">
+          <el-input v-model="userForm.nickName" placeholder="请输入用户昵称" />
         </el-form-item>
         <el-form-item label="密码">
           <el-input
@@ -189,9 +192,7 @@
             show-password
           />
         </el-form-item>
-        <el-form-item label="用户昵称">
-          <el-input v-model="userForm.nickName" placeholder="请输入用户昵称" />
-        </el-form-item>
+
         <el-form-item label="重置密码" v-if="edistUser">
           <el-button
             type="primary"
