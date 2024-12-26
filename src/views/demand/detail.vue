@@ -69,7 +69,7 @@
             >
             </el-input>
           </el-form-item>
-          <el-form-item label="附件"> xxxx.doc </el-form-item>
+          <!-- <el-form-item label="附件"> xxxx.doc </el-form-item> -->
 
           <div class="comments-div">
             <div>
