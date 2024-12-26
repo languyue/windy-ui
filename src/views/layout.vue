@@ -2,6 +2,9 @@
   <el-container>
     <!-- 侧边栏 -->
     <el-header class="header">
+      <div class="logo-box">
+        <el-image class="logo-image" :src="logoUrl" fit="contain"></el-image>
+      </div>
       <!-- 侧边导航 -->
       <el-menu
         mode="horizontal"
@@ -171,6 +174,7 @@ import resourceApi from '../http/Resource'
 import windyTool from '../assets/windy-tool.png'
 import userApi from '../http/User'
 import cookies from 'js-cookie'
+import imageLogo from '../assets/windy.png'
 import monitor from './service/monitor.vue'
 export default {
   components: {
@@ -180,6 +184,7 @@ export default {
     return {
       user: {},
       imageUrl: windyTool,
+      logoUrl: imageLogo,
       showDrawer: false,
     }
   },
@@ -292,5 +297,19 @@ body {
 .user-div span {
   font-size: 14px;
   margin-left: 5px;
+}
+.logo-box {
+  position: absolute;
+  top: 50%;
+  left: 20px;
+  transform: translateY(-50%);
+  margin-left: 20px;
+}
+
+.logo-image {
+  background: #fff;
+  border-radius: 40px;
+  width: 40px;
+  height: 40px;
 }
 </style>

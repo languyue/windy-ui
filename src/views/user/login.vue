@@ -1,8 +1,10 @@
 <template>
   <div class="content">
-    <div class="video-background">
+    <div class="background">
       <div class="login-div">
-        <div class="title">Windy</div>
+        <div class="title">
+          <el-image class="image" :src="windyImage" fit="contain"></el-image>
+        </div>
 
         <el-form
           size="small"
@@ -44,11 +46,13 @@
 <script>
 import userApi from '../../http/User'
 import resourceApi from '../../http/Resource'
+import imageLogo from '../../assets/windy.png'
 import cookies from 'js-cookie'
 export default {
   data() {
     return {
       loginForm: {},
+      windyImage: imageLogo,
     }
   },
   methods: {
@@ -123,6 +127,12 @@ export default {
       line-height: 50px;
       text-align: center;
       vertical-align: middle;
+
+      .image {
+        width: 150px;
+        height: 150px;
+        top: -50px;
+      }
     }
     .form-div {
       margin: 10% 20px;
@@ -138,13 +148,16 @@ export default {
     }
   }
 
-  .video-background {
+  .background {
     position: relative;
     width: 100%;
     height: 100vh;
     overflow: hidden;
+    background-image: url('../../assets/background.jpeg');
     background-size: cover;
-    background-image: url('../../assets/background.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #d8dae3;
   }
 }
 </style>
