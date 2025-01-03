@@ -3,7 +3,7 @@
     <!-- 侧边栏 -->
     <el-header class="header">
       <div class="logo-box">
-        <el-image class="logo-image" :src="logoUrl" fit="contain"></el-image>
+        <img class="logo-image" :src="logoUrl" s />
       </div>
       <!-- 侧边导航 -->
       <el-menu
@@ -174,7 +174,7 @@ import resourceApi from '../http/Resource'
 import windyTool from '../assets/windy-tool.png'
 import userApi from '../http/User'
 import cookies from 'js-cookie'
-import imageLogo from '../assets/windy.png'
+import imageLogo from '../assets/windy-white.png'
 import monitor from './service/monitor.vue'
 export default {
   components: {
@@ -307,9 +307,7 @@ body {
 }
 
 .logo-image {
-  background: #fff;
-  border-radius: 40px;
-  width: 40px;
-  height: 40px;
+  width: 57px;
+  height: 50px;
 }
 </style>

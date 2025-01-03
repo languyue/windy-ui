@@ -3,7 +3,7 @@
     <div class="background">
       <div class="login-div">
         <div class="title">
-          <el-image class="image" :src="windyImage" fit="contain"></el-image>
+          <img class="image" :src="windyImage" fit="contain" />
         </div>
 
         <el-form
@@ -121,17 +121,14 @@ export default {
     }
 
     .title {
-      margin-top: 50px;
+      margin-top: 40px;
       margin-bottom: 30px;
-      height: 50px;
-      line-height: 50px;
       text-align: center;
       vertical-align: middle;
 
       .image {
-        width: 150px;
-        height: 150px;
-        top: -50px;
+        width: 90px;
+        height: 80px;
       }
     }
     .form-div {

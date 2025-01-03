@@ -58,6 +58,9 @@
             @input="notifyParam"
           />
         </el-col>
+        <el-col :span="1" class="delete-icon"
+          ><i class="el-icon-remove-outline" @click="deleteParam(index)"
+        /></el-col>
       </el-row>
       <div class="add-btn" @click="addNewItem">新增参数</div>
     </el-form-item>
@@ -184,7 +187,7 @@
           </el-select>
         </el-col>
         <el-col :span="1" class="separate-line">-</el-col>
-        <el-col :span="4">
+        <el-col :span="3">
           <el-select
             v-model="item.operator"
             placeholder="选择运算服符"
@@ -207,6 +210,9 @@
             @input="notifyParam"
           />
         </el-col>
+        <el-col :span="1" class="delete-icon"
+          ><i class="el-icon-remove-outline" @click="deleteCompare(index)"
+        /></el-col>
       </el-row>
       <div class="add-btn" @click="addNewCondition">新增条件</div>
     </el-form-item>
@@ -262,6 +268,15 @@ export default {
     }
   },
   methods: {
+    deleteCompare(index) {
+      if (this.compareList.length == 1) {
+        return
+      }
+      this.compareList.splice(index, 1)
+    },
+    deleteParam(index) {
+      this.paramList.splice(index, 1)
+    },
     notifyParam() {
       this.$emit('notifyParam', {
         paramList: this.paramList,
@@ -298,6 +313,11 @@ export default {
 <style scoped>
 .separate-line {
   text-align: center;
+}
+.delete-icon {
+  color: #f56c6c;
+  padding-left: 10px;
+  cursor: pointer;
 }
 .add-btn {
   height: 30px;

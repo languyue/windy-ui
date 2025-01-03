@@ -1172,8 +1172,11 @@ export default {
             }
           })
           if (res.data.pipelineStatus != 4) {
-            this.isRunning = false
             this.getLatestHistory(this.currentPipeline.pipelineId)
+            if (this.currentPipeline.pipelineType == 1 && this.isRunning) {
+              this.getServicePublishes()
+            }
+            this.isRunning = false
             return
           }
           this.isRunning = true
@@ -1212,7 +1215,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="less" scoped>
 .service-tip {
   cursor: pointer;
 }
@@ -1248,7 +1251,7 @@ export default {
 }
 .left-content {
   border-right: 1px solid #dcdfe6;
-  height: 100vh;
+  height: calc(100vh - 130px);
 }
 .pipeline-item {
   cursor: pointer;

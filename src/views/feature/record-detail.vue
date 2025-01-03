@@ -236,6 +236,9 @@ export default {
       })
     },
     filterRecord() {
+      this.presetError = false
+      this.executeError = false
+      this.cleanError = false
       this.presetList = []
       this.executeList = []
       this.cleanList = []

@@ -95,7 +95,12 @@
               }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="userId" label="执行人"> </el-table-column>
+          <el-table-column prop="percent" label="执行成功率">
+            <template slot-scope="scope">
+              {{ scope.row.percent ? scope.row.percent + '%' : '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="executeUser" label="执行人"> </el-table-column>
           <el-table-column label="执行时间">
             <template slot-scope="scope">
               <span> {{ dateFormat(scope.row.updateTime) }}</span>

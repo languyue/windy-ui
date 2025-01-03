@@ -300,27 +300,34 @@ export default {
       })
     },
     notifyCompare() {
-      let compareItem = this.compareItem || {} // 确保 compareItem 存在
-      let keys = ['compareKey', 'operator', 'propertyKey', 'expectValue']
+      let compareItem = JSON.parse(JSON.stringify(this.compareItem)) || {}
 
-      let condition = keys
-        .map((key) => `[${compareItem[key] || ''}]`) // 如果值不存在则设置为空字符串
-        .join('')
-      this.executeData.service = condition
+      let condition = {
+        compareKey: compareItem.compareKey,
+        operator: compareItem.operator,
+        expectValue: compareItem.expectValue,
+      }
+      if (compareItem.propertyKey) {
+        condition.expectValue = `{${compareItem.propertyKey}}${compareItem.expectValue}`
+      }
+      this.executeData.service = JSON.stringify(condition)
       this.notifyData()
       this.$forceUpdate()
     },
     parseCompare(input) {
-      // 使用正则匹配方括号中的内容
-      const regex = /\[(.*?)\]/g
-      const result = []
-      let match
-
-      // 逐个匹配
-      while ((match = regex.exec(input)) !== null) {
-        result.push(match[1] || '') // 提取方括号内的内容
+      if (!input) {
+        return null
       }
-
+      let result = {}
+      // 使用正则匹配方括号中的内容
+      const regex = /\{(.*?)\}(.*)/
+      const match = input.match(regex)
+      if (!match) {
+        return null
+      }
+      console.log('match', match)
+      result.propertyKey = match[1]
+      result.expectValue = match[2]
       return result
     },
     selectOperator() {
@@ -441,11 +448,12 @@ export default {
     }
 
     if (this.data.service) {
-      let splitArray = this.parseCompare(this.data.service)
-      this.compareItem.compareKey = splitArray[0]
-      this.compareItem.operator = splitArray[1]
-      this.compareItem.propertyKey = splitArray[2]
-      this.compareItem.expectValue = splitArray[3]
+      this.compareItem = JSON.parse(this.data.service)
+      let splitResult = this.parseCompare(this.compareItem.expectValue)
+      if (splitResult) {
+        this.compareItem.propertyKey = splitResult.propertyKey
+        this.compareItem.expectValue = splitResult.expectValue
+      }
     }
     this.getOperators()
   },

@@ -316,11 +316,10 @@ export default {
         ],
         demandName: [
           { required: true, message: '请输入需求名称', trigger: 'blur' },
-          { min: 10, message: '需求名称最少10个字符', trigger: 'blur' },
+          { min: 4, message: '需求名称最少10个字符', trigger: 'blur' },
         ],
         demandContent: [
           { required: true, message: '请输入需求描述', trigger: 'blur' },
-          { min: 20, message: '需求名称最少20个字符', trigger: 'blur' },
         ],
         customerValue: [
           { required: true, message: '请选择客户价值', trigger: 'change' },

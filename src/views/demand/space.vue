@@ -55,7 +55,7 @@
         </el-menu>
       </el-aside>
       <el-main v-bind:style="{ height: asideHeight + 'px' }">
-        <div class="right-content">
+        <div>
           <demand v-if="showIndex == 1" :space="spaceId"></demand>
           <bug v-else-if="showIndex == 2" :space="spaceId"></bug>
           <iteration :space="spaceId" v-else></iteration>
@@ -155,7 +155,7 @@ export default {
   .left-content {
     overflow: visible;
     position: relative;
-    // height: auto;
+    margin-right: 10px;
     background-color: #303133;
   }
 }
@@ -213,8 +213,5 @@ export default {
 }
 .collapse-icon i:hover {
   color: #fff;
-}
-.right-content {
-  padding: 10px;
 }
 </style>

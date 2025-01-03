@@ -85,7 +85,10 @@
           description="请在左侧选择迭代"
         ></el-empty>
         <div v-else class="main-content">
-          <div class="content-title">迭代名称: {{ iterationInfo.name }}</div>
+          <div class="content-title">
+            <i class="el-icon-add-location"></i>迭代名称:
+            <text-view :text="iterationInfo.name" />
+          </div>
           <el-tabs v-model="activeName" @tab-click="handleClick">
             <!-- 预览开始 -->
             <el-tab-pane label="概览" name="review">
@@ -321,16 +324,18 @@
                     <div class="card-col-title">
                       {{ item.name }} ({{ item.data.length }})
                     </div>
-                    <div>
-                      <div
-                        v-for="(it, index) in item.data"
-                        :key="index"
-                        class="card-item"
-                      >
-                        <div class="card-type">s</div>
-                        {{ it.name }}
-                        <div class="tag-div">
-                          <div
+                    <div class="content-list">
+                      <el-scrollbar :wrap-style="'height:80vh;'">
+                        <div
+                          v-for="(it, index) in item.data"
+                          :key="index"
+                          class="card-item"
+                        >
+                          <div class="card-type">s</div>
+                          {{ it.name }}
+                          <div class="tag-div">
+                            <text-view :text="it.description" :len="30" />
+                            <!-- <div
                             class="tag-inline"
                             v-for="(item, index) in it.selectTag"
                             :key="index"
@@ -340,8 +345,8 @@
                             }"
                           >
                             {{ item.statusName }}
-                          </div>
-                          <el-popover
+                          </div> -->
+                            <!-- <el-popover
                             placement="right"
                             width="200"
                             trigger="click"
@@ -362,9 +367,10 @@
                               <div class="tag-line">{{ item.statusName }}</div>
                             </div>
                             <div slot="reference" class="plus-div">+</div>
-                          </el-popover>
+                          </el-popover> -->
+                          </div>
                         </div>
-                      </div>
+                      </el-scrollbar>
                     </div>
                   </div>
                 </div>
@@ -480,10 +486,11 @@ export default {
       iterationRule: {
         name: [
           { required: true, message: '请输入迭代名称', trigger: 'blur' },
-          { min: 4, message: '迭代名称最少10个字符', trigger: 'blur' },
+          { min: 4, message: '迭代名称最少4个字符', trigger: 'blur' },
+          { max: 50, message: '迭代名称最多50个字符', trigger: 'blur' },
         ],
         description: [
-          { max: 256, message: '迭代名称最少10个字符', trigger: 'blur' },
+          { max: 256, message: '迭代描述最多个256字符', trigger: 'blur' },
         ],
       },
       iterationList: [],
@@ -833,6 +840,8 @@ export default {
           let item = {
             name: e.bugName,
             id: e.bugId,
+            type: 2,
+            description: e.scene,
             showPop: false,
             selectTag: [],
           }
@@ -855,6 +864,8 @@ export default {
             let item = {
               name: e.demandName,
               id: e.demandId,
+              type: 1,
+              description: e.demandContent,
               showPop: false,
               selectTag: [],
             }
@@ -994,12 +1005,12 @@ export default {
   margin: 20px;
 }
 .main-content {
-  margin-top: 20px;
   width: 100%;
 }
 .content-title {
   font-size: 16px;
   font-weight: 900;
+  margin-top: 20px;
 }
 .cycle {
   height: 10px;
@@ -1043,7 +1054,6 @@ export default {
   }
   .col-list {
     display: flex;
-
     .card-col {
       flex: 1;
       background: linear-gradient(
@@ -1051,7 +1061,6 @@ export default {
         rgba(24, 43, 80, 0.04),
         hsla(0, 0%, 100%, 0)
       );
-      height: calc(100vh - 100px);
 
       border-top-left-radius: 10px;
       border-top-right-radius: 10px;
@@ -1135,6 +1144,10 @@ export default {
           }
         }
       }
+    }
+    .content-list {
+      height: calc(90vh - 160px);
+      overflow-y: hidden;
     }
   }
 }

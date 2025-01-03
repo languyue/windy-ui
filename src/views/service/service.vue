@@ -356,7 +356,7 @@
                   </el-row>
                 </el-form-item>
               </el-tab-pane>
-              <el-tab-pane label="高级配置" name="second">
+              <!-- <el-tab-pane label="高级配置" name="second">
                 <el-form-item label="更新策略">
                   <el-select v-model="strategy" placeholder="选择更新策略">
                     <el-option label="暂停更新" value="Recreate"> </el-option>
@@ -389,7 +389,7 @@
                     >
                   </div>
                 </el-form-item>
-              </el-tab-pane>
+              </el-tab-pane> -->
             </el-tabs>
           </el-collapse-item>
         </el-collapse>
@@ -453,6 +453,17 @@ export default {
       rules: {
         serviceName: [
           { required: true, message: '请输入服务名称', trigger: 'blur' },
+          {
+            validator: (rule, value, callback) => {
+              // 检查是否包含非英文、数字、中划线或下划线的字符
+              if (/[^a-zA-Z0-9-_]/.test(value)) {
+                callback(new Error('只能输入英文、数字、中划线或下划线'))
+              } else {
+                callback()
+              }
+            },
+            trigger: 'blur',
+          },
         ],
         description: [
           { required: true, message: '请输入服务描述', trigger: 'blur' },

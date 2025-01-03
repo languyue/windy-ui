@@ -1,14 +1,13 @@
 <template>
   <div>
     <div class="header-container">
-      <img class="image-logo" :src="imageUrl" alt="windy" />
       <el-autocomplete
         class="custom-input"
         size="mini"
         clearable
         v-model="queryName"
         :fetch-suggestions="querySearchAsync"
-        placeholder="请输入关联的需求、缺陷、任务名称"
+        placeholder="请输入关联的需求、缺陷、任务名称快速检索"
         @select="selectData"
       >
         <template slot-scope="{ item }">
@@ -666,7 +665,6 @@ export default {
 .ui-container {
   width: 300px;
   position: absolute;
-  top: 10px;
   right: 60px;
   display: flex;
   justify-content: space-between;

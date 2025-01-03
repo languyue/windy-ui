@@ -40,7 +40,7 @@
                         v-if="!result.show"
                       />
                       <i class="el-icon-remove icon-tag" v-else />
-                      {{ result.name }}
+                      {{ result.name }}111
                     </div>
 
                     <div class="tag-list">
@@ -125,6 +125,15 @@
 
           <div v-else>
             <div v-for="(result, index) in item.resultList" :key="index">
+              <el-row class="desc-div" v-if="result.spendTime">
+                <el-col :span="3"><i class="el-icon-timer" /> 请求耗时:</el-col>
+                <el-col :span="12"
+                  ><el-tag type="warning" size="mini"
+                    >{{ result.spendTime }}ms</el-tag
+                  ></el-col
+                >
+              </el-row>
+
               <Panel>
                 <template slot="title">
                   <div class="desc-div">
@@ -218,6 +227,7 @@ export default {
       item.show = !item.show
     },
     exchangeData(array) {
+      console.log('ssss', array)
       this.resultList = []
       array.forEach((e) => {
         let item = this.handleItem(e)

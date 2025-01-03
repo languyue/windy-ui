@@ -22,6 +22,16 @@
     <div class="change-content">
       <div class="change-title">
         <div class="change-desc">代码变更列表</div>
+        <div class="filter-input">
+          <el-input
+            type="text"
+            prefix-icon="el-icon-search"
+            size="mini"
+            v-model="filterText"
+            placeholder="输入分支名称过滤变更列表"
+            clearable
+          />
+        </div>
         <div class="add-btn">
           <el-button
             type="primary"
@@ -34,7 +44,20 @@
       </div>
       <div class="change-list">
         <div>
-          <el-table :data="changeList" size="mini" stripe style="width: 100%">
+          <el-table
+            :data="
+              changeList.filter(
+                (data) =>
+                  !filterText ||
+                  data.changeBranch
+                    .toLowerCase()
+                    .includes(filterText.toLowerCase())
+              )
+            "
+            size="mini"
+            stripe
+            style="width: 100%"
+          >
             <el-table-column prop="changeName" label="变更"> </el-table-column>
             <el-table-column prop="changeBranch" label="分支">
             </el-table-column>
@@ -49,18 +72,18 @@
             <el-table-column fixed="right" label="操作" width="100">
               <template slot-scope="scope">
                 <el-button
-                  @click="removeChange(scope.row)"
-                  slot="reference"
-                  type="text"
-                  size="small"
-                  >删除</el-button
-                >
-                <el-button
                   @click="startEdit(scope.row)"
                   slot="reference"
                   type="text"
                   size="small"
                   >编辑</el-button
+                >
+                <el-button
+                  @click="removeChange(scope.row)"
+                  slot="reference"
+                  type="text"
+                  size="small"
+                  >删除</el-button
                 >
               </template>
             </el-table-column>
@@ -68,7 +91,11 @@
         </div>
       </div>
     </div>
-    <el-dialog title="创建变更" :visible.sync="dialogFormVisible">
+    <el-dialog
+      title="创建变更"
+      :visible.sync="dialogFormVisible"
+      @close="closeDialog"
+    >
       <el-form
         :model="changeForm"
         ref="changeForm"
@@ -134,7 +161,9 @@
         <el-button
           type="primary"
           v-clickOnce
+          :disabled="isProcessing"
           @click="confirmChange('changeForm')"
+          :loading="isProcessing"
           size="mini"
           >确 定</el-button
         >
@@ -149,6 +178,7 @@ export default {
   data() {
     return {
       service: '',
+      filterText: '',
       serviceList: [],
       changeList: [],
       changeForm: {
@@ -173,6 +203,7 @@ export default {
           },
         ],
       },
+      isProcessing: false,
     }
   },
   methods: {
@@ -189,6 +220,9 @@ export default {
       })
     },
     querySearchAsync(text, cb) {
+      if (!text) {
+        text = ''
+      }
       requestApi.relationList(text).then((res) => {
         let array = []
         res.data.forEach((e) => {
@@ -200,6 +234,7 @@ export default {
     },
     handleSelect(item) {
       this.selectItem = item
+      this.changeForm.relationId = item.relationId
     },
     getServices() {
       this.serviceList = []
@@ -247,7 +282,12 @@ export default {
     },
     closeDialog() {
       this.dialogFormVisible = false
-      this.changeForm = {}
+      this.changeForm = {
+        branchType: 'custom',
+      }
+      this.selectItem = {}
+      this.isProcessing = false
+      this.$refs.changeForm.resetFields()
     },
     confirmChange(confirmChange) {
       this.$refs[confirmChange].validate((valid) => {
@@ -257,17 +297,20 @@ export default {
         this.changeForm.relationId = this.selectItem.relationId
         this.changeForm.relationType = this.selectItem.relationType
         this.changeForm.serviceId = this.service
-        requestApi.saveCodeChange(this.changeForm).then(() => {
-          this.$message({
-            message: '创建变更成功',
-            type: 'success',
+        this.isProcessing = true
+        requestApi
+          .saveCodeChange(this.changeForm)
+          .then(() => {
+            this.$message({
+              message: '创建变更成功',
+              type: 'success',
+            })
+            this.closeDialog()
+            this.getCodeChangeList()
           })
-          this.changeForm = {
-            branchType: 'custom',
-          }
-          this.dialogFormVisible = false
-          this.getCodeChangeList()
-        })
+          .catch(() => {
+            this.isProcessing = false
+          })
       })
     },
     getCodeChangeList() {
@@ -315,7 +358,10 @@ export default {
   box-sizing: border-box;
   white-space: nowrap;
 }
-
+.filter-input {
+  width: 300px;
+  margin-left: 10px;
+}
 .demand {
   background-color: #409eff;
 }

@@ -571,6 +571,9 @@ export default {
           }
         }
 
+        if (!this.serviceId) {
+          this.serviceId = this.$store.state.serviceId
+        }
         //修改流水线
         if (this.isEditPipeline) {
           pipelineApi
@@ -718,6 +721,9 @@ export default {
   created() {
     this.getConfigNodes()
     this.serviceId = this.service
+    if (!this.serviceId) {
+      this.serviceId = this.$store.state.serviceId
+    }
     this.pipelineId = this.pipeline
   },
 }

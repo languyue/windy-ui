@@ -17,6 +17,7 @@
               <el-radio-group v-model="systemForm.gitType" @change="changeGit">
                 <el-radio label="Gitea">Gitea</el-radio>
                 <el-radio label="Gitlab">Gitlab</el-radio>
+                <el-radio label="GitHub">GitHub</el-radio>
               </el-radio-group>
             </el-form-item>
             <el-form-item label="Git域名" prop="gitDomain">
@@ -50,9 +51,9 @@
             </el-form-item>
           </el-form>
         </el-tab-pane>
-        <el-tab-pane label="镜像仓库配置" name="repo">
+        <el-tab-pane label="容器镜像仓库配置" name="repo">
           <el-form :model="repoForm" size="mini" label-width="120px">
-            <el-form-item label="仓库地址" prop="repositoryUrl">
+            <el-form-item label="镜像仓库地址" prop="repositoryUrl">
               <el-input
                 type="text"
                 v-model="repoForm.repositoryUrl"
@@ -109,7 +110,7 @@
             </el-form-item>
           </el-form>
         </el-tab-pane>
-        <el-tab-pane label="构建版本管理" name="build">
+        <el-tab-pane label="构建工具管理" name="build">
           <div class="verion-content">
             <el-button
               size="mini"
@@ -122,16 +123,18 @@
               :data="
                 versionData.filter(
                   (data) =>
-                    !searchText ||
-                    data.name.toLowerCase().includes(searchText.toLowerCase())
+                    !searchVersion ||
+                    data.name
+                      .toLowerCase()
+                      .includes(searchVersion.toLowerCase())
                 )
               "
               height="500"
               size="mini"
             >
-              <el-table-column label="版本名称" prop="name"> </el-table-column>
+              <el-table-column label="工具名称" prop="name"> </el-table-column>
               <el-table-column
-                label="语言类型"
+                label="工具类型"
                 prop="type"
                 :filters="[
                   { text: 'Java', value: 'Java' },
@@ -147,11 +150,16 @@
               <el-table-column label="描述" prop="description">
               </el-table-column>
               <el-table-column align="right">
-                <template slot="header">
+                <template slot="header" slot-scope="scope">
                   <el-input
-                    v-model="searchText"
+                    v-model="searchVersion"
                     clearable
                     size="mini"
+                    @change="
+                      () => {
+                        scope.row
+                      }
+                    "
                     placeholder="输入版本名称搜索"
                   />
                 </template>
@@ -179,7 +187,7 @@
       ©Windy, 保留所有权利-控制台版本: {{ consoleVersion }}
     </div>
     <el-dialog
-      title="构建版本管理"
+      title="构建工具管理"
       :visible.sync="showVersionDialog"
       @close="cancelVersion"
     >
@@ -190,10 +198,10 @@
         :rules="versionRules"
         size="mini"
       >
-        <el-form-item label="版本名称" prop="name">
+        <el-form-item label="工具名称" prop="name">
           <el-input v-model="versionForm.name" placeholder="请输入版本名称" />
         </el-form-item>
-        <el-form-item label="版本类型" prop="type">
+        <el-form-item label="工具类型" prop="type">
           <el-radio-group v-model="versionForm.type">
             <el-radio label="Java">Java</el-radio>
             <el-radio label="Go">Go</el-radio>
@@ -206,7 +214,7 @@
             placeholder="请输入安装路径"
           />
         </el-form-item>
-        <el-form-item label="版本描述" prop="description">
+        <el-form-item label="工具描述" prop="description">
           <el-input
             v-model="versionForm.description"
             placeholder="请输入版本描述"
@@ -272,12 +280,14 @@ import systemApi from '../../http/System'
 export default {
   data() {
     return {
-      systemForm: {},
+      systemForm: {
+        gitType: 'Gitlab',
+      },
       repoForm: {},
       mavenForm: {},
       configType: 'git',
       versionData: [],
-      searchText: '',
+      searchVersion: '',
       showVersionDialog: false,
       versionForm: {},
       versionRules: {
