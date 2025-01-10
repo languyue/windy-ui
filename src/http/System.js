@@ -143,6 +143,20 @@ export default {
         })
     })
   },
+  createSecret() {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/pipeline/system/git/push/secret`
+      http
+        .post(url, '')
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
+
   deleteTool(toolId) {
     return new Promise((resolve, reject) => {
       let url = `/v1/devops/system/builds/${toolId}`

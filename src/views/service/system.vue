@@ -2,7 +2,7 @@
   <div>
     <el-alert
       class="tips-info"
-      title="消息提示"
+      title="使用提示"
       type="info"
       :closable="false"
       description="系统配置作用于全局，请谨慎操作"
@@ -12,6 +12,7 @@
     <div class="content">
       <el-tabs tab-position="left" v-model="configType" @tab-click="clickTab">
         <el-tab-pane label="Git配置" name="git">
+          <el-divider content-position="left">Git仓库配置</el-divider>
           <el-form :model="systemForm" size="mini" label-width="120px">
             <el-form-item label="类型" prop="gitType">
               <el-radio-group v-model="systemForm.gitType" @change="changeGit">
@@ -46,6 +47,66 @@
                 show-password
               />
             </el-form-item>
+
+            <el-divider content-position="left">Git推送配置</el-divider>
+            <el-form-item>
+              <template slot="label">
+                推送Secret
+                <el-tooltip
+                  class="item"
+                  effect="dark"
+                  content="在 Git 服务端添加 Webhook 时，配置的 secret 即为当前设置的值。"
+                  placement="top-end"
+                >
+                  <i class="el-icon-info" />
+                </el-tooltip>
+              </template>
+              <el-row :gutter="20">
+                <el-col :span="10">
+                  <el-input
+                    type="text"
+                    v-model="systemForm.pushSecret"
+                    :show-password="showSecret"
+                  />
+                </el-col>
+                <el-col :span="4">
+                  <el-popover
+                    placement="top"
+                    width="300"
+                    v-model="confirmRefresh"
+                  >
+                    <p style="margin: 0">
+                      重新生成 Secret 会导致已配置的 Git
+                      推送校验失败，进而影响Webhook的正常触发。<br />
+                      这不仅会导致需求和缺陷状态变更无法及时更新，还会导致推送类型的流水线无法自动执行，从而影响整体流程的效率和准确性。
+                    </p>
+                    <div style="text-align: right; margin: 0">
+                      <el-button
+                        size="mini"
+                        type="text"
+                        @click="confirmRefresh = !confirmRefresh"
+                        >取消</el-button
+                      >
+                      <el-button
+                        type="primary"
+                        size="mini"
+                        @click="refreshSecret"
+                        >确定</el-button
+                      >
+                    </div>
+                    <el-button
+                      slot="reference"
+                      type="danger"
+                      plain
+                      icon="el-icon-refresh"
+                      size="mini"
+                      >生成密钥</el-button
+                    >
+                  </el-popover>
+                </el-col>
+              </el-row>
+            </el-form-item>
+
             <el-form-item>
               <el-button type="primary" @click="submitGit">提交</el-button>
             </el-form-item>
@@ -282,12 +343,15 @@ export default {
     return {
       systemForm: {
         gitType: 'Gitlab',
+        secrets: [],
       },
       repoForm: {},
+      showCreateSecret: false,
       mavenForm: {},
       configType: 'git',
       versionData: [],
       searchVersion: '',
+      showSecret: true,
       showVersionDialog: false,
       versionForm: {},
       versionRules: {
@@ -306,9 +370,21 @@ export default {
       consoleVersion: '',
       editTool: false,
       repositories: [],
+      secretForm: {},
+      confirmRefresh: false,
     }
   },
   methods: {
+    refreshSecret() {
+      this.confirmRefresh = false
+      systemApi.createSecret().then((res) => {
+        if (res.data) {
+          this.showSecret = false
+          this.$set(this.systemForm, 'pushSecret', res.data)
+          this.$notify.success('获取密钥成，请点击提交按钮保存')
+        }
+      })
+    },
     deleteItem(index) {
       this.repositories.splice(index, 1)
     },
@@ -402,6 +478,9 @@ export default {
     getGitConfig() {
       systemApi.requestGitConfig().then((res) => {
         this.systemForm = res.data
+        if (!this.systemForm.secrets) {
+          this.systemForm.secrets = []
+        }
       })
     },
     getRepoConfig() {
@@ -471,8 +550,7 @@ export default {
 </script>
 <style lang="less" scoped>
 .tips-info {
-  margin: 10px;
-  width: 80%;
+  width: 100%;
 }
 .content {
   width: 70%;

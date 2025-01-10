@@ -205,7 +205,7 @@ export default {
     handleSelect(index) {
       if (index == 'plugin') {
         window.open(
-          'https://github.com/zhijianfree/windy-plugin/releases',
+          'https://plugins.jetbrains.com/plugin/25539-windy/versions?noRedirect=true',
           '_blank'
         )
         return

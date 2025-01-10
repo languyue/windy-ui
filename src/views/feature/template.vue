@@ -138,8 +138,9 @@
               <el-button
                 size="mini"
                 type="danger"
-                plain
                 @click="handleDelete(scope.row)"
+                plain
+                slot="reference"
                 >删除</el-button
               >
             </template>
@@ -739,7 +740,7 @@ export default {
         this.selectService()
       })
     },
-    deletePlugin() {
+    cleanPlugin() {
       if (!this.pluginId) {
         return
       }
@@ -759,7 +760,7 @@ export default {
       this.batchUpdateTemplates()
     },
     closeUpload() {
-      this.deletePlugin()
+      this.cleanPlugin()
       this.showUploadDialog = false
       this.parseData = []
       this.existPlugins = []

@@ -82,10 +82,10 @@ export default {
         })
     })
   },
-  delete(url) {
+  delete(url, data) {
     return new Promise((resolve, reject) => {
       axios
-        .delete(base + url)
+        .delete(base + url, { data: data })
         .then((res) => {
           if (res && res.status == 200) {
             resolve(res.data)

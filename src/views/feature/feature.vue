@@ -9,7 +9,7 @@
                 class="el-icon-edit-outline edit-name-icon"
                 @click="startEditCase"
               />
-              <testview :text="caseName" :len="8"></testview>
+              <textview :text="caseName" :len="8"></textview>
             </span>
           </el-page-header>
         </div>
@@ -367,7 +367,6 @@
         <el-table
           :data="configData"
           border
-          :key="randomId"
           size="small"
           default-expand-all
           row-key="configId"
@@ -409,6 +408,20 @@
               <span v-if="!scope.row.isEdit">{{ scope.row.value }}</span>
               <el-input
                 v-model="scope.row.value"
+                v-if="scope.row.isEdit"
+                size="mini"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column prop="description" label="描述">
+            <template slot-scope="scope">
+              <textview
+                v-if="!scope.row.isEdit"
+                :text="scope.row.description"
+                :len="20"
+              ></textview>
+              <el-input
+                v-model="scope.row.description"
                 v-if="scope.row.isEdit"
                 size="mini"
               />
@@ -540,7 +553,7 @@
 <script>
 import history from './history.vue'
 import FeatureConfig from './comp/feature-config.vue'
-import testview from '../../components/text-view.vue'
+import textview from '../../components/text-view.vue'
 import featureApi from '../../http/Feature'
 import taskApi from '../../http/Task'
 import testCaseApi from '../../http/TestCase'
@@ -548,7 +561,7 @@ export default {
   components: {
     history,
     FeatureConfig,
-    testview,
+    textview,
   },
   watch: {
     filterText(val) {
@@ -569,7 +582,6 @@ export default {
       showDebugDialog: false,
       isConnect: false,
       serviceId: '',
-      randomId: '',
       showFeatureDialog: false,
       featureForm: {},
       isEditFeature: false,
@@ -800,6 +812,7 @@ export default {
           .deleteFeature(data.featureId)
           .then(() => {
             this.$notify.success('删除用例成功')
+            this.expendList = []
             this.requestCaseFeatures(this.caseId)
             this.uuid = this.$utils.randomString(20)
           })
@@ -901,12 +914,10 @@ export default {
       })
     },
     startEditParam(row) {
-      row.isEdit = true
-      this.randomId = this.$utils.randomString(20)
+      this.$set(row, 'isEdit', true)
     },
     cancelEditParam(row) {
-      this.randomId = this.$utils.randomString(20)
-      row.isEdit = false
+      this.$set(row, 'isEdit', false)
     },
     handleSave(row) {
       if (row.configId) {

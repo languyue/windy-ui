@@ -105,6 +105,11 @@
                       <el-dropdown-item command="dir" v-if="data.apiType == 0"
                         >新增目录</el-dropdown-item
                       >
+                      <el-dropdown-item
+                        command="dir_edit"
+                        v-if="data.apiType == 0"
+                        >编辑目录</el-dropdown-item
+                      >
                       <el-dropdown-item command="delete">删除</el-dropdown-item>
                     </el-dropdown-menu>
                   </el-dropdown>
@@ -191,33 +196,12 @@
                   </el-table>
                 </div>
 
-                <div class="display-param" v-if="headerData.length > 0">
+                <div class="display-param" v-if="headerList.length > 0">
                   <h5>Header</h5>
-                  <el-table :data="headerData" border size="mini"
-                    ><el-table-column
-                      prop="paramKey"
-                      label="参数名称"
-                      width="200px"
-                    >
+                  <el-table :data="headerList" border size="mini"
+                    ><el-table-column prop="key" label="参数名称" width="200px">
                     </el-table-column>
-                    <el-table-column prop="type" label="参数类型" width="150px">
-                    </el-table-column>
-                    <el-table-column
-                      prop="required"
-                      label="是否必填"
-                      width="150px"
-                    >
-                      <template slot-scope="scope">
-                        <el-switch
-                          disabled
-                          v-model="scope.row.required"
-                          active-color="#13ce66"
-                          inactive-color="#909399"
-                        >
-                        </el-switch>
-                      </template>
-                    </el-table-column>
-                    <el-table-column prop="description" label="参数描述">
+                    <el-table-column prop="value" label="参数值">
                     </el-table-column
                   ></el-table>
                 </div>
@@ -359,6 +343,41 @@
                       placeholder="请输入接口描述"
                     ></el-input>
                   </el-form-item>
+                  <h4 class="title-bar">请求Header</h4>
+                  <el-button type="primary" size="mini" @click="addHeader"
+                    >新增Header参数</el-button
+                  >
+                  <div class="header-list">
+                    <el-row
+                      class="header-line"
+                      v-for="(item, index) in headerList"
+                      :key="index"
+                      :gutter="20"
+                    >
+                      <el-col :span="6">
+                        <el-autocomplete
+                          class="header-key"
+                          v-model="item.key"
+                          size="mini"
+                          :fetch-suggestions="queryHeaderKey"
+                          placeholder="请输入内容"
+                        ></el-autocomplete>
+                      </el-col>
+                      <el-col :span="6">
+                        <el-input
+                          size="mini"
+                          v-model="item.value"
+                          placeholder="请输入请求Value"
+                        />
+                      </el-col>
+                      <el-col :span="1">
+                        <i
+                          @click="deleteHeader(index)"
+                          class="el-icon-remove-outline delete-icon"
+                        />
+                      </el-col>
+                    </el-row>
+                  </div>
                   <h4 class="title-bar">参数设置</h4>
                   <el-button type="primary" size="mini" @click="addParam"
                     >新增请求参数</el-button
@@ -841,6 +860,7 @@ export default {
       apiForm: {
         type: 'http',
       },
+      editDir: false,
       paramData: [],
       responseData: [],
       apiTreeData: [],
@@ -900,6 +920,16 @@ export default {
       loading: null,
       expendKeys: [],
       apiTitle: '创建接口',
+      headerList: [],
+      defaultHeaderList: [
+        { value: 'Accept' },
+        { value: 'Accept-Charset' },
+        { value: 'Accept-Encoding' },
+        { value: 'Accept-Language' },
+        { value: 'Authorization' },
+        { value: 'Content-Length' },
+        { value: 'Content-Type' },
+      ],
     }
   },
   watch: {
@@ -924,8 +954,35 @@ export default {
       deep: true,
       immediate: true,
     },
+    headerList: {
+      handler(val, old) {
+        if (old && old.length > 0) {
+          this.updateApi = true
+        }
+      },
+      deep: true,
+      immediate: true,
+    },
   },
   methods: {
+    deleteHeader(index) {
+      this.headerList.splice(index, 1)
+    },
+    queryHeaderKey(queryString, cb) {
+      var restaurants = this.defaultHeaderList
+      var results = queryString
+        ? restaurants.filter(this.createFilter(queryString))
+        : restaurants
+      cb(results)
+    },
+    createFilter(queryString) {
+      return (key) => {
+        return key.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0
+      }
+    },
+    addHeader() {
+      this.headerList.push({})
+    },
     copyToClipboard(text) {
       // 创建一个临时的 textarea 元素
       const textarea = document.createElement('textarea')
@@ -996,9 +1053,12 @@ export default {
         )
           .then(() => {
             this.isLeaving = true
-            this.activeName = activeName
-            this.selectTab()
             this.updateApi = false
+            this.activeName = activeName
+            console.log(this.apiForm)
+            serviceApi.getApi(this.apiForm.apiId).then((res) => {
+              this.treeNodeSelect(res.data)
+            })
           })
           .catch(() => {})
         return false
@@ -1028,6 +1088,11 @@ export default {
         this.addFolder(data)
         return
       }
+      if (command == 'dir_edit') {
+        this.apiTitle = '编辑目录'
+        this.updateFolder(data)
+        return
+      }
       if (command == 'api') {
         this.apiTitle = '创建接口'
         this.addApi(data)
@@ -1049,6 +1114,14 @@ export default {
         return
       }
       this.apiForm = JSON.parse(JSON.stringify(data))
+      if (data.header) {
+        Object.keys(data.header).forEach((key) => {
+          this.headerList.push({ key: key, value: data.header[key] })
+        })
+      } else {
+        this.headerList = []
+      }
+
       this.paramData = data.requestParams
       if (!this.paramData) {
         this.paramData = []
@@ -1082,6 +1155,14 @@ export default {
       this.createDir = true
       this.showCreateApi = true
       this.dataForm.parentId = node.apiId
+      this.dataForm.apiType = 0
+    },
+    updateFolder(node) {
+      this.editDir = true
+      this.createDir = true
+      this.showCreateApi = true
+      this.dataForm.apiId = node.apiId
+      this.$set(this.dataForm, 'apiName', node.apiName)
       this.dataForm.apiType = 0
     },
     addApi(node) {
@@ -1130,6 +1211,19 @@ export default {
         }
 
         this.dataForm.serviceId = this.serviceId
+        if (this.editDir) {
+          serviceApi.updateApi(this.dataForm).then((res) => {
+            if (res.data) {
+              this.$notify.success('修改目录成功')
+              this.selectService()
+              this.cancelCreate()
+            } else {
+              this.$notify.error('添修改失败')
+            }
+          })
+          return
+        }
+
         serviceApi.createApi(this.dataForm).then((res) => {
           if (res.data) {
             this.$notify.success('添加成功')
@@ -1186,6 +1280,7 @@ export default {
       this.dataForm.apiType = this.createDir ? 0 : 1
     },
     cancelCreate() {
+      this.editDir = false
       this.showCreateApi = false
       this.dataForm = { type: 'http' }
     },
@@ -1196,6 +1291,13 @@ export default {
       this.recursionName(this.responseData)
       data.requestParams = this.paramData
       data.responseParams = this.responseData
+      if (this.headerList) {
+        let header = {}
+        this.headerList.forEach((e) => {
+          header[e.key] = e.value
+        })
+        data.header = header
+      }
       if (this.currentApi != '') {
         serviceApi.updateApi(data).then((res) => {
           if (res.data) {
@@ -1246,9 +1348,9 @@ export default {
             this.bodyData.push(e)
           }
         })
-        this.previewRes = JSON.parse(JSON.stringify(this.responseData))
-        this.traverseTree(this.previewRes)
-        this.$forceUpdate()
+        let array = JSON.parse(JSON.stringify(this.responseData))
+        this.traverseTree(array)
+        this.previewRes = array
       }
     },
     traverseTree(nodes) {
@@ -1285,6 +1387,10 @@ export default {
             children: [],
           },
         ]
+      } else {
+        if (item.children) {
+          item.children = []
+        }
       }
     },
     addParam() {
@@ -1552,5 +1658,18 @@ export default {
   position: absolute;
   right: 20px;
   z-index: 1000;
+}
+.header-list {
+  margin-top: 10px;
+}
+.header-line {
+  margin: 10px 0;
+}
+.header-key {
+  width: 100%;
+}
+.delete-icon {
+  color: #f56c6c;
+  cursor: pointer;
 }
 </style>

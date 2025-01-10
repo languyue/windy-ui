@@ -38,13 +38,16 @@
           type="primary"
           >登录</el-button
         >
-        <div class="bottom-line">-便捷一站式Devops平台-</div>
+        <div class="bottom-line">
+          版本:{{ consoleVersion }} -便捷一站式Devops平台-
+        </div>
       </div>
     </div>
   </div>
 </template>
 <script>
 import userApi from '../../http/User'
+import systemApi from '../../http/System'
 import resourceApi from '../../http/Resource'
 import imageLogo from '../../assets/windy.png'
 import cookies from 'js-cookie'
@@ -53,9 +56,15 @@ export default {
     return {
       loginForm: {},
       windyImage: imageLogo,
+      consoleVersion: '',
     }
   },
   methods: {
+    getSystemVersion() {
+      systemApi.getSystemVersion().then((res) => {
+        this.consoleVersion = res.data.consoleVersion
+      })
+    },
     getUserMenus(callback) {
       resourceApi.getUserMenuList().then((res) => {
         let array = []
@@ -94,6 +103,7 @@ export default {
     if (cookie) {
       this.redirectPage()
     }
+    this.getSystemVersion()
   },
 }
 </script>
