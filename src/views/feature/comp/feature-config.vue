@@ -653,6 +653,9 @@ export default {
       )
     },
     showExecutePoint(point) {
+      if (!point.pointId) {
+        return
+      }
       featureApi.getExecutePointTemplate(point.pointId).then((res) => {
         this.pointTemplate = res.data
       })

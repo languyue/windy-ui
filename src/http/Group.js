@@ -65,9 +65,9 @@ export default {
         })
     })
   },
-  getGroupUsers(groupId) {
+  getGroupUsers(groupId, page, size) {
     return new Promise((resolve, reject) => {
-      let url = `/v1/devops/groups/${groupId}/users`
+      let url = `/v1/devops/groups/${groupId}/users?page=${page}&size=${size}`
       http
         .get(url)
         .then((res) => {

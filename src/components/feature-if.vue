@@ -209,16 +209,16 @@
             <!-- 执行点头部结束 -->
 
             <!-- 执行点内容开始 -->
-            <collapse>
-              <div v-show="executePoint.isActive" class="content-item-detail">
-                <FeatureTemplate
-                  :data="executePoint"
-                  :isEdit="isEdit"
-                  :type="executePoint.writeType"
-                  @refreshData="refreshValue"
-                />
-              </div>
-            </collapse>
+            <!-- <el-collapse> -->
+            <div v-show="executePoint.isActive" class="content-item-detail">
+              <FeatureTemplate
+                :data="executePoint"
+                :isEdit="isEdit"
+                :type="executePoint.writeType"
+                @refreshData="refreshValue"
+              />
+            </div>
+            <!-- </el-collapse> -->
             <!-- 执行点内容结束 -->
           </div>
           <!-- <el-collapse accordion :key="uuid">
@@ -325,7 +325,6 @@ export default {
       if (!match) {
         return null
       }
-      console.log('match', match)
       result.propertyKey = match[1]
       result.expectValue = match[2]
       return result

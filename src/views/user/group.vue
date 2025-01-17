@@ -41,17 +41,12 @@
           <h3>
             <i class="el-icon-office-building" />:{{ chooseGroup.groupName }}
           </h3>
-          <el-tabs
-            type="card"
-            v-model="chooseName"
-            @tab-click="clickTab"
-            style="height: 600px"
-          >
+          <el-tabs type="card" v-model="chooseName" @tab-click="clickTab">
             <el-tab-pane label="用户管理" name="user">
               <el-button type="primary" size="mini" @click="clickUser"
                 >新增用户</el-button
               >
-              <el-table :data="userTable" size="mini" height="300px">
+              <el-table :data="userTable" size="mini" height="400px">
                 <el-table-column prop="userId" label="用户Id">
                 </el-table-column>
                 <el-table-column prop="userName" label="用户名称">
@@ -93,7 +88,7 @@
                 >
               </div>
               <div>
-                <el-table :data="groupRoles" size="mini" height="300px">
+                <el-table :data="groupRoles" size="mini" height="400px">
                   <el-table-column prop="roleId" label="角色ID">
                   </el-table-column>
                   <el-table-column prop="roleName" label="角色名称">

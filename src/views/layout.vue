@@ -190,7 +190,7 @@ export default {
   },
   methods: {
     goGithub() {
-      window.open('https://github.com/zhijianfree/Windy', '__blank')
+      window.open('https://github.com/languyue/Windy', '__blank')
     },
     getUserMenus() {
       resourceApi.getUserMenuList().then((res) => {

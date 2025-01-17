@@ -17,6 +17,16 @@
       </FeatureIF>
     </div>
     <div v-if="executePoint.executeType == 6">
+      <div class="cover-glocal">
+        <el-checkbox
+          size="mini"
+          :disabled="!isEdit"
+          @change="selectCheck"
+          v-model="coverGlobal"
+          >覆盖全局变量</el-checkbox
+        >
+      </div>
+
       <codeeditor
         :codes="executePoint.service"
         @change="dataChange"
@@ -59,11 +69,19 @@ export default {
     return {
       executePoint: {},
       writeType: '',
+      coverGlobal: false,
     }
   },
   methods: {
+    selectCheck() {
+      this.executePoint.method = JSON.stringify({ global: this.coverGlobal })
+      this.$emit('refreshData', {
+        data: this.executePoint,
+      })
+    },
     dataChange(info) {
       this.executePoint.service = info
+      this.executePoint.method = JSON.stringify({ global: this.coverGlobal })
       this.$emit('refreshData', {
         data: this.executePoint,
       })
@@ -74,6 +92,11 @@ export default {
   },
   created() {
     this.executePoint = this.data
+    if (this.executePoint.executeType == 6 && this.executePoint.method) {
+      let config = JSON.parse(this.executePoint.method)
+      console.log('update.....', config)
+      this.coverGlobal = config.global
+    }
   },
 }
 </script>
@@ -100,5 +123,8 @@ export default {
   float: right;
   margin-right: 10px;
   color: #606266;
+}
+.cover-glocal {
+  margin: 5px;
 }
 </style>
