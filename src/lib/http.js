@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { Message } from 'element-ui'
+import { Notification } from 'element-ui'
 import cookies from 'js-cookie'
 
 axios.interceptors.request.use(
@@ -51,11 +51,13 @@ axios.interceptors.response.use(
       return
     }
     if (error.response.data.code) {
-      Message.error(
-        `[${error.response.data.code}] ${error.response.data.message}`
-      )
+      Notification.error({
+        message: `[${error.response.data.code}] ${error.response.data.message}`,
+      })
     } else {
-      Message.error(`访问服务器失败`)
+      Notification.error({
+        message: `访问服务器失败`,
+      })
     }
     return Promise.reject(error)
   }

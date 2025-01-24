@@ -585,19 +585,18 @@ export default {
               })
               this.cancelCreatePipeline()
             })
+          return
         }
 
         //创建流水线
-        if (!this.isEditPipeline) {
-          param.serviceId = this.serviceId
-          pipelineApi.savePipeline(param).then(() => {
-            this.$message({
-              message: '创建流水线成功',
-              type: 'success',
-            })
-            this.cancelCreatePipeline()
+        param.serviceId = this.serviceId
+        pipelineApi.savePipeline(param).then(() => {
+          this.$message({
+            message: '创建流水线成功',
+            type: 'success',
           })
-        }
+          this.cancelCreatePipeline()
+        })
       })
     },
     choosePipeItem(node) {

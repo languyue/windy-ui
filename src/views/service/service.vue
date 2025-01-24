@@ -153,7 +153,7 @@
                 <el-radio :label="1">SSH部署</el-radio>
               </el-radio-group>
             </el-form-item>
-            <el-form-item label="开发语言" prop="code">
+            <el-form-item label="开发语言">
               <el-radio-group
                 v-model="contextForm.code"
                 @change="selectCodeType"
@@ -164,7 +164,7 @@
                 <el-radio label="Vue">Vue</el-radio> -->
               </el-radio-group>
             </el-form-item>
-            <el-form-item label="构建版本" prop="code">
+            <el-form-item label="构建版本">
               <el-radio-group v-model="contextForm.buildVersion">
                 <el-radio
                   :label="version.installPath"
@@ -173,6 +173,22 @@
                   >{{ version.name }}</el-radio
                 >
               </el-radio-group>
+            </el-form-item>
+            <el-form-item label="主干分支">
+              <el-input
+                type="text"
+                v-model="contextForm.mainBranch"
+                placeholder="请输入服务主干分支名称"
+              />
+            </el-form-item>
+            <el-form-item label="服务端口" v-if="contextForm.deployType == 1">
+              <el-input-number
+                type="text"
+                controls-position="right"
+                :min="1"
+                v-model="contextForm.servicePort"
+                placeholder="请输入服务启动端口"
+              />
             </el-form-item>
           </el-collapse-item>
           <el-collapse-item>
@@ -226,6 +242,7 @@
             <el-form-item label="访问token" prop="accessToken">
               <el-input
                 type="text"
+                show-password
                 v-model="gitForm.accessToken"
                 placeholder="请输入git访问token"
               />
@@ -667,6 +684,7 @@ export default {
       this.contextForm = {
         deployType: 2,
         code: 'Java',
+        mainBranch: 'main',
       }
     },
     closeDialog() {

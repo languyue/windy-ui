@@ -270,7 +270,7 @@ export default {
       this.$forceUpdate()
     },
     removeChange(item) {
-      this.$confirm('确认删除？').then(() => {
+      this.$confirm('变更删除后会将关联的分支也删除,确认删除？').then(() => {
         requestApi.deleteCodeChange(this.service, item.changeId).then(() => {
           this.$message({
             message: '删除变更成功',

@@ -135,13 +135,18 @@
         </el-submenu>
       </el-menu>
       <div class="github-icon">
-        <img
-          src="../assets/github-mark.svg"
-          width="25px"
-          height="25px"
-          alt="跳转github"
-          @click="goGithub"
-        />
+        <a
+          href="https://github.com/languyue/Windy"
+          rel="noopener"
+          target="_blank"
+        >
+          <img
+            src="../assets/github-mark.svg"
+            width="25px"
+            height="25px"
+            alt="跳转github"
+          />
+        </a>
       </div>
       <div class="user-icon">
         <el-dropdown szie="mini" @command="handleClick">
@@ -189,9 +194,6 @@ export default {
     }
   },
   methods: {
-    goGithub() {
-      window.open('https://github.com/languyue/Windy', '__blank')
-    },
     getUserMenus() {
       resourceApi.getUserMenuList().then((res) => {
         let array = []

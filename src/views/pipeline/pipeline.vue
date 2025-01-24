@@ -828,8 +828,8 @@ export default {
         this.deletePipeline(item)
       }
     },
-    selectService() {
-      this.$store.commit('UPDATE_SERVICE_ID', this.serviceId)
+    selectService(serviceId) {
+      this.$store.commit('UPDATE_SERVICE_ID', serviceId)
       this.getPipelineList()
       this.currentPipeline = { pipelineConfig: [] }
     },
@@ -1140,6 +1140,7 @@ export default {
         })
         if (!this.serviceId) {
           this.serviceId = this.serviceList[0].value
+          this.selectService(this.serviceId)
         }
         this.getPipelineList()
       })

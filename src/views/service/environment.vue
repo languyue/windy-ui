@@ -109,6 +109,7 @@
               :label="item.name"
             >
               <el-input
+                :show-password="item.showPass"
                 v-model="item.value"
                 :placeholder="item.desc"
               ></el-input>
@@ -199,6 +200,7 @@ export default {
           key: 'password',
           value: '',
           name: 'ssh密码',
+          showPass: true,
           desc: '请输入访问ssh所使用的密码',
         },
         {
@@ -219,6 +221,7 @@ export default {
           key: 'token',
           value: '',
           name: '访问token',
+          showPass: true,
           desc: '请输入访问k8s的地址',
         },
         {
