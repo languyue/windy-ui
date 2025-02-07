@@ -1055,7 +1055,6 @@ export default {
             this.isLeaving = true
             this.updateApi = false
             this.activeName = activeName
-            console.log(this.apiForm)
             serviceApi.getApi(this.apiForm.apiId).then((res) => {
               this.treeNodeSelect(res.data)
             })

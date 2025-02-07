@@ -474,10 +474,8 @@ export default {
     },
     showEditWork(row) {
       this.getAllData(() => {
-        console.log('ddddd', this.allData, row)
         this.allData.forEach((e) => {
           if (e.relationId == row.relatedId) {
-            console.log('ddddd', 'hui diao')
             this.selectItem = e
           }
         })

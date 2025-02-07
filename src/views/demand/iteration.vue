@@ -384,7 +384,7 @@
     </el-container>
     <!-- 创建迭代开始 -->
     <el-dialog
-      title="创建迭代"
+      title="迭代"
       :visible.sync="showIteration"
       width="40%"
       :close-on-click-modal="false"
@@ -690,8 +690,12 @@ export default {
     },
     selectCommand(event, row) {
       if (event == 'edit') {
-        this.iterationForm = JSON.parse(JSON.stringify(row))
-        this.iterationForm.selectedDate = [row.startTime, row.endTime]
+        this.iterationForm = {
+          name: row.name,
+          description: row.description,
+          iterationId: row.iterationId,
+          selectedDate: [row.startTime, row.endTime],
+        }
         this.showIteration = true
         this.isEditIteration = true
       }

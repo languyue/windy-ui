@@ -94,7 +94,6 @@ export default {
     this.executePoint = this.data
     if (this.executePoint.executeType == 6 && this.executePoint.method) {
       let config = JSON.parse(this.executePoint.method)
-      console.log('update.....', config)
       this.coverGlobal = config.global
     }
   },

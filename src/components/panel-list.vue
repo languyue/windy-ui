@@ -227,7 +227,6 @@ export default {
       item.show = !item.show
     },
     exchangeData(array) {
-      console.log('ssss', array)
       this.resultList = []
       array.forEach((e) => {
         let item = this.handleItem(e)

@@ -317,23 +317,46 @@
     <!-- Integer数据类型展示结束 -->
 
     <!-- 默认数据类型展示开始 -->
-    <el-autocomplete
-      v-else
-      size="small"
-      :disabled="!isEdit"
-      v-model="data.value"
-      @input="notifyData"
-      :fetch-suggestions="querySearch"
-      @pointerdown.stop.native
-      :placeholder="data.description"
-      @select="handleSelect"
-    >
-      <el-button
-        slot="append"
-        @click="diaplayString(data.value)"
-        icon="el-icon-full-screen"
-      ></el-button
-    ></el-autocomplete>
+    <div v-else>
+      <el-select
+        v-if="
+          data.initData && data.initData.range && data.initData.range.length > 0
+        "
+        v-model="data.value"
+        :disabled="!isEdit"
+        size="small"
+        clearable
+        @select="handleSelect"
+        :placeholder="data.description"
+      >
+        <el-option
+          v-for="(item, index) in data.initData.range"
+          :key="index"
+          :label="item"
+          :value="item"
+        >
+        </el-option>
+      </el-select>
+      <el-autocomplete
+        size="small"
+        v-else
+        clearable
+        :disabled="!isEdit"
+        v-model="data.value"
+        @input="notifyData"
+        :fetch-suggestions="querySearch"
+        @pointerdown.stop.native
+        :placeholder="data.description"
+        @select="handleSelect"
+      >
+        <el-button
+          slot="append"
+          @click="diaplayString(data.value)"
+          icon="el-icon-full-screen"
+        ></el-button
+      ></el-autocomplete>
+    </div>
+
     <!-- 默认数据类型展示结束 -->
 
     <el-dialog

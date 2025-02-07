@@ -49,7 +49,6 @@ export default {
     },
     readonly: {
       handler(val) {
-        console.log("fake", val)
         this.$set(this.options, 'readOnly', val)
         this.refreshEditor()
       },
