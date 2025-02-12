@@ -160,7 +160,11 @@ export default {
     notifyData() {
       let array = JSON.parse(JSON.stringify(this.compareData))
       array.forEach((item) => {
-        if (item.propertyKey) {
+        if (
+          item.propertyKey &&
+          (item.operator == 'array_item_match' ||
+            item.operator == 'none_item_match')
+        ) {
           item.expectValue =
             '{' +
             item.propertyKey +
