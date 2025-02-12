@@ -26,11 +26,24 @@ export default {
         })
     })
   },
-  approval(historyId, nodeId, status) {
+  getPipelienHistories(pipelineId) {
     return new Promise((resolve, reject) => {
-      let url = `/v1/devops/pipeline/node/approval?historyId=${historyId}&nodeId=${nodeId}&type=${status}`
+      let url = `/v1/devops/pipeline/${pipelineId}/histories`
       http
-        .put(url)
+        .get(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
+  approval(data) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/pipeline/node/approval`
+      http
+        .put(url, data)
         .then((res) => {
           resolve(res)
         })

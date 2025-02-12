@@ -2,7 +2,13 @@
   <div>
     <div>
       <div class="git">
-        <el-link type="primary" :underline="false">{{ gitUrl }}</el-link>
+        服务GIT地址:
+        <el-link
+          type="primary"
+          :underline="false"
+          @click="goRepository(gitUrl)"
+          >{{ gitUrl }}</el-link
+        >
       </div>
     </div>
 
@@ -11,9 +17,13 @@
         <el-select
           v-model="selectedBranch"
           filterable
+          remote
           size="small"
-          reserve-keyword
+          @focus="remoteMethod"
           placeholder="请输入绑定的分支"
+          loading-text="分支加载中..."
+          :remote-method="remoteMethod"
+          :loading="isLoadRemote"
         >
           <el-option
             v-for="item in branches"
@@ -87,18 +97,45 @@ export default {
       pipelineId: '',
       serviceId: '',
       gitUrl: '',
+      isLoadRemote: false,
     }
   },
+  watch: {
+    service: {
+      handler(val) {
+        if (val) {
+          this.serviceId = val
+          this.getService()
+          this.getServiceBranch()
+        }
+      },
+    },
+    pipeline: {
+      handler(val) {
+        if (val) {
+          this.pipelineId = val
+          this.getBindBranches()
+        }
+      },
+    },
+  },
   methods: {
+    goRepository(gitUrl) {
+      window.open(gitUrl, '_blank')
+    },
     deleteBind(row) {
       gitBindApi.deleteCodeChange(this.pipelineId, row.bindId).then((res) => {
         if (res.data == 1) {
-          this.$message.success('删除成功')
+          this.$notify.success('删除成功')
           this.getBindBranches()
         } else {
-          this.$message.error('删除失败')
+          this.$notify.error('删除失败')
         }
       })
+    },
+    remoteMethod() {
+      this.isLoadRemote = true
+      this.getServiceBranch()
     },
     bindBranch(item) {
       item.isChoose = !item.isChoose
@@ -138,6 +175,7 @@ export default {
     getServiceBranch() {
       this.branches = []
       gitBindApi.getServiceBranch(this.serviceId).then((res) => {
+        this.isLoadRemote = false
         res.data.forEach((branch) => {
           this.branches.push({ label: branch, value: branch })
         })
@@ -149,7 +187,6 @@ export default {
     this.pipelineId = this.pipeline
     this.getBindBranches()
     this.getService()
-    this.getServiceBranch()
   },
 }
 </script>

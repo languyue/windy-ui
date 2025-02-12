@@ -28,24 +28,34 @@
           >
           </el-input>
         </div>
-        <el-tree
-          node-key="featureId"
-          @node-click="treeNodeClick"
-          :default-expanded-keys="errorList"
-          :data="recordData"
-          :filter-node-method="filterNode"
-          :props="{
-            children: 'children',
-            label: 'featureName',
-          }"
-          ref="tree"
-        >
-          <span slot-scope="{ node, data }">
-            <span class="custom-tree-node" :style="{ color: data.status }">{{
-              node.label
-            }}</span>
-          </span>
-        </el-tree>
+        <div class="tree-container">
+          <el-scrollbar wrap-style="max-height: 600px;">
+            <el-tree
+              node-key="featureId"
+              @node-click="treeNodeClick"
+              :default-expanded-keys="errorList"
+              :data="recordData"
+              :filter-node-method="filterNode"
+              :props="{
+                children: 'children',
+                label: 'featureName',
+              }"
+              ref="tree"
+            >
+              <span slot-scope="{ node, data }">
+                <span class="custom-tree-node" :style="{ color: data.status }">
+                  <i
+                    v-if="node.isLeaf"
+                    :style="{ color: data.status }"
+                    :class="statusClass(data.executeStatus)"
+                  />
+                  <span v-if="data.skip">[已禁用]</span>
+                  <span class="node-text">{{ node.label }}</span>
+                </span>
+              </span>
+            </el-tree>
+          </el-scrollbar>
+        </div>
       </el-col>
       <el-col :span="18">
         <div class="percent-box">
@@ -171,6 +181,7 @@ export default {
       successCount: 0,
       errorCount: 0,
       displayAll: false,
+      recordStatus: 0,
     }
   },
   watch: {
@@ -193,12 +204,26 @@ export default {
     },
   },
   methods: {
+    statusClass(status) {
+      switch (status) {
+        case 1:
+          return 'el-icon-success'
+        case 2:
+          return 'el-icon-error'
+        case 3:
+          return 'el-icon-warning'
+        case 4:
+          return 'el-icon-loading'
+        default:
+          return 'el-icon-info'
+      }
+    },
     chooseStatus() {
       this.displayAll = this.filterStatus != 1
       this.$refs.tree.filter()
     },
     goBack() {
-      this.$router.go(-1)
+      this.$router.push({ path: '/task' })
     },
     treeNodeClick(data) {
       this.resultList = []
@@ -211,6 +236,9 @@ export default {
       })
     },
     filterRecord() {
+      this.presetError = false
+      this.executeError = false
+      this.cleanError = false
       this.presetList = []
       this.executeList = []
       this.cleanList = []
@@ -271,15 +299,24 @@ export default {
     displayTreeNode(list) {
       list.forEach((e) => {
         if (e.executeStatus) {
-          e.status = '#67C23A'
-          if (e.executeStatus != 1) {
-            e.status = '#F56C6C'
+          if (e.executeStatus == 1) {
+            this.successCount++
+          } else {
             this.errorCount++
             this.errorList.push(e.featureId)
-            // this.treeNodeClick(e)
-          } else {
-            this.successCount++
           }
+
+          e.status = '#67C23A'
+          if (e.executeStatus == 2) {
+            e.status = '#F56C6C'
+          } else if (e.executeStatus == 3) {
+            e.status = '#E6A23C'
+          } else if (e.executeStatus == 4) {
+            e.status = '#409EFF'
+          }
+        }
+        if (e.skip) {
+          e.status = '#C0C4CC'
         }
 
         if (e.children && e.children.length > 0) {
@@ -300,16 +337,24 @@ export default {
     getRecordDetail() {
       taskApi.getTaskRecordDetail(this.recordId).then((res) => {
         this.recordName = `任务名称: ${res.data.taskName}`
+        this.recordStatus = res.data.status
         this.getCaseFeatures(res.data.testCaseId)
+        if (res.data.status == 4) {
+          this.startInterval()
+        }
       })
     },
     getCaseFeatures(caseId) {
       caseApi.getCaseFeatures(caseId).then((res) => {
-        res.data.forEach((e) => {
-          if (e.featureType == 1) {
-            this.totalCount++
-          }
-        })
+        if (this.recordStatus != 4) {
+          this.totalCount = this.errorCount + this.successCount
+        } else {
+          res.data.forEach((e) => {
+            if (e.featureType == 1) {
+              this.totalCount++
+            }
+          })
+        }
       })
     },
   },
@@ -317,7 +362,11 @@ export default {
     this.recordId = this.$route.query.recordId
     this.getRecordDetail()
     this.getTaskHistories()
-    this.startInterval()
+  },
+  beforeDestroy() {
+    if (this.queryInterval) {
+      clearInterval(this.queryInterval)
+    }
   },
 }
 </script>
@@ -383,5 +432,12 @@ export default {
 }
 .status-box {
   margin: 10px 20px;
+}
+.node-text {
+  margin-left: 5px;
+}
+.tree-container {
+  max-height: 600px; /* 设置滚动区域最大高度 */
+  overflow: hidden;
 }
 </style>

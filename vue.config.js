@@ -1,22 +1,19 @@
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin')
-
 module.exports = {
   chainWebpack: (config) => {
-    config.plugin('monaco-editor').use(MonacoWebpackPlugin, [
-      {
-        // Languages are loaded on demand at runtime
-        languages: ['json', 'javscript'],
-      },
-    ])
-
-    config.plugin('html').tag((args) => {
+    config.plugin('html').tap((args) => {
       args[0].title = 'Windy'
       return args
     })
   },
-}
-
-module.exports = {
+  css: {
+    loaderOptions: {
+      less: {
+        lessOptions: {
+          strictMath: true,
+        },
+      },
+    },
+  },
   devServer: {
     host: 'localhost',
     open: true,

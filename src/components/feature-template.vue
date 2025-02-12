@@ -4,7 +4,7 @@
       <div class="select-button">
         <el-radio-group v-model="writeType" size="mini">
           <el-radio-button label="1">用例</el-radio-button>
-          <el-radio-button label="2">校验</el-radio-button>
+          <el-radio-button label="2">断言</el-radio-button>
           <el-radio-button label="3">变量</el-radio-button>
         </el-radio-group>
       </div>
@@ -23,6 +23,7 @@
             <FeatureEdit
               :point="executePoint.pointId"
               :feature="item"
+              :case="caseId"
               :isEdit="isEdit"
               @refreshData="refreshValue"
             />
@@ -57,6 +58,7 @@ export default {
     data: Object,
     isEdit: Boolean,
     type: String,
+    case: String,
   },
   components: {
     FeatureEdit,
@@ -75,6 +77,7 @@ export default {
     return {
       executePoint: {},
       writeType: '',
+      caseId: '',
     }
   },
   methods: {
@@ -84,6 +87,7 @@ export default {
           p.value = update.item.value
         }
       })
+
       this.$emit('refreshData', {
         data: this.executePoint,
       })
@@ -102,6 +106,7 @@ export default {
     },
   },
   created() {
+    this.caseId = this.case
     this.executePoint = this.data
     this.writeType = this.type
   },

@@ -11,7 +11,9 @@
         v-model="item.value"
         @input="notifyParam"
       >
-        <span slot="suffix">默认在根目录下</span>
+        <span slot="suffix"
+          >默认在根目录下，比如maven项目填写pom相对路径、go项目填写main.go路径</span
+        >
       </el-input>
     </el-form-item>
   </div>
@@ -43,8 +45,8 @@ export default {
       paramList: [
         {
           name: 'pomPath',
-          description: '构建pom相对路径',
-          value: 'pom.xml',
+          description: '构建文件相对路径',
+          value: '',
         },
       ],
       compareList: [

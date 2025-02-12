@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="feature-content gridBackground">
+    <div class="feature-content gridBackground" ref="parent">
       <div>
         <el-row :gutter="20">
           <!--- 开始编写用例-->
@@ -22,123 +22,234 @@
                   v-if="isShowEmpty"
                   description="请在右侧拖拽组件到此处"
                 ></el-empty>
-                <div v-else>
-                  <draggable
-                    v-model="displayList"
-                    class="drag-box"
-                    v-bind="dragOptions"
-                    @end="dragEnd"
-                    @add="addItem"
-                  >
-                    <div
-                      v-for="(executePoint, index) in displayList"
-                      :key="executePoint.id"
-                      class="content-item"
+                <div class="drag-content" v-else>
+                  <el-scrollbar :wrap-style="'height: calc(80vh - 60px);'">
+                    <draggable
+                      v-model="displayList"
+                      ref="child"
+                      class="drag-box"
+                      v-bind="dragOptions"
+                      @end="dragEnd"
+                      @add="addItem"
                     >
-                      <!-- 执行点头部开始 -->
                       <div
-                        class="content-item-title"
-                        :key="uuid"
-                        @dblclick="closeDiv(executePoint)"
+                        v-for="(executePoint, index) in displayList"
+                        :key="executePoint.id"
                       >
-                        <el-row :gutter="10">
-                          <el-col :span="executePoint.editDesc ? 6 : 13">
-                            <span
-                              @dblclick="
-                                () => {
-                                  if (isEdit && !executePoint.editDesc) {
-                                    exchangeEditStatus(executePoint)
-                                  }
-                                }
-                              "
-                              >{{ executePoint.description }}
-                            </span>
-                            <i
-                              class="el-icon-document-copy"
-                              @click="copyExecutePoint(executePoint)"
-                            />
-                          </el-col>
-                          <el-col :span="4">
-                            <i
+                        <el-row>
+                          <el-col :span="22">
+                            <div class="content-item">
+                              <!-- 执行点头部开始 -->
+                              <div
+                                class="content-item-title"
+                                :key="uuid"
+                                @dblclick="closeDiv(executePoint)"
+                              >
+                                <el-row :gutter="10">
+                                  <el-col
+                                    :span="executePoint.editDesc ? 6 : 13"
+                                  >
+                                    <span
+                                      @dblclick="
+                                        () => {
+                                          if (
+                                            isEdit &&
+                                            !executePoint.editDesc
+                                          ) {
+                                            exchangeEditStatus(executePoint)
+                                          }
+                                        }
+                                      "
+                                      >{{ executePoint.description }}
+                                    </span>
+                                    <i
+                                      class="el-icon-document-copy i-icon"
+                                      @click="copyExecutePoint(executePoint)"
+                                    />
+
+                                    <el-popover
+                                      placement="right-end"
+                                      title="关联模版信息"
+                                      width="400"
+                                      v-if="isShowTemplate(executePoint)"
+                                      trigger="click"
+                                      @show="showExecutePoint(executePoint)"
+                                      @hide="hideTemplate"
+                                    >
+                                      <el-descriptions :column="1">
+                                        <el-descriptions-item
+                                          label="所属服务"
+                                          >{{
+                                            pointTemplate.service
+                                          }}</el-descriptions-item
+                                        >
+                                        <el-descriptions-item
+                                          label="请求信息"
+                                          >{{
+                                            pointTemplate.request
+                                          }}</el-descriptions-item
+                                        >
+                                        <el-descriptions-item
+                                          label="请求方法"
+                                          >{{
+                                            pointTemplate.method
+                                          }}</el-descriptions-item
+                                        >
+                                        <el-descriptions-item
+                                          label="模版描述"
+                                          >{{
+                                            pointTemplate.description
+                                          }}</el-descriptions-item
+                                        >
+                                      </el-descriptions>
+                                      <i
+                                        slot="reference"
+                                        class="el-icon-info i-icon icon-template"
+                                      ></i>
+                                    </el-popover>
+                                  </el-col>
+                                  <el-col :span="4">
+                                    <!-- <i
                               v-if="isEdit"
                               @click="
                                 deleteExecutePoint(index, executePoint.pointId)
                               "
                               class="el-icon-delete delete-point"
-                            />
-                            <i
-                              v-if="isEdit && !executePoint.editDesc"
-                              @click="exchangeEditStatus(executePoint)"
-                              class="el-icon-edit-outline delete-point"
-                            />
-                          </el-col>
+                            /> -->
+                                    <el-popconfirm
+                                      v-if="isEdit"
+                                      title="确认删除用例的执行点？"
+                                      icon-color="#F56C6C"
+                                      @confirm="
+                                        deleteExecutePoint(
+                                          index,
+                                          executePoint.pointId
+                                        )
+                                      "
+                                    >
+                                      <i
+                                        slot="reference"
+                                        class="el-icon-delete delete-point"
+                                      />
+                                    </el-popconfirm>
+                                    <i
+                                      v-if="isEdit && !executePoint.editDesc"
+                                      @click="exchangeEditStatus(executePoint)"
+                                      class="el-icon-edit-outline delete-point"
+                                    />
+                                  </el-col>
 
-                          <el-col
-                            :span="8"
-                            v-if="executePoint.editDesc && isEdit"
-                          >
-                            <div>
-                              <el-input
-                                placeholder="输入功能描述"
-                                @pointerdown.stop.native
-                                v-model="executePoint.desc"
-                                size="mini"
-                              />
+                                  <el-col
+                                    :span="8"
+                                    v-if="executePoint.editDesc && isEdit"
+                                  >
+                                    <div>
+                                      <el-input
+                                        placeholder="输入功能描述"
+                                        @pointerdown.stop.native
+                                        v-model="executePoint.desc"
+                                        size="mini"
+                                      />
+                                    </div>
+                                  </el-col>
+                                  <el-col
+                                    v-if="executePoint.editDesc"
+                                    :span="5"
+                                  >
+                                    <el-button
+                                      size="mini"
+                                      @click="
+                                        exchangeEditStatus(executePoint, true)
+                                      "
+                                      >保存</el-button
+                                    >
+                                    <el-button
+                                      size="mini"
+                                      @click="exchangeEditStatus(executePoint)"
+                                      >取消</el-button
+                                    >
+                                  </el-col>
+                                </el-row>
+                                <i
+                                  :class="{
+                                    'el-icon-arrow-down': executePoint.isActive,
+                                    'right-icon': true,
+                                    'el-icon-arrow-right':
+                                      !executePoint.isActive,
+                                  }"
+                                  @click="closeDiv(executePoint)"
+                                />
+                              </div>
+                              <!-- 执行点头部结束 -->
+
+                              <!-- 执行点内容开始 -->
+                              <collapse>
+                                <div
+                                  v-show="executePoint.isActive"
+                                  class="content-item-detail"
+                                >
+                                  <FeatureTemplate
+                                    v-if="
+                                      executePoint.executeType == 1 ||
+                                      executePoint.executeType == 4 ||
+                                      executePoint.executeType == 5
+                                    "
+                                    :case="caseId"
+                                    :data="executePoint"
+                                    :isEdit="isEdit"
+                                    :key="uuid"
+                                    :type="executePoint.writeType"
+                                    @refreshData="refreshValue"
+                                  />
+                                  <FeatureTool
+                                    v-else
+                                    :data="executePoint"
+                                    :isEdit="isEdit"
+                                    :key="uuid"
+                                    @refreshData="refreshValue"
+                                  />
+                                </div>
+                              </collapse>
+                              <!-- 执行点内容结束 -->
                             </div>
                           </el-col>
-                          <el-col v-if="executePoint.editDesc" :span="5">
-                            <el-button
-                              size="mini"
-                              @click="exchangeEditStatus(executePoint, true)"
-                              >保存</el-button
+                          <el-col :span="2">
+                            <el-popover
+                              placement="right-end"
+                              width="120"
+                              title="变量列表"
+                              trigger="hover"
                             >
-                            <el-button
-                              size="mini"
-                              @click="exchangeEditStatus(executePoint)"
-                              >取消</el-button
-                            >
+                              <div>
+                                <ul class="variable-list">
+                                  <li
+                                    v-for="(
+                                      item, index
+                                    ) in executePoint.variableDefine"
+                                    :key="index"
+                                  >
+                                    <i class="el-icon-caret-right" />
+                                    {{ item.variableKey }}
+                                  </li>
+                                </ul>
+                              </div>
+
+                              <span
+                                slot="reference"
+                                v-if="
+                                  executePoint.variableDefine &&
+                                  executePoint.variableDefine.length
+                                "
+                                class="top-show-icon"
+                              >
+                                <i class="el-icon-camera-solid"
+                              /></span>
+                            </el-popover>
                           </el-col>
                         </el-row>
-                        <i
-                          :class="{
-                            'el-icon-arrow-down': executePoint.isActive,
-                            'right-icon': true,
-                            'el-icon-arrow-right': !executePoint.isActive,
-                          }"
-                          @click="closeDiv(executePoint)"
-                        />
                       </div>
-                      <!-- 执行点头部结束 -->
-
-                      <!-- 执行点内容开始 -->
-                      <collapse>
-                        <div
-                          v-show="executePoint.isActive"
-                          class="content-item-detail"
-                        >
-                          <FeatureTemplate
-                            v-if="
-                              executePoint.executeType == 1 ||
-                              executePoint.executeType == 4
-                            "
-                            :data="executePoint"
-                            :isEdit="isEdit"
-                            :key="uuid"
-                            :type="executePoint.writeType"
-                            @refreshData="refreshValue"
-                          />
-                          <FeatureTool
-                            v-else
-                            :data="executePoint"
-                            :isEdit="isEdit"
-                            :key="uuid"
-                            @refreshData="refreshValue"
-                          />
-                        </div>
-                      </collapse>
-                      <!-- 执行点内容结束 -->
-                    </div>
-                  </draggable>
+                    </draggable>
+                  </el-scrollbar>
                 </div>
               </div>
             </div>
@@ -185,6 +296,14 @@
                   size="middle"
                   >调试</el-link
                 >
+                <el-link
+                  icon="el-icon-tickets"
+                  type="info"
+                  :underline="false"
+                  @click="showHistoryDrawer = !showHistoryDrawer"
+                  size="middle"
+                  >历史日志</el-link
+                >
               </div>
               <el-collapse v-model="toolType" accordion>
                 <el-collapse-item title="基础工具" name="1">
@@ -192,7 +311,7 @@
                     class="tool-list"
                     @start="startDrag($event, { list: featureItemList })"
                     :list="featureItemList"
-                    :group="{ name: 'api', pull: 'clone' }"
+                    :group="{ name: 'api', pull: 'clone', put: false }"
                     animation="100"
                   >
                     <div
@@ -213,19 +332,37 @@
                 <el-collapse-item title="业务模版" name="2">
                   <div>
                     <el-row :gutter="20">
-                      <el-col :span="20">
+                      <el-col :span="14">
                         <el-input
                           size="mini"
                           clearable
                           v-model="filterName"
-                          placeholder="输入模版名称过滤"
+                          placeholder="过滤模版名称"
                         />
                       </el-col>
-                      <el-col :span="4">
+                      <el-col :span="3">
                         <i
                           class="el-icon-refresh refresh-icon"
                           @click="getCaseInfo"
                         />
+                      </el-col>
+                      <el-col :span="7">
+                        <el-tooltip
+                          effect="dark"
+                          content="关联其他服务模版"
+                          placement="top-start"
+                        >
+                          <span>
+                            <el-link
+                              :underline="false"
+                              @click="startShowRelated"
+                              icon="el-icon-share"
+                              ><span style="font-szie: 12px"
+                                >关联</span
+                              ></el-link
+                            ></span
+                          >
+                        </el-tooltip>
                       </el-col>
                     </el-row>
                   </div>
@@ -247,7 +384,7 @@
                           @start="startDrag($event, item)"
                           class="template-list"
                           :list="item.list"
-                          :group="{ name: 'api', pull: 'clone' }"
+                          :group="{ name: 'api', pull: 'clone', put: false }"
                           animation="100"
                         >
                           <div
@@ -275,15 +412,74 @@
         </el-row>
       </div>
     </div>
+    <!-- 显示历史日志开始 -->
+    <el-drawer
+      title="用例历史日志"
+      size="50%"
+      :visible.sync="showHistoryDrawer"
+    >
+      <history ref="historyComp" :feature="featureId" />
+    </el-drawer>
+    <!-- 显示历史日志结束 -->
+    <!-- 关联其他服务模版开始 -->
+    <el-dialog
+      :visible.sync="showRelatedTemplate"
+      title="关联服务模版"
+      @close="cancelRelatedService"
+    >
+      <el-form size="mini" inline>
+        <el-form-item>
+          <el-input
+            style="width: 300px"
+            v-model="filterText"
+            size="mini"
+            placeholder="请输入服务名称关键字搜索"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button icon="el-icon-refresh" type="primary">刷新服务</el-button>
+        </el-form-item>
+      </el-form>
+
+      <el-table
+        :data="
+          serviceList.filter(
+            (data) =>
+              data.serviceId != service &&
+              (!filterText ||
+                data.serviceName
+                  .toLowerCase()
+                  .includes(filterText.toLowerCase()))
+          )
+        "
+        size="mini"
+        max-height="500px"
+        @selection-change="selectServices"
+        ref="relatedTemplateTable"
+      >
+        <el-table-column type="selection" width="55"> </el-table-column>
+        <el-table-column label="服务ID" prop="serviceId"></el-table-column>
+        <el-table-column label="服务名称" prop="serviceName"></el-table-column>
+        <el-table-column label="服务描述" prop="description"></el-table-column>
+      </el-table>
+      <div slot="footer">
+        <el-button size="mini" @click="cancelRelatedService">取消</el-button>
+        <el-button type="primary" @click="addRelatedService" size="mini"
+          >确定</el-button
+        >
+      </div>
+    </el-dialog>
+    <!-- 关联其他服务模版结束 -->
   </div>
 </template>
 <script>
+import history from '../history.vue'
 import FeatureTemplate from '@/components/feature-template'
 import FeatureTool from '@/components/feature-tool'
 import draggable from 'vuedraggable'
 import featureApi from '../../../http/Feature'
-import testCaseApi from '../..//../http/TestCase'
-import serviceApi from '../..//../http/Service'
+import testCaseApi from '../../../http/TestCase'
+import serviceApi from '../../../http/Service'
 import collapse from '../../../lib/collapse'
 export default {
   props: {
@@ -293,6 +489,7 @@ export default {
   },
   components: {
     draggable,
+    history,
     FeatureTemplate,
     FeatureTool,
     collapse,
@@ -300,23 +497,30 @@ export default {
   watch: {
     feature: {
       handler(val) {
-        this.featureId = val
+        if (val != this.featureId) {
+          this.featureId = val
+          this.getFeatureInfo()
+        }
       },
       deep: true,
       immediate: true,
     },
     service: {
       handler(val) {
-        this.serviceId = val
-        this.getExecutePoint()
+        if (val != this.serviceId) {
+          this.serviceId = val
+          this.getExecutePoint()
+        }
       },
       deep: true,
       immediate: true,
     },
     case: {
       handler(val) {
-        this.caseId = val
-        this.getCaseInfo()
+        if (val != this.caseId) {
+          this.caseId = val
+          this.getCaseInfo()
+        }
       },
       deep: true,
       immediate: true,
@@ -327,6 +531,7 @@ export default {
       return {
         animation: 100,
         group: 'api',
+        pull: true,
         revertClone: true,
         disabled: !this.isEdit,
         ghostClass: 'ghost',
@@ -346,17 +551,24 @@ export default {
       return flag
     },
     templateGroup() {
-      return this.serviceGroup.filter((data) => {
-        if (!this.filterName) {
+      let array = this.serviceGroup.filter((data) => {
+        if (!data.filterList) {
+          data.filterList = JSON.parse(JSON.stringify(data.list))
+        }
+        if (!this.filterName || this.filterName == '') {
+          data.list = data.filterList
           return true
         }
 
-        let temp = data.list.filter((item) => {
+        let temp = data.filterList.filter((item) => {
           return item.name.toLowerCase().includes(this.filterName.toLowerCase())
         })
+
         data.list = temp
         return temp.length > 0
       })
+
+      return array
     },
     templateList() {
       return this.featureItemList.filter(
@@ -379,6 +591,7 @@ export default {
       uuid: '',
       isActive: false,
       featureId: '',
+      featureInfo: {},
       filterName: '',
       serviceId: '',
       caseId: '',
@@ -387,9 +600,69 @@ export default {
       testActive: false,
       testShow: false,
       serviceGroup: [],
+      pointTemplate: {},
+      showHistoryDrawer: false,
+      showRelatedTemplate: false,
+      filterText: '',
+      relatedServices: [],
     }
   },
   methods: {
+    selectServices(array) {
+      this.relatedServices = []
+      array.forEach((e) => {
+        this.relatedServices.push(e.serviceId)
+      })
+    },
+    startShowRelated() {
+      this.showRelatedTemplate = true
+    },
+    cancelRelatedService() {
+      this.showRelatedTemplate = false
+      this.relatedServices = []
+    },
+    addRelatedService() {
+      if (!this.relatedServices.length) {
+        this.$notify.warning('请先选择关联的服务')
+        return
+      }
+      let item = {
+        serviceId: this.service,
+        relatedServiceIds: this.relatedServices,
+      }
+      featureApi.addRelatedService(item).then((res) => {
+        if (res.data) {
+          this.$notify.success('关联服务成功')
+          this.cancelRelatedService()
+          this.getTemplates()
+        } else {
+          this.$notify.error('关联服务失败')
+        }
+      })
+    },
+    getFeatureInfo() {
+      featureApi.getFeatureDetail(this.featureId).then((res) => {
+        this.featureInfo = res.data
+      })
+    },
+    isShowTemplate(point) {
+      return (
+        point.executeType == 1 ||
+        point.executeType == 4 ||
+        point.executeType == 5
+      )
+    },
+    showExecutePoint(point) {
+      if (!point.pointId) {
+        return
+      }
+      featureApi.getExecutePointTemplate(point.pointId).then((res) => {
+        this.pointTemplate = res.data
+      })
+    },
+    hideTemplate() {
+      this.pointTemplate = {}
+    },
     closeTemplates(item) {
       item.isActive = !item.isActive
       item.showList = !item.showList
@@ -419,6 +692,7 @@ export default {
         pasteItem.writeType = '1'
         pasteItem.testStage = parseInt(this.menuType)
         pasteItem.pointId = null
+        pasteItem.id = this.displayList.length
         this.allPoints.push(pasteItem)
         this.displayExepoints()
 
@@ -439,31 +713,28 @@ export default {
       this.uuid = this.$utils.randomString(20)
     },
     deleteExecutePoint(index, pointId) {
-      this.$confirm('确认删除用例执行点?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }).then(() => {
-        if (!pointId) {
-          this.removeItem(this.displayList[index])
-          this.displayExepoints()
-          return
-        }
-        this.deletePoint(pointId, index)
-      })
+      if (!pointId) {
+        this.removeItem(this.displayList[index])
+        this.displayExepoints()
+        return
+      }
+      this.deletePoint(pointId, index)
     },
     deletePoint(pointId, index) {
       featureApi.deleteExecutePoint(pointId).then((res) => {
         if (res.data == 1) {
           this.removeItem(this.displayList[index])
           this.displayExepoints()
-          this.$message.success('删除执行点成功')
+          this.$notify.success('删除执行点成功')
           return
         }
         this.$message.warning('删除执行点失败')
       })
     },
     removeItem(item) {
+      if (!item) {
+        return
+      }
       let index = -1
       for (let i in this.allPoints) {
         if (this.allPoints[i]['randomId'] === item.randomId) {
@@ -477,9 +748,9 @@ export default {
     startDebug() {
       featureApi.startFeature(this.featureId).then((res) => {
         if (res.data) {
-          this.$message.success('开始执行，请查看运行日志')
+          this.$notify.success('开始执行，请查看运行日志')
         } else {
-          this.$message.error('执行失败')
+          this.$notify.error('执行失败')
         }
       })
     },
@@ -501,6 +772,14 @@ export default {
       this.displayList.forEach((e) => {
         e.editDesc = false
       })
+      let data = this.convertFeatureData()
+      featureApi.updateFeature(data).then(() => {
+        this.$notify.success('保存成功')
+        this.isEdit = false
+        this.getExecutePoint()
+      })
+    },
+    convertFeatureData() {
       let index = 0
       let array = []
       this.resetOrder()
@@ -515,7 +794,7 @@ export default {
           relatedId: e.relatedId,
         }
 
-        if (e.executeType == 2 || e.executeType == 3) {
+        if (e.executeType == 2 || e.executeType == 3 || e.executeType == 7) {
           item.executePoints = e.executePoints
         } else {
           item.params = e.params
@@ -535,16 +814,11 @@ export default {
         })
         index++
       })
-      let data = {
+      return {
         featureId: this.featureId,
+        parentId: this.featureInfo.parentId,
         testFeatures: array,
       }
-
-      featureApi.updateFeature(data).then(() => {
-        this.$message.success('保存成功')
-        this.isEdit = false
-        this.getExecutePoint()
-      })
     },
     exchangeEditStatus(item, isUpdateText) {
       if (isUpdateText) {
@@ -579,7 +853,7 @@ export default {
       this.allPoints = result
     },
     addItem(e) {
-      let item = this.dragGroupList[e.oldIndex]
+      let item = JSON.parse(JSON.stringify(this.dragGroupList[e.oldIndex]))
       item.isActive = true
       item.randomId = this.$utils.randomString(20)
       item.writeType = '1'
@@ -596,9 +870,13 @@ export default {
       let removeArray = []
       if (update.data.executePoints) {
         update.data.executePoints.forEach((e) => {
-          removeArray.push(e.randomId)
+          if (e.pointId) {
+            removeArray.push(e.randomId)
+          }
         })
       }
+
+      let needUpdate = false
       this.allPoints = this.allPoints.filter((e) => {
         let result = removeArray.indexOf(e.randomId) < 0
         if (!result) {
@@ -606,6 +884,12 @@ export default {
         }
         return result
       })
+      if (needUpdate) {
+        let data = this.convertFeatureData()
+        featureApi.updateFeature(data).then(() => {
+          console.log('drag delete point save success')
+        })
+      }
 
       //更新数据
       let updateArray = []
@@ -620,14 +904,13 @@ export default {
       this.displayExepoints()
     },
     startDrag(event, item) {
+      this.isEdit = true
       this.dragGroupList = item.list
       this.isDrag = true
     },
     selectTestStep() {
       this.bindStepPoints()
       this.displayExepoints()
-      // this.$forceUpdate()
-      // this.uuid = this.$utils.randomString(20)
     },
     bindStepPoints() {
       if (this.displayList.length == 0) {
@@ -683,89 +966,85 @@ export default {
       this.getTemplates()
     },
     getCaseInfo() {
+      if (!this.caseId) {
+        this.caseId = this.$route.query.caseId
+      }
       testCaseApi.getTestCaseDetail(this.caseId).then((res) => {
         this.caseInfo = res.data
         this.getTemplates()
       })
     },
     getTemplates() {
-      if (!this.caseInfo) {
-        this.getCaseInfo()
-        return
-      }
-      if (this.caseInfo.caseType == 2) {
-        featureApi.getAllTemplates().then((res) => {
+      this.caseId = this.$route.query.caseId
+      testCaseApi.getTestCaseDetail(this.caseId).then((res) => {
+        this.caseInfo = res.data
+        if (this.caseInfo.caseType == 2) {
+          featureApi.getAllTemplates().then((res) => {
+            let serviceIds = []
+            let array = res.data
+            array.forEach((e) => {
+              e.isTool = e.templateType != 1
+              e.executeType = e.templateType
+              e.service = e.service ? e.service : ''
+
+              if (serviceIds.indexOf(e.owner) == -1) {
+                serviceIds.push(e.owner)
+              }
+            })
+            const idString = Array.from(serviceIds).join(',')
+            serviceApi.getServicesByIds(idString).then((res) => {
+              this.serviceList = res.data
+              this.exchangeGroup(array)
+              this.featureItemList = array
+            })
+          })
+          return
+        }
+        featureApi.getServiceTemplates(this.serviceId).then((res) => {
           let array = res.data
           array.forEach((e) => {
-            e.isTool = e.templateType != 1 && e.templateType != 5
+            e.isTool = e.templateType != 1
             e.executeType = e.templateType
             e.service = e.service ? e.service : ''
           })
           this.exchangeGroup(array)
           this.featureItemList = array
         })
-        return
-      }
-      featureApi.getServiceTemplates(this.serviceId).then((res) => {
-        let array = res.data
-        array.forEach((e) => {
-          e.isTool = e.templateType != 1 && e.templateType != 5
-          e.executeType = e.templateType
-          e.service = e.service ? e.service : ''
-        })
-        // this.exchangeGroup(array)
-        this.featureItemList = array
-
-        const serviceObj = {}
-        this.serviceList.forEach((obj) => (serviceObj[obj.serviceId] = obj))
-        let service = serviceObj[this.serviceId]
-        if (service) {
-          this.serviceGroup = [
-            {
-              name: service.serviceName,
-              isActive: false,
-              showList: false,
-              list: array,
-            },
-          ]
-        }
       })
     },
     exchangeGroup(array) {
-      let map = {}
+      let serviceTemplateMap = {}
       array.forEach((e) => {
-        let list = map[e.owner]
+        let list = serviceTemplateMap[e.owner]
         if (!list) {
           list = []
         }
 
         list.push(e)
-        map[e.owner] = list
+        serviceTemplateMap[e.owner] = list
       })
 
-      const serviceObj = {}
-      this.serviceList.forEach((obj) => (serviceObj[obj.serviceId] = obj))
+      //将服务列表转成新的对象
+      const serviceMap = this.serviceList.reduce((acc, item) => {
+        acc[item.serviceId] = item.serviceName
+        return acc
+      }, {})
 
       let groupList = []
-      for (let key in map) {
+      for (let key in serviceTemplateMap) {
         if (key && key != '') {
-          let service = serviceObj[key]
+          let service = serviceMap[key]
           if (service) {
             groupList.push({
-              name: service.serviceName,
+              name: service,
               isActive: false,
               showList: false,
-              list: map[key],
+              list: serviceTemplateMap[key],
             })
           }
         }
       }
       this.serviceGroup = groupList
-    },
-    getServices() {
-      serviceApi.getServices().then((res) => {
-        this.serviceList = res.data
-      })
     },
     displayExepoints() {
       this.displayList = []
@@ -777,6 +1056,12 @@ export default {
         }
       })
       this.displayList = array
+      this.$forceUpdate()
+    },
+    getServices() {
+      serviceApi.getServices().then((res) => {
+        this.serviceList = res.data
+      })
     },
   },
   created() {
@@ -790,7 +1075,6 @@ export default {
 <style scoped>
 .operate {
   margin: 10px;
-  padding-left: 20%;
 }
 .operate a {
   margin-right: 10px;
@@ -844,6 +1128,7 @@ export default {
   background-color: #ffffff;
   height: 80vh;
   padding: 10px 20px;
+  padding-right: 10px;
 }
 
 .delete-point {
@@ -887,9 +1172,7 @@ export default {
   padding-bottom: 30px;
   overflow-y: scroll;
 }
-.drag-box {
-  min-height: 400px;
-}
+
 .refresh-icon {
   font-size: 18px;
   cursor: pointer;
@@ -905,5 +1188,45 @@ export default {
   cursor: pointer;
   border-radius: 5px;
   margin: 5px;
+}
+.i-icon {
+  margin-left: 10px;
+  font-size: 15px;
+}
+.icon-template {
+  color: #909399;
+}
+.top-show-icon {
+  font-size: 13px;
+  cursor: pointer;
+  border-color: #409eff;
+  color: #fff;
+  display: inline-block;
+  height: 30px;
+  padding: 0 8px;
+  margin: 15px 10px;
+  line-height: 30px;
+  background-color: #409eff;
+  font-size: 12px;
+  border-radius: 30px;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+</style>
+<style lang="less" scoped>
+.drag-content {
+  height: calc(80vh - 60px);
+  overflow-y: hidden;
+}
+.drag-box {
+  min-height: calc(80vh - 60px);
+}
+.variable-list {
+  list-style: none;
+  padding: 0;
+
+  li {
+    margin: 5px 0;
+  }
 }
 </style>

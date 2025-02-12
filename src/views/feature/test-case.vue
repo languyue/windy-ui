@@ -37,6 +37,112 @@
         </el-col>
       </el-row>
     </div>
+    <!-- 服务统计开始 -->
+    <div class="container">
+      <div class="logo-text">{{ logoName }}</div>
+      <div class="num-row">
+        <el-row :gutter="20">
+          <el-col :span="6">
+            <el-statistic
+              group-separator=","
+              :precision="0"
+              :value="statics.apiCount"
+              :value-style="{ fontSize: '40px', fontWeight: 900 }"
+              title="服务API总数"
+            ></el-statistic>
+          </el-col>
+          <el-col :span="6">
+            <el-statistic
+              :value="statics.apiCoverage"
+              :value-style="{
+                fontSize: '40px',
+                fontWeight: 900,
+                color: statics.apiCoverage >= 90 ? '#67C23A' : '#F56C6C',
+              }"
+              :precision="0"
+              title="用例覆盖率"
+              suffix="%"
+            >
+              <span slot="suffix">
+                <span> {{ statics.apiCoverage ? '%' : '' }}</span>
+              </span>
+            </el-statistic>
+          </el-col>
+          <el-col :span="6">
+            <el-statistic
+              group-separator=","
+              :precision="0"
+              :value="statics.uncoverSize"
+              :value-style="{
+                fontSize: '40px',
+                fontWeight: 900,
+                color: statics.uncoverSize >= 0 ? '#E6A23C' : '#909399',
+              }"
+              title="未覆盖接口"
+            >
+              <span slot="suffix">
+                <el-popover placement="right" width="400" trigger="hover">
+                  <el-alert
+                    :closable="false"
+                    title="接口覆盖率统计"
+                    type="info"
+                    show-icon
+                    description="覆盖率是根据当前服务关联的所有测试用例所使用的模版(模版会关联API)和服务对应的API列表来计算百分比,计算公式如下: 覆盖率 = 模版中使用API个数 / 服务API总数 * 100"
+                  >
+                  </el-alert>
+                  <h4>未覆盖API列表</h4>
+                  <el-table
+                    size="mini"
+                    :row-style="{ cursor: 'pointer' }"
+                    :data="statics.notCoveredApi"
+                    height="400"
+                    @row-click="clickApiRow"
+                  >
+                    <el-table-column
+                      width="150"
+                      property="apiName"
+                      label="API名称"
+                    ></el-table-column>
+                    <el-table-column
+                      property="resource"
+                      label="APi路由"
+                    ></el-table-column>
+                    <el-table-column
+                      width="100"
+                      property="method"
+                      label="请求方法"
+                    ></el-table-column>
+                  </el-table>
+                  <div slot="reference">
+                    <span>
+                      <el-link
+                        style="
+                          margin-left: 5px;
+                          cursor: pointer;
+                          font-size: 12px;
+                          color: 409EFF;
+                        "
+                        >查看<i class="el-icon-view el-icon--right"></i>
+                      </el-link>
+                    </span>
+                  </div>
+                </el-popover>
+              </span>
+            </el-statistic>
+          </el-col>
+          <el-col :span="6">
+            <el-statistic
+              group-separator=","
+              :precision="0"
+              :value="statics.featureCount"
+              :value-style="{ fontSize: '40px', fontWeight: 900 }"
+              title="用例总数"
+            ></el-statistic>
+          </el-col>
+        </el-row>
+      </div>
+    </div>
+    <!-- 服务统计结束 -->
     <!-- 测试集表格开始 -->
     <div class="content">
       <el-table :data="featureData" size="mini">
@@ -98,7 +204,7 @@
         :model="caseForm"
         ref="caseForm"
         :rules="rule"
-        size="small"
+        size="mini"
         label-width="120px"
       >
         <el-form-item label="测试集名称" prop="testCaseName">
@@ -112,17 +218,6 @@
             v-model="caseForm.description"
             placeholder="请输入测试集描述"
           ></el-input>
-        </el-form-item>
-        <el-form-item label="选择服务" prop="serviceId">
-          <el-select v-model="caseForm.serviceId" placeholder="请选择">
-            <el-option
-              v-for="item in serviceList"
-              :key="item.serviceId"
-              :label="item.serviceName"
-              :value="item.serviceId"
-            >
-            </el-option>
-          </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="submit('caseForm')">确认</el-button>
@@ -160,6 +255,7 @@
         </el-row>
       </div>
       <div style="margin: 20px 40px">
+        <span v-if="filterTagList.length">已过滤标签:</span>
         <el-tag
           :key="index"
           @close="handleClose(tag)"
@@ -260,6 +356,7 @@ export default {
       treeData: [],
       allKeys: [],
       featureForm: {},
+      statics: {},
       rule: {
         testCaseName: [
           { required: true, message: '请输入测试集名称', trigger: 'blur' },
@@ -271,9 +368,30 @@ export default {
           { required: true, message: '请选择关联的服务', trigger: 'select' },
         ],
       },
+      serviceName: '',
     }
   },
+  computed: {
+    logoName() {
+      if (!this.serviceName) {
+        return ''
+      }
+      return this.serviceName.substring(0, 1)
+    },
+  },
   methods: {
+    clickApiRow(row) {
+      var getWinLocHref = function () {
+        var location = window.location.href.split('/')
+        var basePath = location[0] + '//' + location[2]
+        return basePath
+      }
+
+      let url =
+        getWinLocHref() +
+        `/#/service/resource?apiId=${row.apiId}&serviceId=${row.serviceId}`
+      window.open(url, '_black')
+    },
     treeNodeClick(data) {
       featureApi.getFeatureDetail(data.featureId).then((res) => {
         this.featureForm = res.data
@@ -301,13 +419,13 @@ export default {
 
       featureApi.copyCaseFeature(data).then((res) => {
         if (res.data) {
-          this.$message.success('复制成功！')
+          this.$notify.success('复制成功！')
           this.selectService()
           this.cancellCopy()
           return
         }
 
-        this.$message.error('复制失败！')
+        this.$notify.error('复制失败！')
       })
     },
     handleClose(tag) {
@@ -369,15 +487,15 @@ export default {
         if (!valid) {
           return false
         }
-
+        this.caseForm.serviceId = this.service
         testCaseApi.createTestCase(this.caseForm).then((res) => {
           this.closeDialog()
           if (res.data) {
-            this.$message.success('添加测试集成功')
+            this.$notify.success('添加测试集成功')
             this.getTestCaseList(1)
             return
           }
-          this.$message.error('添加测试集失败')
+          this.$notify.error('添加测试集失败')
         })
       })
     },
@@ -388,12 +506,22 @@ export default {
       this.serviceList = []
       serviceApi.getServices().then((res) => {
         this.serviceList = res.data
-        this.service = this.serviceList[0].serviceId
+        if (!this.service) {
+          this.service = this.serviceList[0].serviceId
+        }
         this.selectService()
       })
     },
     selectService() {
+      this.$store.commit('UPDATE_SERVICE_ID', this.service)
+      this.serviceList.forEach((e) => {
+        if (e.serviceId == this.service) {
+          this.serviceName = e.serviceName
+        }
+      })
+
       this.getTestCaseList(1)
+      this.getServiceStatic()
     },
     pageChange(page) {
       this.getTestCaseList(page)
@@ -420,18 +548,25 @@ export default {
         type: 'warning',
       }).then(() => {
         testCaseApi.deleteTestCase(row.testCaseId).then(() => {
-          this.$message.success('删除测试集成功')
+          this.$notify.success('删除测试集成功')
           this.getTestCaseList(this.currentPage)
         })
       })
     },
+    getServiceStatic() {
+      serviceApi.getServiceStatics(this.service).then((res) => {
+        this.statics = res.data
+        this.statics.uncoverSize = res.data.notCoveredApi.length
+      })
+    },
   },
   created() {
+    this.service = this.$store.state.serviceId
     this.getServices()
   },
 }
 </script>
-<style scoped>
+<style lang="less" scoped>
 .service {
   margin: 10px 20px;
 }
@@ -454,5 +589,31 @@ export default {
 .tree-list {
   max-height: 600px;
   overflow-y: scroll;
+}
+.container {
+  display: flex;
+  align-items: center;
+
+  .logo-text {
+    display: inline-block;
+    border-radius: 100px;
+    height: 100px;
+    line-height: 100px;
+    width: 100px;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 30px;
+    cursor: pointer;
+    margin-left: 40px;
+    margin-bottom: 20px;
+    color: #909399;
+    font-weight: 800;
+    background-color: #f2f6fc;
+  }
+
+  .num-row {
+    width: 400px;
+    flex-grow: 1;
+  }
 }
 </style>

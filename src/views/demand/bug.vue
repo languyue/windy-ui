@@ -1,6 +1,6 @@
 <template>
   <div class="content">
-    <div>
+    <div class="query-line">
       <el-form :inline="true" v-model="queryForm" size="mini">
         <el-form-item label="缺陷名称">
           <el-input
@@ -24,26 +24,68 @@
             </el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="处理人">
+          <el-select
+            v-model="queryForm.acceptor"
+            clearable
+            :remote-method="querySearchAsync"
+            filterable
+            placeholder="处理人"
+          >
+            <el-option
+              v-for="item in userList"
+              :key="item.userId"
+              :label="item.nickName"
+              :value="item.userId"
+            >
+            </el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="queryBugs">查询</el-button>
         </el-form-item>
       </el-form>
       <div class="bug-div">
+        <el-dropdown @command="selectQueryCommand" size="small">
+          <span class="view-mode"
+            ><i class="el-icon-view" />查看:
+            {{ queryTypeList[commandIndex].label }}
+            <i class="el-icon-arrow-down el-icon--right"></i
+          ></span>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item
+              :command="index + 1"
+              v-for="(item, index) in queryTypeList"
+              :key="index"
+            >
+              <span
+                ><i :class="item.icon" />{{ item.label }}</span
+              ></el-dropdown-item
+            >
+          </el-dropdown-menu>
+        </el-dropdown>
         <el-button
           icon="el-icon-plus"
           type="primary"
           @click="createBug"
           size="mini"
-          >新建缺陷</el-button
+          >创建缺陷</el-button
         >
       </div>
     </div>
     <div class="table-list">
-      <el-table :data="tableData" height="600" style="width: 100%">
-        <el-table-column prop="bugName" label="缺陷名称" width="600">
+      <el-table :data="tableData" height="500" size="mini" style="width: 100%">
+        <el-table-column prop="bugName" label="缺陷名称">
+          <template slot-scope="scope">
+            <text-view :text="scope.row.bugName"></text-view>
+          </template>
         </el-table-column>
-        <el-table-column prop="acceptor" label="负责人" width="180">
+        <el-table-column prop="scene" label="缺陷描述">
+          <template slot-scope="scope">
+            <text-view :text="scope.row.scene" />
+          </template>
         </el-table-column>
+        <el-table-column prop="acceptorName" label="负责人"> </el-table-column>
         <el-table-column prop="status" label="缺陷状态">
           <template slot-scope="scope">
             {{ exchangeStatusName(scope.row.status) }}
@@ -54,11 +96,14 @@
             {{ scope.row.createTime | dateFormat }}
           </template>
         </el-table-column>
-        <el-table-column prop="tag" label="缺陷标签"> </el-table-column>
-        <el-table-column fixed="right" label="操作" width="100">
+
+        <el-table-column label="操作" width="100">
           <template slot-scope="scope">
             <el-button type="text" @click="viewBug(scope.row)" size="small"
               >查看</el-button
+            >
+            <el-button type="text" @click="deleteBug(scope.row)" size="small"
+              >删除</el-button
             >
           </template>
         </el-table-column>
@@ -79,35 +124,64 @@
     <el-dialog
       :title="bugTitle"
       :visible.sync="showBugDialog"
-      :center="true"
       :close-on-click-modal="false"
+      :destroy-on-close="true"
       width="80%"
     >
       <div>
-        <bugDetail :edit="isEdit" :bug="bugId" @cancel="closeBug"></bugDetail>
-      </div>
-      <div slot="footer" class="dialog-footer">
-        <el-button size="mini" @click="closeBug">取 消</el-button>
-        <el-button type="primary" @click="submitBug('bugForm')" size="mini"
-          >确 定</el-button
-        >
+        <bugDetail
+          :edit="isEdit"
+          :iteration="iterationId"
+          :bug="bugId"
+          @cancel="closeBug"
+        ></bugDetail>
       </div>
     </el-dialog>
   </div>
 </template>
 <script>
+import TextView from '../../components/text-view.vue'
 import bugApi from '../../http/BugApi'
+import userApi from '../../http/User'
 import bugDetail from './bug-detail.vue'
 export default {
+  props: {
+    space: {
+      default: '',
+      type: String,
+    },
+    iteration: {
+      default: '',
+      type: String,
+    },
+  },
   components: {
     bugDetail,
+    TextView,
+  },
+  watch: {
+    space: {
+      handler(val) {
+        this.spaceId = val
+        this.getBugList()
+      },
+    },
+    iteration: {
+      handler(val) {
+        this.iterationId = val
+        this.getBugList()
+      },
+    },
   },
   data() {
     return {
+      spaceId: '',
+      iterationId: '',
       tableData: [],
       queryForm: {
         name: '',
         status: '',
+        type: 1,
       },
       statusList: [],
       bugForm: {},
@@ -119,7 +193,6 @@ export default {
       currentSize: 10,
       total: 0,
       isEdit: false,
-      bugId: '',
       bugRule: {
         bugName: [
           { required: true, message: '请输入缺陷名称', trigger: 'blur' },
@@ -129,9 +202,39 @@ export default {
           { required: true, message: '请选择缺陷优先级', trigger: 'change' },
         ],
       },
+      userList: [],
+      queryTypeList: [
+        { icon: 'el-icon-house', label: '所有' },
+        { icon: 'el-icon-thumb', label: '我负责' },
+        { icon: 'el-icon-zoom-in', label: '我创建' },
+      ],
+      commandIndex: 0,
     }
   },
   methods: {
+    selectQueryCommand(command) {
+      this.queryForm.type = command
+      if (this.queryForm.type != '1') {
+        this.$set(this.queryForm, 'acceptor', '')
+      }
+      this.commandIndex = command - 1
+      this.getBugList()
+    },
+    querySearchAsync(queryString) {
+      this.userList = []
+      userApi.queryUserByName('').then((res) => {
+        if (!queryString) {
+          this.userList = res.data
+          return
+        }
+
+        this.userList = res.data.filter((item) => {
+          return (
+            item.label.toLowerCase().indexOf(queryString.toLowerCase()) > -1
+          )
+        })
+      })
+    },
     exchangeStatusName(status) {
       let statusName = '-'
       this.statusList.forEach((e) => {
@@ -149,11 +252,31 @@ export default {
       this.bugId = row.bugId
       // this.bugForm = row
       this.isEdit = true
+      this.bugTitle = '缺陷详情'
+    },
+    deleteBug(row) {
+      bugApi.deleteBug(row.bugId).then((res) => {
+        if (res.data) {
+          this.$notify({
+            title: '成功',
+            message: '删除缺陷成功',
+            type: 'success',
+          })
+          this.getBugList()
+        } else {
+          this.$notify({
+            title: '失败',
+            message: '删除缺陷失败',
+            type: 'danger',
+          })
+        }
+      })
     },
     createBug() {
       this.showBugDialog = true
       this.isEdit = false
       this.bugId = ''
+      this.bugTitle = '创建详情'
     },
     handlePageChange(page) {
       this.currentPage = page
@@ -167,47 +290,20 @@ export default {
       this.showBugDialog = false
       this.bugForm = {}
       this.getBugList()
-      this.$refs.bugForm.resetFields()
-    },
-    submitBug(formName) {
-      this.$refs[formName].validate((valid) => {
-        if (!valid) {
-          return false
-        }
-        console.log('edit', this.isEdit)
-        if (this.isEdit) {
-          bugApi.updateBug(this.bugForm).then((res) => {
-            if (res.data) {
-              this.$message.success('修改缺陷成功')
-              this.getBugList()
-              this.closeBug()
-            } else {
-              this.$message.error('修改缺陷失败')
-            }
-          })
-          return
-        }
-        bugApi.createBug(this.bugForm).then((res) => {
-          if (res.data) {
-            this.$message.success('创建缺陷成功')
-            this.getBugList()
-            this.closeBug()
-          } else {
-            this.$message.error('创建缺陷失败')
-          }
-        })
-      })
     },
     getBugList() {
       bugApi
         .getBugList(
           this.currentPage,
           this.currentSize,
-          this.queryForm.name,
-          this.queryForm.status
+          this.queryForm.name ? this.queryForm.name : '',
+          this.queryForm.status ? this.queryForm.status : '',
+          this.spaceId,
+          this.iterationId ? this.iterationId : '',
+          this.queryForm.type ? this.queryForm.type : '',
+          this.queryForm.acceptor ? this.queryForm.acceptor : ''
         )
         .then((res) => {
-          console.log(res)
           this.tableData = res.data.data
           this.total = res.data.total
         })
@@ -219,19 +315,33 @@ export default {
     },
   },
   created() {
+    this.spaceId = this.$store.state.spaceId
+    this.iterationId = this.iteration
     this.getBugList()
     this.getstatusList()
+    this.querySearchAsync()
   },
 }
 </script>
-<style scoped>
+<style lang="less" scoped>
 .content {
-  margin: 20px;
   position: relative;
+  width: 100%;
 }
 .bug-div {
   position: absolute;
   right: 30px;
   top: 0px;
+}
+.query-line {
+  margin-left: 5px;
+}
+.view-mode {
+  margin-right: 20px;
+  cursor: pointer;
+
+  i {
+    margin-right: 5px;
+  }
 }
 </style>

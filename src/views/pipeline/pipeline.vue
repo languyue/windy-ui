@@ -12,7 +12,7 @@
             placeholder="请输入搜索的服务名"
           >
             <el-option
-              v-for="item in pipelines"
+              v-for="item in serviceList"
               :key="item.value"
               :label="item.label"
               :value="item.value"
@@ -48,18 +48,17 @@
               <el-collapse v-model="activePipelines">
                 <el-collapse-item name="1">
                   <template slot="title">
-                    <i class="el-icon-s-promotion title-icon" />
+                    <i class="el-icon-s-check title-icon" />
                     发布流水线
                   </template>
                   <div
                     v-for="(item, index) in publishList"
                     :key="index"
+                    @click="selectPipeline(item)"
                     class="pipeline-item"
                     :class="{ 'selected-line': item.selected }"
                   >
-                    <span @click="selectPipeline(item)">{{
-                      item.pipelineName
-                    }}</span>
+                    <span>{{ item.pipelineName }}</span>
                     <div style="float: right">
                       <el-dropdown @command="operateLine($event, item)">
                         <span class="el-dropdown-link">
@@ -76,17 +75,16 @@
                 </el-collapse-item>
                 <el-collapse-item name="2">
                   <template slot="title">
-                    <i class="el-icon-cpu title-icon" /> 定时流水线
+                    <i class="el-icon-timer title-icon" /> 定时流水线
                   </template>
                   <div
                     v-for="(item, index) in buildList"
                     :key="index"
+                    @click="selectPipeline(item)"
                     class="pipeline-item"
                     :class="{ 'selected-line': item.selected }"
                   >
-                    <span @click="selectPipeline(item)">{{
-                      item.pipelineName
-                    }}</span>
+                    <span>{{ item.pipelineName }}</span>
                     <div style="float: right">
                       <el-dropdown @command="operateLine($event, item)">
                         <span class="el-dropdown-link">
@@ -103,18 +101,17 @@
                 </el-collapse-item>
                 <el-collapse-item name="3">
                   <template slot="title">
-                    <i class="el-icon-s-custom title-icon" />
+                    <i class="el-icon-coffee-cup title-icon" />
                     自定义流水线
                   </template>
                   <div
                     v-for="(item, index) in customList"
                     :key="index"
                     class="pipeline-item"
+                    @click="selectPipeline(item)"
                     :class="{ 'selected-line': item.selected }"
                   >
-                    <span @click="selectPipeline(item)">{{
-                      item.pipelineName
-                    }}</span>
+                    <span>{{ item.pipelineName }}</span>
                     <div style="float: right">
                       <el-dropdown @command="operateLine($event, item)">
                         <span class="el-dropdown-link">
@@ -166,6 +163,7 @@
               type="primary"
               icon="el-icon-video-play"
               size="mini"
+              v-clickOnce
               :disabled="currentPipeline.executeType != 1"
               @click="startPipeline"
               >运行</el-button
@@ -198,7 +196,7 @@
               icon="el-icon-upload"
               size="mini"
               v-if="currentPipeline.pipelineType != 1"
-              @click="publish"
+              @click="showPushMessageDialog"
               >推送发布</el-button
             >
           </div>
@@ -206,7 +204,10 @@
 
           <!-- 流水线运行描述信息开始 -->
           <div class="pipeline-detail">
-            <el-descriptions title="流水线历史" :column="3" size="medium">
+            <el-descriptions title="流水线日志" :column="3" size="medium">
+              <el-descriptions-item label="流水线ID">
+                {{ currentPipeline.pipelineId }}</el-descriptions-item
+              >
               <el-descriptions-item label="git分支">
                 {{ history.branch }}</el-descriptions-item
               >
@@ -253,6 +254,11 @@
             <h4 class="republis-info">待发布分支</h4>
             <el-table :data="publishData" style="width: 100%">
               <el-table-column prop="branch" label="分支"> </el-table-column>
+              <el-table-column prop="message" label="发布内容">
+                <template slot-scope="scope">
+                  <textView :text="scope.row.message" :len="20"></textView>
+                </template>
+              </el-table-column>
               <el-table-column prop="status" label="状态">
                 <template slot-scope="scope">
                   {{ scope.row.status | publisFormat }}
@@ -266,6 +272,7 @@
               <el-table-column fixed="right" label="操作" width="100">
                 <template slot-scope="scope">
                   <el-button
+                    :disabled="history.pipelineStatus == 4"
                     @click="removePublish(scope.row)"
                     type="text"
                     size="small"
@@ -309,11 +316,18 @@
         }}</el-tag></span
       >
       <el-divider><i class="el-icon-receiving"></i></el-divider>
-      <ul>
-        <li v-for="(item, index) in logForm.messageList" :key="index">
-          <span>{{ item }}</span>
-        </li>
-      </ul>
+      <el-scrollbar>
+        <ul class="log-list">
+          <li
+            class="log-item"
+            v-for="(item, index) in logForm.messageList"
+            :key="index"
+          >
+            <span>{{ item }}</span> <br />
+          </li>
+        </ul>
+      </el-scrollbar>
+
       <div v-if="recordList && recordList.length > 0">
         <el-button type="primary" size="mini" @click="openTaskDetail"
           >查看任务详情</el-button
@@ -368,20 +382,161 @@
     <el-dialog
       title="卡点审批"
       :visible.sync="showApproval"
-      width="30%"
+      width="40%"
       :before-close="approvalClose"
     >
-      <span>审批是否通过?</span>
-      <span slot="footer">
-        <el-button size="mini" type="danger" @click="cancelApproval"
-          >不通过</el-button
+      <el-form
+        :model="approvalForm"
+        :rules="approvalRules"
+        size="mini"
+        ref="approvalForm"
+        label-width="120px"
+      >
+        <el-form-item label="审批是否通过" prop="status">
+          <el-radio-group v-model="approvalForm.status">
+            <el-radio :label="1">通过</el-radio>
+            <el-radio :label="2">不通过</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item
+          label="审批是否通过"
+          prop="message"
+          v-if="approvalForm.status == 2"
         >
-        <el-button size="mini" type="primary" @click="confirmApproval"
-          >通过</el-button
+          <el-input
+            type="textarea"
+            :autosize="{ minRows: 2, maxRows: 4 }"
+            placeholder="请输入审批不通过原因"
+            v-model="approvalForm.message"
+          />
+        </el-form-item>
+        <el-form-item v-auth="'m10020'">
+          <el-button
+            size="mini"
+            type="primary"
+            @click="approvalPipeline('approvalForm')"
+            >确认</el-button
+          >
+        </el-form-item>
+      </el-form>
+    </el-dialog>
+    <!-- 审批结束 -->
+    <!-- 发布弹框开始 -->
+    <el-dialog
+      title="发布确认"
+      :visible.sync="showPublishDialog"
+      width="50%"
+      :before-close="publishDialogClose"
+    >
+      <el-form
+        :model="publishForm"
+        ref="publishForm"
+        :rules="publishRule"
+        size="mini"
+        label-width="120px"
+      >
+        <el-form-item label="发布Tag" prop="tagName">
+          <el-input
+            v-model="publishForm.tagName"
+            placeholder="请输入发布的tag名称"
+          />
+        </el-form-item>
+        <el-form-item label="发布版本号">
+          <el-input
+            v-model="publishForm.version"
+            placeholder="请输入发布的版本号，不配置则使用默认版本规则"
+          />
+        </el-form-item>
+      </el-form>
+      <el-table :data="publishData" style="width: 100%" size="mini">
+        <el-table-column prop="branch" label="分支" width="200px">
+        </el-table-column>
+        <el-table-column prop="message" label="发布内容">
+          <template slot-scope="scope">
+            <textView :text="scope.row.message" :len="50"></textView>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <span slot="footer">
+        <el-button size="mini" type="primary" @click="startRun('publishForm')"
+          >开始流水线</el-button
         >
       </span>
     </el-dialog>
-    <!-- 审批结束 -->
+    <!-- 发布弹框结束 -->
+    <!-- 推送发布消息开始 -->
+    <el-dialog
+      title="分支发布"
+      :visible.sync="showPushMessage"
+      width="40%"
+      :before-close="closePublishMsg"
+    >
+      <el-form
+        :model="publishMsgForm"
+        ref="publishMsgForm"
+        :rules="publishRule"
+        size="mini"
+        label-position="left"
+        label-width="100px"
+      >
+        <el-form-item label="推送分支">
+          {{ pipelineBindBranch }}
+        </el-form-item>
+        <el-form-item label="分支提交信息">
+          <el-popover
+            placement="right"
+            width="600"
+            trigger="click"
+            @show="getBranchCommits"
+          >
+            <el-table :data="commitData" max-height="500px" size="mini">
+              <el-table-column property="shortId" label="提交ID">
+                <template slot-scope="scope">
+                  <i class="el-icon-document" /> {{ scope.row.shortId }}
+                </template>
+              </el-table-column>
+              <el-table-column property="message" label="提交描述">
+                <template slot-scope="scope">
+                  <textView :len="40" :text="scope.row.message" />
+                </template>
+              </el-table-column>
+              <el-table-column property="commitTime" label="提交时间">
+                <template slot-scope="scope">
+                  {{ scope.row.commitTime | dateFormat }}
+                </template>
+              </el-table-column>
+              <el-table-column
+                width="100"
+                property="commitUser"
+                label="提交人"
+              ></el-table-column>
+            </el-table>
+            <el-button
+              slot="reference"
+              type="primary"
+              icon="el-icon-document-checked"
+              >点击查看提交记录</el-button
+            >
+          </el-popover>
+        </el-form-item>
+        <el-form-item label="发布内容" prop="message">
+          <el-input
+            type="textarea"
+            :autosize="{ minRows: 10, maxRows: 20 }"
+            v-model="publishMsgForm.message"
+            placeholder="请输入发布分支的变更内容"
+          />
+        </el-form-item>
+      </el-form>
+
+      <span slot="footer">
+        <el-button size="mini" type="primary" @click="publish('publishMsgForm')"
+          >推送发布分支</el-button
+        >
+      </span>
+    </el-dialog>
+    <!-- 推送发布消息结束 -->
   </div>
 </template>
 <script>
@@ -396,8 +551,9 @@ import actionApi from '../../http/PipelineAction'
 import utils from '../../lib/pipeline'
 import nodeApi from '../../http/NodeBind'
 import gitBindApi from '../../http/GitBind'
+import textView from '../../components/text-view.vue'
 export default {
-  components: { bind, PipelineConfig },
+  components: { bind, PipelineConfig, textView },
   data() {
     return {
       nodes: [],
@@ -405,7 +561,7 @@ export default {
       formLabelWidth: '80px',
       loading: false,
       activePipelines: ['1', '2', '3'],
-      pipelines: [],
+      serviceList: [],
       currentPipeline: {
         pipelineConfig: [],
       },
@@ -428,11 +584,78 @@ export default {
       approvalNode: {},
       showApproval: false,
       bindGit: false,
+      pipelineBindBranch: '',
+      commitData: [],
       recordList: [],
       taskRecordId: '',
+      publishForm: {},
+      publishRule: {
+        tagName: [
+          { required: true, message: '请输入tag名称', trigger: 'blur' },
+        ],
+        message: [
+          { required: true, message: '请输入分支发布内容', trigger: 'blur' },
+          { max: 256, message: '描述内容最长256', trigger: 'blur' },
+        ],
+      },
+      showPublishDialog: false,
+      showPushMessage: false,
+      publishMsgForm: {},
+      loopQuery: null,
+      approvalForm: { status: 1 },
+      currentRunningNode: '',
+      approvalRules: {
+        status: [
+          { required: true, message: '请选择审批状态', trigger: 'change' },
+        ],
+        message: [
+          {
+            required: true,
+            message: '请输入审批不通过原因',
+            trigger: 'blur',
+          },
+        ],
+      },
     }
   },
   methods: {
+    getBranchCommits() {
+      this.commitData = []
+      pipelineApi
+        .getBranchCommits(this.serviceId, this.pipelineBindBranch)
+        .then((res) => {
+          this.commitData = res.data
+        })
+    },
+    closePublishMsg() {
+      this.showPushMessage = false
+      this.publishMsgForm = {}
+    },
+    startRun(formName) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          let config = this.currentPipeline.context
+          if (!config) {
+            config = {}
+          }
+
+          config.paramList = this.publishForm
+          let item = {
+            pipelineId: this.currentPipeline.pipelineId,
+            pipelineConfig: config,
+          }
+          pipelineApi
+            .updatePipeline(this.serviceId, item.pipelineId, item)
+            .then((res) => {
+              if (res.data) {
+                this.executePipeline()
+              } else {
+                this.$notify.error('添加tag失败，运行流水线失败')
+              }
+            })
+        }
+      })
+    },
     closeNodeLog() {
       this.recordList = []
       this.taskRecordId = ''
@@ -455,27 +678,43 @@ export default {
       }
       return label
     },
+    publishDialogClose() {
+      this.showPublishDialog = false
+      this.publishForm = {}
+    },
     approvalClose() {
+      this.approvalForm = { status: 1 }
       this.approvalNode = {}
       this.showApproval = false
     },
-    cancelApproval() {
-      this.approvalPipeline(2)
-    },
-    confirmApproval() {
-      this.approvalPipeline(1)
-    },
-    approvalPipeline(status) {
-      historyApi
-        .approval(this.history.historyId, this.approvalNode.nodeId, status)
-        .then((res) => {
+    approvalPipeline(formName) {
+      this.$refs[formName].validate((valid) => {
+        if (!valid) {
+          return
+        }
+        let item = {
+          historyId: this.history.historyId,
+          nodeId: this.approvalNode.nodeId,
+          type: this.approvalForm.status,
+          message: this.approvalForm.message,
+        }
+        historyApi.approval(item).then((res) => {
           if (res.data) {
-            this.$message.success('审批通过')
+            this.$notify({
+              title: '流水线审批',
+              message:
+                this.approvalForm.status == 1
+                  ? '审批通过'
+                  : '审批不通过，流水线停止',
+              type: this.approvalForm.status == 1 ? 'success' : 'warning',
+            })
+            this.approvalClose()
           } else {
-            this.$message.error('审批失败，请重试')
+            this.$notify.error('审批失败，请重试')
+            return
           }
-          this.approvalClose()
         })
+      })
     },
     getServicePublishes() {
       this.publishData = []
@@ -483,26 +722,36 @@ export default {
         this.publishData = res.data
       })
     },
-    publish() {
-      let data = {
-        pipelineId: this.currentPipeline.pipelineId,
-        serviceId: this.serviceId,
-      }
-      publishApi.createPublish(data).then((res) => {
-        if (res.data) {
-          this.$message.success('推送发布成功，请去发布流水线查看')
-        } else {
-          this.$message.error('推送发布失败')
+    showPushMessageDialog() {
+      this.showPushMessage = true
+      this.publishMsgForm = {}
+    },
+    publish(formName) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          let data = {
+            pipelineId: this.currentPipeline.pipelineId,
+            serviceId: this.serviceId,
+            message: this.publishMsgForm.message,
+          }
+          publishApi.createPublish(data).then((res) => {
+            if (res.data) {
+              this.$notify.success('推送发布成功，请去发布流水线查看')
+              this.closePublishMsg()
+            } else {
+              this.$notify.error('推送发布失败')
+            }
+          })
         }
       })
     },
     removePublish(row) {
       publishApi.deletePublish(row.publishId).then((res) => {
         if (res.data) {
-          this.$message.success('删除成功')
+          this.$notify.success('删除成功')
           this.getServicePublishes()
         } else {
-          this.$message.error('删除失败')
+          this.$notify.error('删除失败')
         }
       })
     },
@@ -518,6 +767,8 @@ export default {
             this.currentPipeline.pipelineName = res.data.pipelineName
             this.currentPipeline.pipelineType = res.data.pipelineType
             this.currentPipeline.pipelineId = res.data.pipelineId
+            this.currentPipeline.pipelineStatus = res.data.pipelineStatus
+            this.currentPipeline.context = res.data.pipelineConfig
             this.uuid++
           })
       }
@@ -577,7 +828,8 @@ export default {
         this.deletePipeline(item)
       }
     },
-    selectService() {
+    selectService(serviceId) {
+      this.$store.commit('UPDATE_SERVICE_ID', serviceId)
       this.getPipelineList()
       this.currentPipeline = { pipelineConfig: [] }
     },
@@ -592,7 +844,7 @@ export default {
             return
           }
           this.approvalNode = node
-          this.showApproval = true
+          this.showApproval = this.currentRunningNode == node.nodeId
           return
         }
 
@@ -603,7 +855,6 @@ export default {
           return
         }
 
-        console.log('ddd', res)
         let nodeType = res.data.executeType
         historyApi.getPipelienStatus(this.history.historyId).then((res) => {
           res.data.nodeStatusList.forEach((e) => {
@@ -632,11 +883,8 @@ export default {
     openTaskDetail() {
       let array = window.location.href.split('//')
       let domain = array[1].split('/')[0]
-      console.log(
-        `${array[0]}//${domain}/record/detail?recordId=${this.taskRecordId}`
-      )
       window.open(
-        `${array[0]}//${domain}/record/detail?recordId=${this.taskRecordId}`,
+        `${array[0]}//${domain}/#/record/detail?recordId=${this.taskRecordId}`,
         '_blank'
       )
     },
@@ -668,9 +916,9 @@ export default {
     },
     remoteMethod() {
       serviceApi.getServices().then((res) => {
-        this.pipelines = []
+        this.serviceList = []
         res.data.forEach((e) => {
-          this.pipelines.push({
+          this.serviceList.push({
             label: e.serviceName,
             value: e.serviceId,
           })
@@ -685,9 +933,9 @@ export default {
       pipelineApi.pausePipeline(this.history.historyId).then((res) => {
         this.isRunning = false
         if (res.data) {
-          this.$message.success('停止流水线成功')
+          this.$notify.success('停止流水线成功')
         } else {
-          this.$message.error('停止流水线失败')
+          this.$notify.error('停止流水线失败')
         }
       })
     },
@@ -704,7 +952,7 @@ export default {
         return
       }
 
-      if (!isPublish && !this.bindGit) {
+      if (this.currentPipeline.pipelineType != 1 && !this.bindGit) {
         let notify = this.$message.warning({
           dangerouslyUseHTMLString: true,
           message:
@@ -715,18 +963,26 @@ export default {
         notify.$el.querySelector('span').onclick = () => {
           that.showGitConfig = !that.showGitConfig
         }
-
         return
       }
 
+      if (this.currentPipeline.pipelineType == 1) {
+        this.showPublishDialog = true
+        return
+      }
+
+      this.executePipeline()
+    },
+    executePipeline() {
       pipelineApi.startPipeline(this.currentPipeline.pipelineId).then((res) => {
         if (res.data == '' || res.data == null) {
-          this.$message.error('运行流水线失败')
+          this.$notify.error('运行流水线失败')
           return
         }
-        this.$message.success('开始运行流水线')
+        this.$notify.success('开始运行流水线')
         this.getLatestHistory(this.currentPipeline.pipelineId)
         this.isRunning = true
+        this.showPublishDialog = false
         this.currentPipeline.pipelineConfig.forEach((e) => {
           e.status = 'success'
         })
@@ -784,9 +1040,10 @@ export default {
         this.currentPipeline.pipelineType = res.data.pipelineType
         this.currentPipeline.executeType = res.data.executeType
         this.currentPipeline.pipelineId = item.pipelineId
+        this.currentPipeline.pipelineStatus = res.data.pipelineStatus
+        this.currentPipeline.context = res.data.pipelineConfig
         this.pipelineId = item.pipelineId
         this.uuid++
-
         this.checkBindBranch()
 
         if (this.currentPipeline.pipelineType == 1) {
@@ -854,7 +1111,7 @@ export default {
         this.customList = []
         res.data.forEach((e) => {
           e.selected = false
-          e.pipelineConfig = JSON.parse(e.pipelineConfig)
+
           if (e.pipelineType == 1) {
             this.publishList.push(e)
           }
@@ -874,26 +1131,31 @@ export default {
     },
     getDefaultService() {
       serviceApi.getServices().then((res) => {
-        this.pipelines = []
+        this.serviceList = []
         res.data.forEach((e) => {
-          this.pipelines.push({
+          this.serviceList.push({
             label: e.serviceName,
             value: e.serviceId,
           })
         })
-
-        this.serviceId = this.pipelines[0].value
+        if (!this.serviceId) {
+          this.serviceId = this.serviceList[0].value
+          this.selectService(this.serviceId)
+        }
         this.getPipelineList()
       })
     },
     loopQueryStatus() {
-      setInterval(() => {
+      let loopQuery = setInterval(() => {
         if (!this.history.historyId) {
           return
         }
         historyApi.getPipelienStatus(this.history.historyId).then((res) => {
           let item = {}
           res.data.nodeStatusList.forEach((e) => {
+            if (e.status == 4) {
+              this.currentRunningNode = e.nodeId
+            }
             item[e.nodeId] = this.exchangeStatus(e.status)
             if (e.nodeId == this.logForm.nodeId) {
               this.logForm = {
@@ -911,13 +1173,17 @@ export default {
             }
           })
           if (res.data.pipelineStatus != 4) {
-            this.isRunning = false
             this.getLatestHistory(this.currentPipeline.pipelineId)
+            if (this.currentPipeline.pipelineType == 1 && this.isRunning) {
+              this.getServicePublishes()
+            }
+            this.isRunning = false
             return
           }
           this.isRunning = true
         })
       }, 3000)
+      this.loopQuery = loopQuery
     },
     cancelCreatePipeline() {
       this.pipelineDialog = false
@@ -931,6 +1197,7 @@ export default {
       gitBindApi.gitbindList(this.currentPipeline.pipelineId).then((res) => {
         res.data.forEach((e) => {
           if (e.isChoose) {
+            this.pipelineBindBranch = e.gitBranch
             this.bindGit = true
           }
         })
@@ -938,14 +1205,18 @@ export default {
     },
   },
   created() {
+    this.serviceId = this.$store.state.serviceId
     this.getConfigNodes()
     this.getDefaultService()
     this.loopQueryStatus()
   },
+  beforeDestroy() {
+    clearInterval(this.loopQuery)
+  },
 }
 </script>
 
-<style scoped>
+<style lang="less" scoped>
 .service-tip {
   cursor: pointer;
 }
@@ -981,7 +1252,7 @@ export default {
 }
 .left-content {
   border-right: 1px solid #dcdfe6;
-  height: 100vh;
+  height: calc(100vh - 130px);
 }
 .pipeline-item {
   cursor: pointer;
@@ -1050,5 +1321,18 @@ ul {
 }
 .republis-info {
   margin: 10px;
+}
+.banch-name {
+  color: #409eff;
+  font-size: 900;
+}
+
+.log-list {
+  background-color: #1e1f22;
+  padding: 10px;
+  border-radius: 5px;
+  color: #bcbec4;
+  max-height: 500px;
+  overflow-y: scroll;
 }
 </style>

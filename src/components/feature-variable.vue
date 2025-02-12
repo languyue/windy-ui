@@ -42,12 +42,10 @@
       </el-row>
     </div>
 
-    <div
-      class="add-line"
-      @click="addItem"
-      v-bind:class="{ 'disable-select': !isEdit }"
-    >
-      <div class="add-button"><i class="el-icon-plus" /> 新增</div>
+    <div class="add-line" v-bind:class="{ 'disable-select': !isEdit }">
+      <div @click="addItem" class="add-button">
+        <i class="el-icon-plus" /> 新增
+      </div>
     </div>
   </div>
 </template>
@@ -102,6 +100,7 @@ export default {
 }
 .add-line {
   position: relative;
+  height: 30px;
   margin: 10px 20px;
 }
 .disable-select {

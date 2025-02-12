@@ -52,8 +52,8 @@
                         <el-dropdown-item command="delete"
                           >删除</el-dropdown-item
                         >
-                        <el-dropdown-item command="generate"
-                          >生成Maven</el-dropdown-item
+                        <el-dropdown-item command="generate" v-clickOnce
+                          >生成二方包</el-dropdown-item
                         >
                         <el-dropdown-item command="import"
                           >API导入</el-dropdown-item
@@ -92,7 +92,9 @@
                   v-if="data.apiType == 0"
                   class="el-icon-folder-opened folder-icon"
                 />
-                <span class="api-name">{{ node.label }}</span>
+                <span class="api-name">
+                  <textView :len="15" :text="node.label" />
+                </span>
                 <div class="tree-op-list">
                   <el-dropdown @command="selectItemCommand($event, data)">
                     <span> ... </span>
@@ -102,6 +104,11 @@
                       >
                       <el-dropdown-item command="dir" v-if="data.apiType == 0"
                         >新增目录</el-dropdown-item
+                      >
+                      <el-dropdown-item
+                        command="dir_edit"
+                        v-if="data.apiType == 0"
+                        >编辑目录</el-dropdown-item
                       >
                       <el-dropdown-item command="delete">删除</el-dropdown-item>
                     </el-dropdown-menu>
@@ -189,33 +196,12 @@
                   </el-table>
                 </div>
 
-                <div class="display-param" v-if="headerData.length > 0">
+                <div class="display-param" v-if="headerList.length > 0">
                   <h5>Header</h5>
-                  <el-table :data="headerData" border size="mini"
-                    ><el-table-column
-                      prop="paramKey"
-                      label="参数名称"
-                      width="200px"
-                    >
+                  <el-table :data="headerList" border size="mini"
+                    ><el-table-column prop="key" label="参数名称" width="200px">
                     </el-table-column>
-                    <el-table-column prop="type" label="参数类型" width="150px">
-                    </el-table-column>
-                    <el-table-column
-                      prop="required"
-                      label="是否必填"
-                      width="150px"
-                    >
-                      <template slot-scope="scope">
-                        <el-switch
-                          disabled
-                          v-model="scope.row.required"
-                          active-color="#13ce66"
-                          inactive-color="#909399"
-                        >
-                        </el-switch>
-                      </template>
-                    </el-table-column>
-                    <el-table-column prop="description" label="参数描述">
+                    <el-table-column prop="value" label="参数值">
                     </el-table-column
                   ></el-table>
                 </div>
@@ -227,9 +213,9 @@
                     size="mini"
                     border
                     row-key="id"
+                    default-expand-all
                     :tree-props="{
                       children: 'children',
-                      hasChildren: 'hasChildren',
                     }"
                     ><el-table-column
                       prop="paramKey"
@@ -268,7 +254,6 @@
                     size="mini"
                     :tree-props="{
                       children: 'children',
-                      hasChildren: 'hasChildren',
                     }"
                     ><el-table-column prop="paramKey" label="参数名称">
                     </el-table-column>
@@ -313,7 +298,7 @@
                       @change="apiForm.method = ''"
                     >
                       <el-option label="HTTP" value="http"> </el-option>
-                      <el-option label="DUBBO" value="dubbo"> </el-option>
+                      <!-- <el-option label="DUBBO" value="dubbo"> </el-option> -->
                     </el-select>
                   </el-form-item>
                   <el-form-item label="接口定义">
@@ -358,6 +343,41 @@
                       placeholder="请输入接口描述"
                     ></el-input>
                   </el-form-item>
+                  <h4 class="title-bar">请求Header</h4>
+                  <el-button type="primary" size="mini" @click="addHeader"
+                    >新增Header参数</el-button
+                  >
+                  <div class="header-list">
+                    <el-row
+                      class="header-line"
+                      v-for="(item, index) in headerList"
+                      :key="index"
+                      :gutter="20"
+                    >
+                      <el-col :span="6">
+                        <el-autocomplete
+                          class="header-key"
+                          v-model="item.key"
+                          size="mini"
+                          :fetch-suggestions="queryHeaderKey"
+                          placeholder="请输入内容"
+                        ></el-autocomplete>
+                      </el-col>
+                      <el-col :span="6">
+                        <el-input
+                          size="mini"
+                          v-model="item.value"
+                          placeholder="请输入请求Value"
+                        />
+                      </el-col>
+                      <el-col :span="1">
+                        <i
+                          @click="deleteHeader(index)"
+                          class="el-icon-remove-outline delete-icon"
+                        />
+                      </el-col>
+                    </el-row>
+                  </div>
                   <h4 class="title-bar">参数设置</h4>
                   <el-button type="primary" size="mini" @click="addParam"
                     >新增请求参数</el-button
@@ -375,7 +395,9 @@
                         <el-col :span="4">
                           <el-input
                             size="mini"
-                            :disabled="data.hide"
+                            :disabled="
+                              data.hide || node.parent.data.type == 'Array'
+                            "
                             v-model="data.paramKey"
                             placeholder="请输入参数名称"
                           ></el-input>
@@ -385,7 +407,9 @@
                             v-model="data.position"
                             style="with: 100%"
                             size="mini"
-                            :disabled="data.freezed"
+                            :disabled="
+                              data.freezed || node.parent.data.type == 'Array'
+                            "
                             placeholder="请选择参数位置"
                           >
                             <el-option label="Path" value="Path"> </el-option>
@@ -425,6 +449,8 @@
                             <el-option label="Integer" value="Integer">
                             </el-option>
                             <el-option label="Float" value="Float"> </el-option>
+                            <el-option label="Object" value="Object">
+                            </el-option>
                             <el-option label="Array" value="Array"> </el-option>
                           </el-select>
                         </el-col>
@@ -480,7 +506,7 @@
                           <el-input
                             size="mini"
                             v-model="data.objectName"
-                            placeholder="请输入Object类名,代码生成使用"
+                            placeholder="输入对象类名,代码生成使用"
                           />
                         </el-col>
                       </el-row>
@@ -549,7 +575,7 @@
                           ></el-input>
                         </el-col>
                         <el-col :span="2">
-                          <div class="op-icon" @click="addSubParam(data)">
+                          <div class="op-icon">
                             <i
                               class="el-icon-remove-outline"
                               @click="removeParam(node, data)"
@@ -565,15 +591,15 @@
                           <el-input
                             size="mini"
                             v-model="data.objectName"
-                            placeholder="请输入Object类名,代码生成使用"
+                            placeholder="请输入对象类名,代码生成使用"
                           />
                         </el-col>
                       </el-row>
                     </div>
                   </el-tree>
 
-                  <h4 class="title-bar">代码生成配置</h4>
-                  <el-form-item label="文件类名" label-width="120px">
+                  <h4 class="title-bar">二方包代码生成配置</h4>
+                  <el-form-item label="Controller名称" label-width="120px">
                     <div>
                       <el-input
                         placeholder="请输入类名"
@@ -590,18 +616,14 @@
                   <el-form-item
                     label="body请求体类名"
                     label-width="120px"
-                    v-if="isHaveBody"
+                    v-if="isHaveBody && apiForm.method != 'GET'"
                   >
                     <el-input
                       placeholder="请输入body请求体类名"
                       v-model="apiForm.bodyClass"
                     ></el-input>
                   </el-form-item>
-                  <el-form-item
-                    label="响应体类名"
-                    label-width="120px"
-                    v-if="responseData.length > 0"
-                  >
+                  <el-form-item label="响应体类名" label-width="120px">
                     <el-input
                       placeholder="请输入接口响应类名"
                       v-model="apiForm.resultClass"
@@ -625,7 +647,7 @@
       >
     </div>
     <el-dialog
-      title="创建目录"
+      :title="apiTitle"
       :visible.sync="showCreateApi"
       width="50%"
       :before-close="cancelCreate"
@@ -688,6 +710,7 @@
       title="构建Maven二方包"
       :visible.sync="showGenerateApi"
       @open="getBuildParam"
+      @close="cancelGenerate"
       width="60%"
     >
       <el-form
@@ -700,25 +723,25 @@
         <el-form-item label="包路径" prop="packageName">
           <el-input
             v-model="generateForm.packageName"
-            placeholder="请输入二方包路径，例如:com.zj.windy"
+            placeholder="请输入二方包路径,例如:com.zj.windy"
           ></el-input>
         </el-form-item>
         <el-form-item label="GroupId" prop="groupId">
           <el-input
             v-model="generateForm.groupId"
-            placeholder="请输入GroupId"
+            placeholder="请输入GroupId,例如: com.zj"
           ></el-input>
         </el-form-item>
         <el-form-item label="ArtifactId" prop="artifactId">
           <el-input
             v-model="generateForm.artifactId"
-            placeholder="请输入ArtifactId"
+            placeholder="请输入ArtifactId,例如: Windy"
           ></el-input>
         </el-form-item>
         <el-form-item label="Version" prop="version">
           <el-input
             v-model="generateForm.version"
-            placeholder="请输入二方包版本号"
+            placeholder="请输入二方包版本号,例如: 1.0.0"
           ></el-input>
         </el-form-item>
       </el-form>
@@ -740,11 +763,19 @@
       :before-close="closeLog"
       @open="openLog"
     >
+      <el-button
+        type="primary"
+        class="refresh-btn"
+        icon="el-icon-refresh"
+        @click="queryHistory"
+        size="mini"
+        >刷新记录</el-button
+      >
       <el-form v-model="logForm" size="mini">
         <el-form-item label="版本">
           <el-select
             v-model="logRecordId"
-            placeholder="请选择历史构建版本"
+            placeholder="历史构建版本"
             @change="selectVersion"
           >
             <el-option
@@ -778,6 +809,9 @@
     <!-- 构建二方包结束 -->
     <el-dialog title="三方API导入" :visible.sync="showImportDialog">
       <el-form v-model="importForm" size="mini" :rules="importRule">
+        <el-form-item label="服务名称">
+          {{ importForm.serviceName }}
+        </el-form-item>
         <el-form-item label="导入类型" prop="type">
           <el-select v-model="importForm.type" placeholder="请选择">
             <el-option label="Yapi-JSON文件" value="Yapi"> </el-option>
@@ -807,7 +841,11 @@
 </template>
 <script>
 import serviceApi from '../../http/Service'
+import textView from '../../components/text-view.vue'
 export default {
+  components: {
+    textView,
+  },
   data() {
     return {
       logInterval: null,
@@ -819,7 +857,10 @@ export default {
       showGenerateApi: false,
       activeName: 'preview',
       filterText: '',
-      apiForm: {},
+      apiForm: {
+        type: 'http',
+      },
+      editDir: false,
       paramData: [],
       responseData: [],
       apiTreeData: [],
@@ -878,11 +919,22 @@ export default {
       },
       loading: null,
       expendKeys: [],
+      apiTitle: '创建接口',
+      headerList: [],
+      defaultHeaderList: [
+        { value: 'Accept' },
+        { value: 'Accept-Charset' },
+        { value: 'Accept-Encoding' },
+        { value: 'Accept-Language' },
+        { value: 'Authorization' },
+        { value: 'Content-Length' },
+        { value: 'Content-Type' },
+      ],
     }
   },
   watch: {
     filterText(val) {
-      this.$refs.tree.filter(val)
+      this.$refs.apiTree.filter(val)
     },
     apiForm: {
       handler(val, old) {
@@ -902,8 +954,35 @@ export default {
       deep: true,
       immediate: true,
     },
+    headerList: {
+      handler(val, old) {
+        if (old && old.length > 0) {
+          this.updateApi = true
+        }
+      },
+      deep: true,
+      immediate: true,
+    },
   },
   methods: {
+    deleteHeader(index) {
+      this.headerList.splice(index, 1)
+    },
+    queryHeaderKey(queryString, cb) {
+      var restaurants = this.defaultHeaderList
+      var results = queryString
+        ? restaurants.filter(this.createFilter(queryString))
+        : restaurants
+      cb(results)
+    },
+    createFilter(queryString) {
+      return (key) => {
+        return key.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0
+      }
+    },
+    addHeader() {
+      this.headerList.push({})
+    },
     copyToClipboard(text) {
       // 创建一个临时的 textarea 元素
       const textarea = document.createElement('textarea')
@@ -915,7 +994,7 @@ export default {
       // 清理临时元素
       document.body.removeChild(textarea)
       // 提示复制成功
-      this.$message.success('复制成功')
+      this.$notify.success('复制成功')
     },
     httpRequest(param) {
       const formData = new FormData()
@@ -926,11 +1005,11 @@ export default {
       serviceApi.importApi(formData).then((res) => {
         this.closeLoading()
         if (res.data.apiList) {
-          this.$message.success('导入api成功')
+          this.$notify.success('导入api成功')
           this.showImportDialog = false
           this.selectService()
         } else {
-          this.$message.error('导入api失败')
+          this.$notify.error('导入api失败')
           this.showImportDialog = false
         }
       })
@@ -959,8 +1038,6 @@ export default {
       if (targetNode.data.apiType != 0) {
         resource.parentId = null
       }
-      resource.requestParams = JSON.parse(resource.requestParams)
-      resource.responseParams = JSON.parse(resource.responseParams)
       serviceApi.updateApi(resource)
     },
     beforeLeave(activeName, oldActiveName) {
@@ -976,9 +1053,11 @@ export default {
         )
           .then(() => {
             this.isLeaving = true
-            this.activeName = activeName
-            this.selectTab()
             this.updateApi = false
+            this.activeName = activeName
+            serviceApi.getApi(this.apiForm.apiId).then((res) => {
+              this.treeNodeSelect(res.data)
+            })
           })
           .catch(() => {})
         return false
@@ -1004,20 +1083,27 @@ export default {
     },
     selectItemCommand(command, data) {
       if (command == 'dir') {
+        this.apiTitle = '创建目录'
         this.addFolder(data)
         return
       }
+      if (command == 'dir_edit') {
+        this.apiTitle = '编辑目录'
+        this.updateFolder(data)
+        return
+      }
       if (command == 'api') {
+        this.apiTitle = '创建接口'
         this.addApi(data)
         return
       }
       if (command == 'delete') {
         serviceApi.deleteApi(data.apiId).then((res) => {
           if (res.data) {
-            this.$message.success('删除成功')
+            this.$notify.success('删除成功')
             this.selectService()
           } else {
-            this.$message.error('删除失败')
+            this.$notify.error('删除失败')
           }
         })
       }
@@ -1027,8 +1113,15 @@ export default {
         return
       }
       this.apiForm = JSON.parse(JSON.stringify(data))
-      console.log('show item', this.apiForm)
-      this.paramData = JSON.parse(data.requestParams)
+      if (data.header) {
+        Object.keys(data.header).forEach((key) => {
+          this.headerList.push({ key: key, value: data.header[key] })
+        })
+      } else {
+        this.headerList = []
+      }
+
+      this.paramData = data.requestParams
       if (!this.paramData) {
         this.paramData = []
       }
@@ -1043,10 +1136,13 @@ export default {
           e.children[0].hide = true
           e.children[0].freezed = true
         }
-      })
-      console.log('show paramData', this.paramData)
 
-      this.responseData = JSON.parse(data.responseParams)
+        if (!e.objectName) {
+          e.objectName = ''
+        }
+      })
+
+      this.responseData = data.responseParams
       if (!this.responseData) {
         this.responseData = []
       }
@@ -1060,6 +1156,14 @@ export default {
       this.dataForm.parentId = node.apiId
       this.dataForm.apiType = 0
     },
+    updateFolder(node) {
+      this.editDir = true
+      this.createDir = true
+      this.showCreateApi = true
+      this.dataForm.apiId = node.apiId
+      this.$set(this.dataForm, 'apiName', node.apiName)
+      this.dataForm.apiType = 0
+    },
     addApi(node) {
       this.createDir = false
       this.showCreateApi = true
@@ -1071,6 +1175,9 @@ export default {
       this.showGenerateApi = false
     },
     getBuildParam() {
+      if (!this.serviceId) {
+        return
+      }
       serviceApi.getGenerate(this.serviceId).then((res) => {
         if (!res.data) {
           return
@@ -1086,12 +1193,12 @@ export default {
         this.generateForm.serviceId = this.serviceId
         serviceApi.buildGenerate(this.generateForm).then((res) => {
           if (res.data) {
-            this.$message.success('开始构建')
+            this.$notify.success('开始构建')
             this.showGenerateApi = false
             this.isShowLog = true
             this.queryHistory()
           } else {
-            this.$message.error('触发构建任务失败')
+            this.$notify.error('触发构建任务失败')
           }
         })
       })
@@ -1103,13 +1210,26 @@ export default {
         }
 
         this.dataForm.serviceId = this.serviceId
+        if (this.editDir) {
+          serviceApi.updateApi(this.dataForm).then((res) => {
+            if (res.data) {
+              this.$notify.success('修改目录成功')
+              this.selectService()
+              this.cancelCreate()
+            } else {
+              this.$notify.error('添修改失败')
+            }
+          })
+          return
+        }
+
         serviceApi.createApi(this.dataForm).then((res) => {
           if (res.data) {
-            this.$message.success('添加成功')
+            this.$notify.success('添加成功')
             this.selectService()
             this.cancelCreate()
           } else {
-            this.$message.error('添加失败')
+            this.$notify.error('添加失败')
           }
         })
       })
@@ -1121,26 +1241,45 @@ export default {
       }
 
       if (command == 'import') {
+        let serviceName = ''
+        this.serviceList.forEach((e) => {
+          if (e.serviceId == this.serviceId) {
+            serviceName = e.serviceName
+          }
+        })
+        this.importForm.serviceName = serviceName
         this.showImportDialog = true
         return
       }
 
       if (command == 'delete') {
+        if (!this.selectNodes.length) {
+          this.$notify.warning('请先选择要删除的API')
+          return
+        }
         serviceApi.batchDeleteApi(this.selectNodes).then((res) => {
           if (res.data) {
-            this.$message.success('删除成功')
+            this.$notify.success('删除成功')
             this.selectService()
           } else {
-            this.$message.error('删除失败')
+            this.$notify.error('删除失败')
           }
         })
         return
+      }
+      if (command == 'dir') {
+        this.apiTitle = '创建目录'
+      }
+
+      if (command == 'api') {
+        this.apiTitle = '创建接口'
       }
       this.createDir = command == 'dir'
       this.showCreateApi = true
       this.dataForm.apiType = this.createDir ? 0 : 1
     },
     cancelCreate() {
+      this.editDir = false
       this.showCreateApi = false
       this.dataForm = { type: 'http' }
     },
@@ -1151,10 +1290,17 @@ export default {
       this.recursionName(this.responseData)
       data.requestParams = this.paramData
       data.responseParams = this.responseData
+      if (this.headerList) {
+        let header = {}
+        this.headerList.forEach((e) => {
+          header[e.key] = e.value
+        })
+        data.header = header
+      }
       if (this.currentApi != '') {
         serviceApi.updateApi(data).then((res) => {
           if (res.data) {
-            this.$message.success({ showClose: true, message: '修改接口成功' })
+            this.$notify.success({ showClose: true, message: '修改接口成功' })
             this.expendKeys = [data.apiId]
             this.selectService()
             this.updateApi = false
@@ -1164,12 +1310,12 @@ export default {
       }
       serviceApi.createApi(data).then((res) => {
         if (res.data) {
-          this.$message.success('添加接口成功')
+          this.$notify.success('添加接口成功')
           this.updateApi = false
           this.expendKeys = [data.apiId]
           this.selectService()
         } else {
-          this.$message.error('添加接口失败')
+          this.$notify.error('添加接口失败')
         }
       })
     },
@@ -1190,7 +1336,6 @@ export default {
         this.headerData = []
         this.bodyData = []
         this.traverseTree(this.paramData)
-        console.log('this.paramData', this.paramData)
         this.paramData.forEach((e) => {
           if (e.position == 'Path' || e.position == 'Query') {
             this.pathData.push(e)
@@ -1202,9 +1347,9 @@ export default {
             this.bodyData.push(e)
           }
         })
-        this.previewRes = JSON.parse(JSON.stringify(this.responseData))
-
-        this.traverseTree(this.previewRes)
+        let array = JSON.parse(JSON.stringify(this.responseData))
+        this.traverseTree(array)
+        this.previewRes = array
       }
     },
     traverseTree(nodes) {
@@ -1241,6 +1386,10 @@ export default {
             children: [],
           },
         ]
+      } else {
+        if (item.children) {
+          item.children = []
+        }
       }
     },
     addParam() {
@@ -1279,8 +1428,12 @@ export default {
       this.uuid++
     },
     selectService() {
+      this.$store.commit('UPDATE_SERVICE_ID', this.serviceId)
       serviceApi.getApiList(this.serviceId).then((res) => {
         this.apiTreeData = this.buildTree(res.data)
+        setTimeout(() => {
+          this.$refs.apiTree.filter(this.filterText)
+        }, 100)
       })
     },
     buildTree(data, parentId = null) {
@@ -1308,12 +1461,12 @@ export default {
       serviceApi.getGenerateLog(this.serviceId).then((res) => {
         let array = []
         res.data.forEach((e) => {
-          let params = JSON.parse(e.executeParams)
+          let params = e.generateParams
           params.time = e.updateTime
           params.status = e.status
           params.label = params.version
           params.value = e.recordId
-          params.messageList = JSON.parse(e.result)
+          params.messageList = e.generateResult
           array.push(params)
         })
         this.logVersions = array
@@ -1346,7 +1499,19 @@ export default {
       this.serviceList = []
       serviceApi.getServices().then((res) => {
         this.serviceList = res.data
-        this.serviceId = this.serviceList[0].serviceId
+        if (!this.serviceId) {
+          this.serviceId = this.serviceList[0].serviceId
+        }
+        let apiId = this.$route.query.apiId
+        if (apiId) {
+          this.expendKeys = [apiId]
+          this.$refs.apiTree.setCheckedKeys(this.expendKeys)
+        }
+        let serviceId = this.$route.query.serviceId
+        if (serviceId) {
+          this.serviceId = serviceId
+        }
+
         this.selectService()
       })
     },
@@ -1363,7 +1528,13 @@ export default {
     },
   },
   created() {
+    this.serviceId = this.$store.state.serviceId
     this.getServices()
+  },
+  beforeDestroy() {
+    if (this.logInterval) {
+      clearInterval(this.logInterval)
+    }
   },
 }
 </script>
@@ -1481,5 +1652,23 @@ export default {
   border-radius: 3px;
   margin: 0px;
   min-height: 300px;
+}
+.refresh-btn {
+  position: absolute;
+  right: 20px;
+  z-index: 1000;
+}
+.header-list {
+  margin-top: 10px;
+}
+.header-line {
+  margin: 10px 0;
+}
+.header-key {
+  width: 100%;
+}
+.delete-icon {
+  color: #f56c6c;
+  cursor: pointer;
 }
 </style>

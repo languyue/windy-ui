@@ -26,6 +26,19 @@ export default {
         })
     })
   },
+  deleteTask(taskId) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/work/tasks/${taskId}`
+      http
+        .delete(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
   getTaskStatuses() {
     return new Promise((resolve, reject) => {
       let url = `/v1/devops/work/task/statuses`

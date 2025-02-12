@@ -20,8 +20,16 @@
     <!-- 测试集表格开始 -->
     <div class="content">
       <el-table :data="featureData" size="mini">
-        <el-table-column prop="testCaseName" label="e2e用例"> </el-table-column>
-        <el-table-column prop="description" label="描述"> </el-table-column>
+        <el-table-column prop="testCaseName" label="e2e用例">
+          <template slot-scope="scope">
+            <testview :text="scope.row.testCaseName" :len="40"></testview>
+          </template>
+        </el-table-column>
+        <el-table-column prop="description" label="描述">
+          <template slot-scope="scope">
+            <testview :text="scope.row.description" :len="40"></testview>
+          </template>
+        </el-table-column>
         <el-table-column prop="updateTime" label="最近编辑时间">
           <template slot-scope="scope">
             {{ scope.row.updateTime | dateFormat }}
@@ -204,10 +212,14 @@
 <script>
 import testCaseApi from '../../http/TestCase'
 import featureApi from '../../http/Feature'
+import testview from '../../components/text-view.vue'
 export default {
+  components: {
+    testview,
+  },
   data() {
     return {
-      activeName: '1',
+      TemplatectiveName: '1',
       tableData: [],
       showHistory: false,
       direction: 'rtl',
@@ -264,13 +276,13 @@ export default {
 
       featureApi.copyCaseFeature(data).then((res) => {
         if (res.data) {
-          this.$message.success('复制成功！')
-          this.selectService()
+          this.$notify.success('复制成功！')
+          this.getTestCaseList(this.currentPage)
           this.cancellCopy()
           return
         }
 
-        this.$message.error('复制失败！')
+        this.$notify.error('复制失败！')
       })
     },
     handleClose(tag) {
@@ -336,11 +348,11 @@ export default {
         testCaseApi.createTestCase(this.caseForm).then((res) => {
           this.closeDialog()
           if (res.data) {
-            this.$message.success('添加测试集成功')
+            this.$notify.success('添加测试集成功')
             this.getTestCaseList(1)
             return
           }
-          this.$message.error('添加测试集失败')
+          this.$notify.error('添加测试集失败')
         })
       })
     },
@@ -372,7 +384,7 @@ export default {
         type: 'warning',
       }).then(() => {
         testCaseApi.deleteTestCase(row.testCaseId).then(() => {
-          this.$message.success('删除测试集成功')
+          this.$notify.success('删除测试集成功')
           this.getTestCaseList(this.currentPage)
         })
       })

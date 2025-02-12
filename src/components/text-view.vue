@@ -1,12 +1,11 @@
 <template>
-  <span>
-    <span v-if="showText.length == len">{{ showText }}</span>
+  <span class="text-content">
+    <span v-if="showText.length <= len">{{ showText }}</span>
     <span v-else>
       <el-tooltip
         v-if="showpop"
-        class="item"
+        popper-class="toptip"
         effect="dark"
-        :open-delay="200"
         :content="fullText"
         placement="top-start"
       >
@@ -56,3 +55,14 @@ export default {
   },
 }
 </script>
+<style>
+.text-content {
+  cursor: pointer;
+}
+
+.toptip {
+  white-space: normal;
+  word-break: break-word; /* 可选，防止长单词溢出 */
+  max-width: 200px; /* 可选，设置最大宽度 */
+}
+</style>

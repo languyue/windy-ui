@@ -16,11 +16,35 @@
         ></el-input>
       </el-form-item>
       <el-form-item label="模版类型" prop="invokeType">
-        <el-radio-group v-model="infoForm.invokeType" @change="dataChange">
+        <el-radio-group v-model="infoForm.invokeType" @change="changeType">
           <el-radio :label="1">本地方法调用</el-radio>
           <el-radio :label="2">HTTP调用</el-radio>
           <el-radio :label="3">关联模版</el-radio>
         </el-radio-group>
+      </el-form-item>
+      <el-form-item label="关联模版" v-if="infoForm.invokeType == 3">
+        <el-select
+          v-model="infoForm.relatedId"
+          placeholder="请选择关联的模版"
+          @change="selectTemplate"
+          clearable
+        >
+          <el-option
+            v-for="item in uploadTemplates"
+            :key="item.templateId"
+            :label="item.name"
+            :value="item.templateId"
+          >
+          </el-option>
+        </el-select>
+        <div class="related-div">
+          <span v-if="infoForm.className"
+            >关联模版类名: {{ infoForm.className }}</span
+          >
+          <span v-if="infoForm.methodName"
+            >方法名: {{ infoForm.methodName }}</span
+          >
+        </div>
       </el-form-item>
       <el-form-item
         :label="infoForm.invokeType == 1 ? '类名' : 'Url'"
@@ -28,7 +52,7 @@
       >
         <el-input v-model="infoForm.service" placeholder="请输入"></el-input>
       </el-form-item>
-      <el-form-item label="请求header" v-if="infoForm.invokeType == 2">
+      <el-form-item label="请求header" v-if="infoForm.invokeType != 1">
         <el-row v-for="(item, index) in headerList" :key="index">
           <el-col :span="10">
             <el-input
@@ -243,6 +267,7 @@ export default {
   },
   data() {
     return {
+      uploadTemplates: [],
       serviceId: '',
       infoForm: {},
       headerList: [],
@@ -265,12 +290,14 @@ export default {
         { label: 'Integer', value: 'Integer' },
         { label: 'Float', value: 'Float' },
         { label: 'Double', value: 'Double' },
+        { label: 'Boolean', value: 'Boolean' },
+        { label: 'Object', value: 'Object' },
       ],
       httpMethods: [
-        { label: 'Post', value: 'Post' },
-        { label: 'Get', value: 'Get' },
-        { label: 'Put', value: 'Put' },
-        { label: 'Delete', value: 'Delete' },
+        { label: 'POST', value: 'POST' },
+        { label: 'GET', value: 'GET' },
+        { label: 'PUT', value: 'PUT' },
+        { label: 'DELETE', value: 'DELETE' },
       ],
       positionList: [
         { label: 'Body', value: 'Body' },
@@ -278,9 +305,31 @@ export default {
         { label: 'Query', value: 'Query' },
         { label: 'Header', value: 'Header' },
       ],
+      pluginType: 5,
     }
   },
   methods: {
+    selectTemplate() {
+      this.infoForm.className = ''
+      this.infoForm.methodName = ''
+      this.uploadTemplates.forEach((e) => {
+        if (e.templateId == this.infoForm.relatedId) {
+          this.infoForm.className = e.service
+          this.infoForm.methodName = e.method
+        }
+      })
+    },
+    changeType(type) {
+      if (type != 3) {
+        this.infoForm.relatedId = ''
+        this.infoForm.className = ''
+        this.infoForm.methodName = ''
+      }
+      templateApi.getTemplateByType(this.pluginType).then((res) => {
+        this.uploadTemplates = res.data
+      })
+      this.dataChange()
+    },
     isEmpty(value) {
       return !value || value == '' || value == null
     },
@@ -359,14 +408,14 @@ export default {
 
         if (!this.isCreate) {
           templateApi.updateTemplate(requestParam).then(() => {
-            this.$message.success({ message: `修改成功`, showClose: true })
+            this.$notify.success({ message: `修改成功`, showClose: true })
             this.$emit('complete')
           })
           return
         }
 
         templateApi.createTemplate(requestParam).then(() => {
-          this.$message.success({ message: `添加成功`, showClose: true })
+          this.$notify.success({ message: `添加成功`, showClose: true })
           this.$emit('complete')
         })
       })
@@ -376,9 +425,12 @@ export default {
       this.$emit('complete')
     },
   },
+  created() {
+    this.changeType(3)
+  },
 }
 </script>
-<style scoped>
+<style lang="less" scoped>
 .header-line {
   text-align: center;
 }
@@ -390,5 +442,11 @@ export default {
   margin-left: 10px;
   font-size: 16px;
   cursor: pointer;
+}
+.related-div {
+  color: #c0c4cc;
+  span {
+    margin-left: 10px;
+  }
 }
 </style>

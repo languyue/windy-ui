@@ -15,6 +15,21 @@
           placeholder="请输入任务名称"
         ></el-input>
       </el-form-item>
+      <el-form-item label="关联服务">
+        <el-select
+          v-model="serviceId"
+          size="small"
+          @change="chooseService"
+          placeholder="选择服务"
+        >
+          <el-option
+            v-for="(item, index) in serviceList"
+            :key="index"
+            :label="item.serviceName"
+            :value="item.serviceId"
+          ></el-option>
+        </el-select>
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" @click="startQuery"
           >查询</el-button
@@ -95,10 +110,15 @@
               }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="userId" label="执行人"> </el-table-column>
+          <el-table-column prop="percent" label="执行成功率">
+            <template slot-scope="scope">
+              {{ scope.row.percent ? scope.row.percent + '%' : '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="executeUser" label="执行人"> </el-table-column>
           <el-table-column label="执行时间">
             <template slot-scope="scope">
-              <span> {{ dateFormat(scope.row.updateTime) }}</span>
+              <span> {{ scope.row.updateTime | dateFormat }}</span>
             </template>
           </el-table-column>
           <el-table-column label="操作">
@@ -187,7 +207,7 @@
             placeholder="请选择"
           >
             <el-option
-              v-for="item in services"
+              v-for="item in serviceList"
               :key="item.serviceId"
               :label="item.serviceName"
               :value="item.serviceId"
@@ -219,12 +239,12 @@
             @click="refreshConfig"
             >同步测试集配置</el-button
           >
-          <monaco
+          <codeeditor
             ref="editer"
             :codes="jsonStr"
             @change="dataChange"
             :readonly="false"
-          ></monaco>
+          ></codeeditor>
         </el-form-item>
 
         <!-- <el-form-item label="执行机器">
@@ -258,12 +278,12 @@
   </div>
 </template>
 <script>
-import monaco from '../../components/MonacoEditor.vue'
+import codeeditor from '../../components/CodeEditor.vue'
 import serviceApi from '../../http/Service'
 import testCaseApi from '../../http/TestCase'
 import taskApi from '../../http/Task'
 export default {
-  components: { monaco },
+  components: { codeeditor },
   data() {
     return {
       recordData: [],
@@ -277,7 +297,6 @@ export default {
       machineList: [],
       executeList: [],
       testCases: [],
-      services: [],
       jsonStr: ``,
       taskCurrentPage: 1,
       taskTotal: 0,
@@ -295,9 +314,20 @@ export default {
           { required: true, message: '请选择关联的测试集', trigger: 'select' },
         ],
       },
+      serviceList: [],
+      serviceId: '',
     }
   },
   methods: {
+    chooseService() {
+      this.getTasks(1, this.queryForm.name)
+    },
+    getServices() {
+      this.serviceList = []
+      serviceApi.getServices().then((res) => {
+        this.serviceList = res.data
+      })
+    },
     chooseType(type) {
       if (type == 2) {
         this.testCases = []
@@ -353,16 +383,16 @@ export default {
     startRun(row) {
       taskApi.runTask(row.taskId).then((res) => {
         if (res.data) {
-          this.$message.success('执行成功,请查看执行记录')
+          this.$notify.success('执行成功,请查看执行记录')
         } else {
-          this.$message.error('任务执行失败')
+          this.$notify.error('任务执行失败')
         }
       })
       this.getTasks(this.taskCurrentPage, this.queryForm.name)
     },
     stopRun(row) {
       taskApi.stopTask(row.recordId).then(() => {
-        this.$message.success('执行成功,请查看执行记录')
+        this.$notify.success('执行成功,请查看执行记录')
       })
       this.getTasks(this.taskCurrentPage, this.queryForm.name)
       this.getTaskRecords(this.recordCurrentPage)
@@ -393,10 +423,10 @@ export default {
       }).then(() => {
         taskApi.deleteTask(row.taskId).then((res) => {
           if (res.data) {
-            this.$message.success('删除成功')
+            this.$notify.success('删除成功')
             this.getTasks(this.taskCurrentPage, this.queryForm.name)
           } else {
-            this.$message.error('删除失败')
+            this.$notify.error('删除失败')
           }
         })
       })
@@ -418,7 +448,7 @@ export default {
             this.closeDialog()
             this.getTasks(1)
             if (res.data == 1) {
-              this.$message.success('修改成功')
+              this.$notify.success('修改成功')
               return
             }
 
@@ -431,7 +461,7 @@ export default {
           this.closeDialog()
           this.getTasks(1)
           if (res.data == 1) {
-            this.$message.success('添加成功')
+            this.$notify.success('添加成功')
             return
           }
 
@@ -439,17 +469,11 @@ export default {
         })
       })
     },
-    getServices() {
-      this.services = []
-      serviceApi.getServices().then((res) => {
-        this.services = res.data
-      })
-    },
     getTasks(page, name) {
       if (!name) {
         name = ''
       }
-      taskApi.getTaskList(page, 10, name).then((res) => {
+      taskApi.getTaskList(page, 10, name, this.serviceId).then((res) => {
         this.taskTotal = res.data.total
         this.taskCurrentPage = 1
         this.taskData = res.data.data
@@ -487,22 +511,9 @@ export default {
     },
     deleteTaskRecord(row) {
       taskApi.deleteTaskRecord(row.recordId).then(() => {
-        this.$message.success('删除成功')
+        this.$notify.success('删除成功')
         this.getTaskRecords(this.recordCurrentPage)
       })
-    },
-    dateFormat(time) {
-      var date = new Date(time) //时间戳为10位需*1000，时间戳为13位的话不需乘1000
-      var Y = date.getFullYear() + '-'
-      var M =
-        (date.getMonth() + 1 < 10
-          ? '0' + (date.getMonth() + 1)
-          : date.getMonth() + 1) + '-'
-      var D = date.getDate() + ' '
-      var h = date.getHours() + ':'
-      var m = date.getMinutes() + ':'
-      var s = date.getSeconds()
-      return Y + M + D + h + m + s
     },
   },
   created() {

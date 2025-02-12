@@ -17,19 +17,38 @@
       </FeatureIF>
     </div>
     <div v-if="executePoint.executeType == 6">
-      <monaco
+      <div class="cover-glocal">
+        <el-checkbox
+          size="mini"
+          :disabled="!isEdit"
+          @change="selectCheck"
+          v-model="coverGlobal"
+          >覆盖全局变量</el-checkbox
+        >
+      </div>
+
+      <codeeditor
         :codes="executePoint.service"
         @change="dataChange"
         language="javascript"
         :readonly="!isEdit"
-      ></monaco>
+      ></codeeditor>
+    </div>
+    <div v-if="executePoint.executeType == 7">
+      <FeatureAsync
+        :data="executePoint"
+        :isEdit="isEdit"
+        @refreshData="refreshValue"
+      >
+      </FeatureAsync>
     </div>
   </div>
 </template>
 <script>
 import FeatureFor from '@/components/feature-for'
 import FeatureIF from '@/components/feature-if'
-import monaco from '@/components/MonacoEditor.vue'
+import FeatureAsync from '@/components/feature-async'
+import codeeditor from '@/components/CodeEditor.vue'
 export default {
   props: {
     data: Object,
@@ -38,7 +57,8 @@ export default {
   components: {
     FeatureFor,
     FeatureIF,
-    monaco,
+    codeeditor,
+    FeatureAsync,
   },
   watch: {
     data(val) {
@@ -49,11 +69,19 @@ export default {
     return {
       executePoint: {},
       writeType: '',
+      coverGlobal: false,
     }
   },
   methods: {
+    selectCheck() {
+      this.executePoint.method = JSON.stringify({ global: this.coverGlobal })
+      this.$emit('refreshData', {
+        data: this.executePoint,
+      })
+    },
     dataChange(info) {
       this.executePoint.service = info
+      this.executePoint.method = JSON.stringify({ global: this.coverGlobal })
       this.$emit('refreshData', {
         data: this.executePoint,
       })
@@ -64,7 +92,10 @@ export default {
   },
   created() {
     this.executePoint = this.data
-    console.log(this.executePoint)
+    if (this.executePoint.executeType == 6 && this.executePoint.method) {
+      let config = JSON.parse(this.executePoint.method)
+      this.coverGlobal = config.global
+    }
   },
 }
 </script>
@@ -91,5 +122,8 @@ export default {
   float: right;
   margin-right: 10px;
   color: #606266;
+}
+.cover-glocal {
+  margin: 5px;
 }
 </style>

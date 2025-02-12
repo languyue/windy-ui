@@ -1,8 +1,8 @@
 import http from '../lib/http'
 export default {
-  getTaskList(page, size, name) {
+  getTaskList(page, size, name, serviceId) {
     return new Promise((resolve, reject) => {
-      let url = `/v1/devops/feature/tasks?page=${page}&pageSize=${size}&name=${name}`
+      let url = `/v1/devops/feature/tasks?page=${page}&pageSize=${size}&name=${name}&serviceId=${serviceId}`
       http
         .get(url)
         .then((res) => {
@@ -172,6 +172,19 @@ export default {
   getTaskRecordByTriggerId(triggerId) {
     return new Promise((resolve, reject) => {
       let url = `/v1/devops/feature/task/${triggerId}/record`
+      http
+        .get(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
+  getTriggerTaskRecords(triggerId, page, size) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/feature/task/${triggerId}/records?page=${page}&size=${size}`
       http
         .get(url)
         .then((res) => {

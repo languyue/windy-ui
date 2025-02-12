@@ -40,12 +40,7 @@
           @click="startCreate"
           >手动创建模版</el-button
         >
-        <el-button
-          type="primary"
-          icon="el-icon-upload"
-          @click="showUploadDialog = !showUploadDialog"
-          >上传模版文件</el-button
-        >
+
         <el-button
           type="primary"
           icon="el-icon-upload"
@@ -54,47 +49,105 @@
         >
       </el-form-item>
     </el-form>
-    <el-table :data="templateData" size="mini" style="width: 100%">
-      <el-table-column prop="templateId" label="模版ID"> </el-table-column>
-      <el-table-column prop="name" label="模版名称"> </el-table-column>
-      <el-table-column prop="description" label="模版描述"> </el-table-column>
-      <el-table-column prop="updateTime" label="最近修改时间">
-        <template slot-scope="scope">
-          {{ scope.row.updateTime | dateFormat }}
-        </template>
-      </el-table-column>
-      <el-table-column align="left" label="操作">
-        <template slot-scope="scope">
-          <el-button
-            type="primary"
-            size="mini"
-            plain
-            @click="refreshTemplate(scope.row)"
-            >刷新</el-button
+    <el-tabs v-model="activeTemplate" @tab-click="handleTabClick">
+      <el-tab-pane label="模版列表" name="template">
+        <el-table :data="templateData" size="mini" style="width: 100%">
+          <el-table-column prop="name" label="模版名称"> </el-table-column>
+          <el-table-column prop="service" label="请求信息"> </el-table-column>
+          <el-table-column prop="method" width="100px" label="方法">
+          </el-table-column>
+          <el-table-column prop="description" label="模版描述">
+          </el-table-column>
+          <el-table-column prop="updateTime" label="最近修改时间">
+            <template slot-scope="scope">
+              {{ scope.row.updateTime | dateFormat }}
+            </template>
+          </el-table-column>
+          <el-table-column align="left" label="操作">
+            <template slot-scope="scope">
+              <el-button
+                type="primary"
+                size="mini"
+                plain
+                @click="refreshTemplate(scope.row)"
+                >刷新</el-button
+              >
+              <el-button
+                size="mini"
+                v-if="scope.row.templateType != 5"
+                @click="handleEdit(scope.row)"
+                plain
+                >编辑</el-button
+              >
+              <el-button
+                size="mini"
+                type="danger"
+                plain
+                @click="handleDelete(scope.row)"
+                >删除</el-button
+              >
+            </template>
+          </el-table-column>
+        </el-table>
+        <div>
+          <el-pagination
+            :page-size="10"
+            :current-page="currentPage"
+            @current-change="pageChange"
+            layout="prev, pager, next"
+            :total="totalSize"
           >
-          <el-button size="mini" @click="handleEdit(scope.row)" plain
-            >编辑</el-button
-          >
-          <el-button
-            size="mini"
-            type="danger"
-            plain
-            @click="handleDelete(scope.row)"
-            >删除</el-button
-          >
-        </template>
-      </el-table-column>
-    </el-table>
-    <div>
-      <el-pagination
-        :page-size="10"
-        :current-page="currentPage"
-        @current-change="pageChange"
-        layout="prev, pager, next"
-        :total="totalSize"
-      >
-      </el-pagination>
-    </div>
+          </el-pagination>
+        </div>
+      </el-tab-pane>
+      <el-tab-pane label="插件模版" name="plugin">
+        <el-button
+          type="primary"
+          icon="el-icon-upload"
+          size="mini"
+          @click="showUploadDialog = !showUploadDialog"
+          >上传插件</el-button
+        >
+        <el-table
+          :data="pluginData"
+          size="mini"
+          style="width: 100%"
+          max-height="600"
+        >
+          <el-table-column prop="name" label="模版名称"> </el-table-column>
+          <el-table-column prop="service" label="请求信息"> </el-table-column>
+          <el-table-column prop="source" label="关联插件ID"> </el-table-column>
+          <el-table-column prop="method" width="100px" label="方法">
+          </el-table-column>
+          <el-table-column prop="description" label="模版描述">
+          </el-table-column>
+          <el-table-column prop="updateTime" label="最近修改时间">
+            <template slot-scope="scope">
+              {{ scope.row.updateTime | dateFormat }}
+            </template>
+          </el-table-column>
+          <el-table-column align="left" label="操作">
+            <template slot-scope="scope">
+              <el-button
+                type="primary"
+                size="mini"
+                plain
+                @click="refreshTemplate(scope.row)"
+                >刷新</el-button
+              >
+              <el-button
+                size="mini"
+                type="danger"
+                @click="handleDelete(scope.row)"
+                plain
+                slot="reference"
+                >删除</el-button
+              >
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-tab-pane>
+    </el-tabs>
 
     <!-- 创建模版开始 -->
     <el-dialog :visible.sync="showDialog" @close="closeDialog" width="85%">
@@ -126,6 +179,7 @@
       :visible.sync="showUploadDialog"
       title="模版扫描"
       :destroy-on-close="true"
+      @close="closeUpload"
       width="60%"
     >
       <div v-if="parseData.length <= 0">
@@ -142,14 +196,22 @@
       </div>
       <div v-else>
         <h3>扫描结果</h3>
+
         <el-collapse>
           <el-collapse-item
-            name="1"
+            :name="index"
             v-for="(item, index) in parseData"
             :key="index"
           >
             <template slot="title">
               {{ item.name }} - {{ item.description }}
+              <el-tag
+                style="float: right; margin-left: 10px"
+                type="warning"
+                v-if="item.templateId"
+                size="mini"
+                >存在历史插件模版</el-tag
+              >
             </template>
             <TemplateConfig
               :isEdit="isEdit"
@@ -161,11 +223,41 @@
         </el-collapse>
       </div>
 
-      <span slot="footer" class="dialog-footer" v-if="parseData.length > 0">
-        <el-button size="mini" @click="deletePlugin">取消</el-button>
-        <el-button type="primary" size="mini" @click="submitTemplates"
+      <span slot="footer" v-if="parseData.length > 0">
+        <el-button size="mini" @click="closeUpload">取消</el-button>
+        <el-button
+          type="primary"
+          v-if="!existPlugins.length"
+          size="mini"
+          @click="submitTemplates"
           >确定</el-button
         >
+        <el-popover v-else placement="top" width="200" v-model="coverPlugin">
+          <p>导入插件后会覆盖已存在的插件信息，确认导入?</p>
+          <div style="text-align: right; margin: 0">
+            <el-button size="mini" type="text" @click="coverPlugin = false"
+              >取消</el-button
+            >
+            <el-button
+              type="primary"
+              size="mini"
+              @click="
+                () => {
+                  coverPlugin = false
+                  submitTemplates()
+                }
+              "
+              >确定</el-button
+            >
+          </div>
+          <el-button
+            type="primary"
+            size="mini"
+            slot="reference"
+            class="comfirm-btn"
+            >确定</el-button
+          >
+        </el-popover>
       </span>
     </el-dialog>
     <!-- 文件上传结束 -->
@@ -290,7 +382,7 @@
           </el-table-column>
         </el-table>
       </div>
-      <span slot="footer" class="dialog-footer">
+      <span slot="footer">
         <el-button
           type="primary"
           @click="nextStep"
@@ -328,7 +420,7 @@
       </div>
 
       <el-row v-for="(item, num) in variableList" :key="num" class="param-line">
-        <el-col :span="3">
+        <el-col :span="4">
           <el-input
             size="mini"
             v-model="item.paramKey"
@@ -338,7 +430,7 @@
         <el-col :span="1">
           <div class="header-line">-</div>
         </el-col>
-        <el-col :span="2">
+        <el-col :span="4">
           <el-select size="mini" v-model="item.position" placeholder="参数位置">
             <el-option
               v-for="item in positionList"
@@ -353,18 +445,7 @@
         <el-col :span="1">
           <div class="header-line">-</div>
         </el-col>
-        <el-col :span="3">
-          <el-input
-            size="mini"
-            v-model="item.description"
-            placeholder="请输入参数描述"
-          ></el-input>
-        </el-col>
-
-        <el-col :span="1">
-          <div class="header-line">-</div>
-        </el-col>
-        <el-col :span="3">
+        <el-col :span="6">
           <el-input
             size="mini"
             v-model="item.initValue"
@@ -424,6 +505,7 @@ export default {
   },
   data() {
     return {
+      activeTemplate: 'template',
       templateData: [],
       queryForm: {},
       showDialog: false,
@@ -447,6 +529,7 @@ export default {
       },
       filterText: '',
       chooseService: '',
+      coverPlugin: false,
       previewData: [],
       uploadTemplates: [],
       isCreate: false,
@@ -460,6 +543,7 @@ export default {
         { label: 'Integer', value: 'Integer' },
         { label: 'Float', value: 'Float' },
         { label: 'Double', value: 'Double' },
+        { label: 'Boolean', value: 'Boolean' },
       ],
       positionList: [
         { label: 'Body', value: 'Body' },
@@ -467,6 +551,8 @@ export default {
         { label: 'Query', value: 'Query' },
         { label: 'Header', value: 'Header' },
       ],
+      pluginData: [],
+      existPlugins: [],
     }
   },
   watch: {
@@ -511,6 +597,14 @@ export default {
       })
       this.showBatchDialog = false
     },
+    handleTabClick(tab) {
+      if (tab.name == 'template') {
+        this.getTemplatePage()
+      }
+      if (tab.name == 'plugin') {
+        this.getPluginTemplates()
+      }
+    },
     deleteItem(index) {
       this.variableList.splice(index, 1)
     },
@@ -537,10 +631,10 @@ export default {
       }
       templateApi.batchCreateTemplate(data).then((res) => {
         if (res.data) {
-          this.$message.success('添加模版成功')
+          this.$notify.success('添加模版成功')
           this.closeApiGenerate()
         } else {
-          this.$message.error('添加模版失败')
+          this.$notify.error('添加模版失败')
         }
       })
     },
@@ -558,13 +652,11 @@ export default {
       this.previewData.splice(index, 1)
     },
     showTemplate(row) {
-      console.log('show log', row)
       this.isEdit = false
       this.infoForm = row
       this.showDialog = true
     },
     genarateApi() {
-      console.log()
       serviceApi
         .generateTemplate({
           serviceId: this.serviceId,
@@ -634,6 +726,7 @@ export default {
       return data.apiName.indexOf(value) !== -1
     },
     selectService() {
+      this.$store.commit('UPDATE_SERVICE_ID', this.serviceId)
       this.currentPage = 1
       this.getTemplatePage()
     },
@@ -641,14 +734,19 @@ export default {
       this.serviceList = []
       serviceApi.getServices().then((res) => {
         this.serviceList = res.data
-        this.serviceId = this.serviceList[0].serviceId
+        if (!this.serviceId) {
+          this.serviceId = this.serviceList[0].serviceId
+        }
         this.selectService()
       })
     },
-    deletePlugin() {
+    cleanPlugin() {
+      if (!this.pluginId) {
+        return
+      }
       templateApi.deletePlugin(this.pluginId).then((res) => {
         if (res.data) {
-          this.$message.success('未使用插件，已清理相关数据')
+          this.$notify.success('未使用插件，已清理相关数据')
         } else {
           this.$message.warning('未使用插件，清理数据错误')
         }
@@ -659,19 +757,34 @@ export default {
       this.$forceUpdate()
     },
     submitTemplates() {
+      this.batchUpdateTemplates()
+    },
+    closeUpload() {
+      this.cleanPlugin()
+      this.showUploadDialog = false
+      this.parseData = []
+      this.existPlugins = []
+      this.pluginId = ''
+      this.getTemplatePage()
+      this.getPluginTemplates()
+    },
+    batchUpdateTemplates() {
       let data = {
         templates: this.parseData,
         pluginId: this.pluginId,
+        existPlugins: this.existPlugins,
       }
       templateApi.batchCreateTemplate(data).then((res) => {
         if (res.data) {
-          this.$message.success('添加模版成功')
+          this.$notify.success('添加模版成功')
           this.showUploadDialog = false
           this.parseData = []
+          this.existPlugins = []
           this.pluginId = ''
           this.getTemplatePage()
+          this.getPluginTemplates()
         } else {
-          this.$message.error('添加模版失败')
+          this.$notify.error('添加模版失败')
         }
       })
     },
@@ -684,11 +797,12 @@ export default {
       formData.append('serviceId', this.serviceId)
       templateApi.upload(formData).then((res) => {
         if (res.data) {
-          this.$message.success('上传文件成功')
+          this.$notify.success('上传文件成功')
           this.parseData = res.data.templateDefines
           this.pluginId = res.data.pluginId
+          this.existPlugins = res.data.existPlugins
         } else {
-          this.$message.error('上传文件失败')
+          this.$notify.error('上传文件失败')
         }
       })
     },
@@ -718,6 +832,12 @@ export default {
           this.totalSize = res.data.total
         })
     },
+    getPluginTemplates() {
+      templateApi.getTemplateByType(5).then((res) => {
+        this.pluginData = res.data
+      })
+    },
+
     startQuery() {
       this.currentPage = 1
       this.getTemplatePage()
@@ -737,9 +857,9 @@ export default {
     refreshTemplate(row) {
       templateApi.refresh(row.templateId).then((res) => {
         if (res.data) {
-          this.$message.success('刷新成功')
+          this.$notify.success('刷新成功')
         } else {
-          this.$message.error('刷新失败')
+          this.$notify.error('刷新失败')
         }
       })
     },
@@ -758,10 +878,11 @@ export default {
       }).then(() => {
         templateApi.deleteTemplate(row.templateId).then((res) => {
           if (res.data) {
-            this.$message.success('删除模版成功')
+            this.$notify.success('删除模版成功')
             this.getTemplatePage()
+            this.getPluginTemplates()
           } else {
-            this.$message.error('删除模版失败')
+            this.$notify.error('删除模版失败')
           }
         })
       })
@@ -774,6 +895,7 @@ export default {
     },
   },
   created() {
+    this.serviceId = this.$store.state.serviceId
     this.getServices()
   },
 }
@@ -810,5 +932,8 @@ export default {
 }
 .param-line {
   margin: 10px;
+}
+.comfirm-btn {
+  margin-left: 10px;
 }
 </style>

@@ -5,18 +5,20 @@
         :data="historyData"
         size="mini"
         style="width: 100%"
-        height="500"
+        height="600"
       >
+        <el-table-column prop="featureName" label="用例">
+          <template slot-scope="scope">
+            <textview :text="scope.row.featureName" :len="15" />
+          </template>
+        </el-table-column>
         <el-table-column prop="historyId" label="执行ID"> </el-table-column>
-        <el-table-column fixed prop="featureName" label="用例">
+        <el-table-column prop="createTime" label="执行时间">
+          <template slot-scope="scope">
+            {{ scope.row.createTime | dateFormat }}
+          </template>
         </el-table-column>
-        <el-table-column
-          prop="createTime"
-          label="执行时间"
-          :formatter="dateFormat"
-        >
-        </el-table-column>
-        <el-table-column prop="executeStatus" label="结果">
+        <el-table-column prop="executeStatus" label="结果" width="100px">
           <template slot-scope="scope">
             <el-tag v-if="scope.row.executeStatus == 1" type="success"
               >成功</el-tag
@@ -32,7 +34,7 @@
             >
           </template>
         </el-table-column>
-        <el-table-column label="操作">
+        <el-table-column label="操作" width="180">
           <template slot="header">
             <el-button
               type="primary"
@@ -44,6 +46,7 @@
             <el-button
               type="primary"
               size="mini"
+              v-if="feature"
               @click="startDebug"
               icon="el-icon-video-play"
               >调试</el-button
@@ -74,7 +77,17 @@
       :modal-append-to-body="false"
     >
       <div class="drawer-content">
-        <div class="drawer-title">详情列表</div>
+        <div class="drawer-title">
+          详情列表
+          <el-button
+            class="refresh-btn"
+            type="primary"
+            @click="refreshHistory"
+            icon="el-icon-refresh"
+            size="mini"
+            circle
+          ></el-button>
+        </div>
         <el-tabs v-model="activeName">
           <el-tab-pane name="preset">
             <div slot="label">
@@ -119,18 +132,35 @@
 </template>
 <script>
 import featureApi from '../../http/Feature'
+import taskApi from '../../http/Task'
 import PanelList from '../../components/panel-list.vue'
+import textview from '../../components/text-view.vue'
+
 export default {
   components: {
     PanelList,
+    textview,
   },
   props: {
     feature: String,
+    task: String,
   },
   watch: {
-    feature: function (newValue) {
-      this.featureId = newValue
-      this.getFeatureHistory(newValue)
+    feature: {
+      handler(val) {
+        this.featureId = val
+        this.getFeatureHistory(val)
+      },
+      deep: true,
+      immediate: true,
+    },
+    task: {
+      handler(val) {
+        this.taskId = val
+        this.getTaskHistories(val)
+      },
+      deep: true,
+      immediate: true,
     },
   },
   data() {
@@ -146,23 +176,37 @@ export default {
       presetError: 0,
       executeError: 0,
       cleanError: 0,
+      selectHistoryId: '',
+      taskId: '',
     }
   },
   methods: {
+    getTaskHistories(recordId) {
+      taskApi.getTaskHistories(recordId).then((res) => {
+        this.historyData = res.data
+      })
+    },
     startDebug() {
       featureApi.startFeature(this.featureId).then((res) => {
         if (res.data) {
-          this.$message.success('开始执行，请查看运行日志')
+          this.$notify.success('开始执行，请查看运行日志')
           this.refreshRecords()
         } else {
-          this.$message.error('执行失败')
+          this.$notify.error('执行失败')
         }
       })
     },
     refreshRecords() {
+      if (this.taskId) {
+        this.getTaskHistories(this.taskId)
+        return
+      }
       this.getFeatureHistory(this.featureId)
     },
     filterRecord() {
+      this.presetList = []
+      this.executeList = []
+      this.cleanList = []
       this.resultList.forEach((e) => {
         if (1 == e.testStage) {
           this.presetList.push(e)
@@ -183,6 +227,9 @@ export default {
           }
         }
       })
+    },
+    refreshHistory() {
+      this.getExecuteRecords(this.selectHistoryId)
     },
     getFeatureHistory(featureId) {
       this.historyData = []
@@ -212,25 +259,12 @@ export default {
     showRecord(row) {
       this.getExecuteRecords(row.historyId)
       this.showDrawer = true
+      this.selectHistoryId = row.historyId
     },
     deleteHistory(row) {
       featureApi.deleteHistory(row.historyId).then(() => {
         this.getFeatureHistory(this.featureId)
       })
-    },
-    changeUser() {},
-    dateFormat(row) {
-      var date = new Date(row.createTime) //时间戳为10位需*1000，时间戳为13位的话不需乘1000
-      var Y = date.getFullYear() + '-'
-      var M =
-        (date.getMonth() + 1 < 10
-          ? '0' + (date.getMonth() + 1)
-          : date.getMonth() + 1) + '-'
-      var D = date.getDate() + ' '
-      var h = date.getHours() + ':'
-      var m = date.getMinutes() + ':'
-      var s = date.getSeconds()
-      return Y + M + D + h + m + s
     },
   },
   created() {
@@ -258,5 +292,9 @@ export default {
 }
 .tab-label {
   margin-top: 10px;
+}
+.refresh-btn {
+  float: right;
+  margin-right: 10px;
 }
 </style>

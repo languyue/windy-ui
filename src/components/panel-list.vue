@@ -4,47 +4,48 @@
       <Panel>
         <template slot="title">
           <div class="list-title" @click="showItem(item)">
-            <div
-              class="execute-name"
-              :style="{ color: item.status ? '#67C23A' : '#F56C6C' }"
-            >
+            <div class="execute-name" :class="item.status | statusFormat">
               <i class="el-icon-circle-plus icon-tag" v-if="!item.show" />
               <i class="el-icon-remove icon-tag" v-else />
               {{ item.name }}
             </div>
 
             <div class="tag-list">
-              <el-tag :type="item.status ? 'success' : 'danger'" size="mini">
-                {{ item.status ? '成功' : '失败' }}
+              <el-tag :type="item.status | statusFormat" size="mini">
+                {{ item.status | statusName }}
               </el-tag>
             </div>
           </div>
         </template>
         <template slot="content">
           <!-- if for执行结果展示开始 -->
-          <div v-if="item.executeType == 2" class="cycle-div">
+          <div
+            v-if="
+              item.executeType == 2 ||
+              item.executeType == 3 ||
+              item.executeType == 7
+            "
+            class="cycle-div"
+          >
             <div v-for="(result, index) in item.resultList" :key="index">
               <Panel>
                 <template slot="title">
                   <div class="list-title" @click="showItem(result)">
                     <div
                       class="execute-name"
-                      :style="{ color: result.status ? '#67C23A' : '#F56C6C' }"
+                      :class="item.status | statusFormat"
                     >
                       <i
                         class="el-icon-circle-plus icon-tag"
                         v-if="!result.show"
                       />
                       <i class="el-icon-remove icon-tag" v-else />
-                      {{ result.name }}
+                      {{ result.name }}111
                     </div>
 
                     <div class="tag-list">
-                      <el-tag
-                        :type="item.status ? 'success' : 'danger'"
-                        size="mini"
-                      >
-                        {{ result.status ? '成功' : '失败' }}
+                      <el-tag :type="item.status | statusFormat" size="mini">
+                        {{ result.status | statusName }}
                       </el-tag>
                     </div>
                   </div>
@@ -53,7 +54,7 @@
                   <Panel>
                     <template slot="title">
                       <div class="desc-div">
-                        <i class="el-icon-s-promotion" /> Request
+                        <i class="el-icon-s-promotion" /> 请求信息
                       </div>
                     </template>
                     <template slot="content">
@@ -70,7 +71,7 @@
                   <Panel>
                     <template slot="title">
                       <div class="desc-div">
-                        <i class="el-icon-camera-solid" /> Response
+                        <i class="el-icon-camera-solid" /> 响应信息
                       </div>
                     </template>
                     <template slot="content">
@@ -83,14 +84,9 @@
                         "
                       >
                         比较错误：
-                        <span
-                          style="
-                            color: #f56c6c;
-                            font-size: 16px;
-                            font-weight: 900;
-                          "
-                          >{{ result.compareResult.description }}</span
-                        >
+                        <div class="compare-info">
+                          {{ result.compareResult.description }}
+                        </div>
                       </div>
                       <div>
                         <div class="request-list">
@@ -115,7 +111,7 @@
                     v-if="result.executeDetailVo.responseDetailVo.errorMessage"
                   >
                     <div class="desc-div error-icon">
-                      <i class="el-icon-warning" /> Error
+                      <i class="el-icon-warning" /> 执行描述
                     </div>
                     <div class="request-list">
                       {{ result.executeDetailVo.responseDetailVo.errorMessage }}
@@ -129,10 +125,19 @@
 
           <div v-else>
             <div v-for="(result, index) in item.resultList" :key="index">
+              <el-row class="desc-div" v-if="result.spendTime">
+                <el-col :span="3"><i class="el-icon-timer" /> 请求耗时:</el-col>
+                <el-col :span="12"
+                  ><el-tag type="warning" size="mini"
+                    >{{ result.spendTime }}ms</el-tag
+                  ></el-col
+                >
+              </el-row>
+
               <Panel>
                 <template slot="title">
                   <div class="desc-div">
-                    <i class="el-icon-s-promotion" /> Request
+                    <i class="el-icon-s-promotion" /> 请求信息
                   </div>
                 </template>
                 <template slot="content">
@@ -149,7 +154,7 @@
               <Panel>
                 <template slot="title">
                   <div class="desc-div">
-                    <i class="el-icon-camera-solid" /> Response
+                    <i class="el-icon-camera-solid" /> 响应信息
                   </div>
                 </template>
                 <template slot="content">
@@ -162,10 +167,9 @@
                     "
                   >
                     比较错误：
-                    <span
-                      style="color: #f56c6c; font-size: 16px; font-weight: 900"
-                      >{{ result.compareResult.description }}</span
-                    >
+                    <div class="compare-info">
+                      {{ result.compareResult.description }}
+                    </div>
                   </div>
                   <div>
                     <div class="request-list">
@@ -225,24 +229,25 @@ export default {
     exchangeData(array) {
       this.resultList = []
       array.forEach((e) => {
-        e.executeResult.forEach((ele) => {
-          ele.status = ele.success
-        })
-        let executeSuccess = e.status == 1
-        if (e.compareResult) {
-          executeSuccess = e.compareResult.compareStatus
-        }
-        let item = {
-          name: e.executePointName,
-          executeType: e.executeType,
-          testStage: e.testStage,
-          resultList: e.executeResult,
-          compareResult: e.compareResult,
-          show: false,
-          status: executeSuccess,
-        }
+        let item = this.handleItem(e)
         this.resultList.push(item)
       })
+    },
+    handleItem(e) {
+      let executeSuccess = e.status
+      if (e.compareResult) {
+        executeSuccess = e.compareResult.compareStatus ? 1 : 2
+      }
+      let item = {
+        name: e.executePointName,
+        executeType: e.executeType,
+        testStage: e.testStage,
+        resultList: e.recordResult,
+        compareResult: e.compareResult,
+        show: false,
+        status: executeSuccess,
+      }
+      return item
     },
   },
   created() {},
@@ -277,5 +282,28 @@ export default {
 }
 .cycle-div {
   margin-left: 20px;
+}
+.warning {
+  color: #e6a23c;
+}
+.success {
+  color: #67c23a;
+}
+.danger {
+  color: #f56c6c;
+}
+.info {
+  color: #909399;
+}
+.primary {
+  color: #409eff;
+}
+.compare-info {
+  color: #f56c6c;
+  font-size: 16px;
+  font-weight: 900;
+  white-space: normal; /* 允许文字自动换行 */
+  word-wrap: break-word; /* 长单词自动换行 */
+  overflow-wrap: break-word; /* 兼容性更好的换行方式 */
 }
 </style>

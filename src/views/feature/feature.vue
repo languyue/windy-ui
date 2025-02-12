@@ -3,23 +3,34 @@
     <el-row>
       <el-col :span="5">
         <div class="title">
-          <el-page-header @back="goBack" :content="caseName"> </el-page-header>
+          <el-page-header @back="goBack">
+            <span slot="content">
+              <i
+                class="el-icon-edit-outline edit-name-icon"
+                @click="startEditCase"
+              />
+              <textview :text="caseName" :len="8"></textview>
+            </span>
+          </el-page-header>
         </div>
         <!-- 用例列表开始 -->
         <div class="api-list">
           <div class="service-panel">
             <div class="op">
               <div>辅助工具</div>
-              <i class="item el-icon-video-play" @click="startDebug">调试</i>
+              <i class="item el-icon-video-play" @click="startDebug"
+                >批量调试</i
+              >
               <el-tooltip
                 effect="dark"
-                content="设置全局变量"
+                content="设置当前测试集的全局变量"
                 placement="top-start"
               >
                 <i class="item el-icon-setting" @click="showGlobalEnv"
                   >全局变量</i
                 >
               </el-tooltip>
+              <i class="el-icon-tickets" @click="showBatchHistory">历史记录</i>
             </div>
             <div class="search">
               <el-input
@@ -66,6 +77,7 @@
             node-key="featureId"
             @node-click="treeNodeClick"
             @node-drop="dragNodeEvent"
+            :allow-drop="allowDrop"
             :default-expanded-keys="expendList"
             :data="caseFeatures"
             :filter-node-method="filterNode"
@@ -79,7 +91,12 @@
                     'el-icon-folder-opened': data.featureType == 2,
                   }"
                 />
-                {{ data.featureName }}</span
+
+                <span></span>
+                <span :class="{ 'disable-feature': data.status == 2 }">
+                  <span v-if="data.status == 2">[已禁用]</span>
+                  {{ data.featureName }}</span
+                ></span
               >
               <span style="float: right">
                 <el-dropdown @command="(val) => clickCommand(val, data)">
@@ -104,6 +121,18 @@
                       ><i class="el-icon-document-copy" />复制</el-dropdown-item
                     >
                     <el-dropdown-item
+                      command="disable"
+                      v-if="data.status == 1 && data.featureType == 1"
+                      ><i
+                        class="el-icon-warning-outline"
+                      />禁用</el-dropdown-item
+                    >
+                    <el-dropdown-item
+                      command="open"
+                      v-if="data.status == 2 && data.featureType == 1"
+                      ><i class="el-icon-circle-check" />开启</el-dropdown-item
+                    >
+                    <el-dropdown-item
                       command="pasteFeature"
                       v-if="data.featureType == 2"
                       ><i
@@ -126,6 +155,9 @@
           description="请在左侧选择或创建用例"
         ></el-empty>
         <div v-else class="content">
+          <div class="feature-name-title">
+            用例名称: <span>{{ infoForm.featureName }}</span>
+          </div>
           <el-tabs v-model="activeName" @tab-click="tabChange">
             <el-tab-pane label="用例信息" name="desc">
               <el-descriptions title="用例描述" :column="3" size="small">
@@ -163,6 +195,9 @@
                   <el-tag :key="tag" v-for="tag in dynamicTags" size="mini">
                     {{ tag }}
                   </el-tag>
+                </el-descriptions-item>
+                <el-descriptions-item label="用例描述">
+                  {{ infoForm.description }}
                 </el-descriptions-item>
               </el-descriptions>
               <div v-if="infoForm.featureType == 1">
@@ -220,7 +255,7 @@
         :model="featureForm"
         :rules="featureRule"
         ref="featureForm"
-        size="small"
+        size="mini"
         label-width="80px"
         label-position="top"
       >
@@ -230,7 +265,15 @@
             placeholder="请输入名称"
           />
         </el-form-item>
-        <el-form-item label="用例标签" v-if="createData.type == 1">
+        <el-form-item label="用例描述" prop="description">
+          <el-input
+            type="textarea"
+            :autosize="{ minRows: 2, maxRows: 6 }"
+            v-model="featureForm.description"
+            placeholder="请输入用例描述信息"
+          />
+        </el-form-item>
+        <el-form-item label="用例标签">
           <el-tag
             :key="index"
             v-for="(tag, index) in dynamicTags"
@@ -324,16 +367,16 @@
         <el-table
           :data="configData"
           border
-          :key="uuid"
           size="small"
           default-expand-all
           row-key="configId"
+          @row-dblclick="(row) => startEditParam(row)"
           :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         >
           <el-table-column prop="paramKey" label="参数" width="250">
             <template slot-scope="scope">
               <span v-if="!scope.row.isEdit">{{ scope.row.paramKey }}</span>
-              <el-input v-model="scope.row.paramKey" v-else />
+              <el-input v-model="scope.row.paramKey" v-else size="mini" />
             </template>
           </el-table-column>
           <el-table-column prop="paramType" label="参数类型" width="180">
@@ -347,6 +390,7 @@
               <el-select
                 v-if="scope.row.isEdit"
                 v-model="scope.row.paramType"
+                size="mini"
                 placeholder="请选择参数类型"
               >
                 <el-option
@@ -362,7 +406,25 @@
           <el-table-column prop="value" label="参数值">
             <template slot-scope="scope">
               <span v-if="!scope.row.isEdit">{{ scope.row.value }}</span>
-              <el-input v-model="scope.row.value" v-if="scope.row.isEdit" />
+              <el-input
+                v-model="scope.row.value"
+                v-if="scope.row.isEdit"
+                size="mini"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column prop="description" label="描述">
+            <template slot-scope="scope">
+              <textview
+                v-if="!scope.row.isEdit"
+                :text="scope.row.description"
+                :len="20"
+              ></textview>
+              <el-input
+                v-model="scope.row.description"
+                v-if="scope.row.isEdit"
+                size="mini"
+              />
             </template>
           </el-table-column>
           <el-table-column label="操作">
@@ -396,17 +458,110 @@
       </div>
     </el-dialog>
     <!-- 全局环境变量结束 -->
+    <!-- 开始编辑测试集 -->
+    <el-dialog title="编辑测试集" :visible.sync="showCaseDialog" width="60%">
+      <el-form
+        :model="caseDetail"
+        ref="caseForm"
+        size="mini"
+        :rules="caseRule"
+        label-width="120px"
+      >
+        <el-form-item label="测试集名称" prop="testCaseName">
+          <el-input
+            v-model="caseDetail.testCaseName"
+            placeholder="请输入测试集名称"
+          />
+        </el-form-item>
+        <el-form-item label="测试集描述" prop="description">
+          <el-input
+            type="textarea"
+            :autosize="{ minRows: 4, maxRows: 10 }"
+            v-model="caseDetail.description"
+            placeholder="请输入测试描述"
+          ></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button size="mini" @click="showCaseDialog = !showCaseDialog"
+          >取 消</el-button
+        >
+        <el-button size="mini" type="primary" @click="submitCase('caseForm')"
+          >确 定</el-button
+        >
+      </span>
+    </el-dialog>
+    <!-- 编辑测试集结束 -->
+    <!-- 查看批量执行历史开始 -->
+    <el-dialog
+      :visible.sync="batchHistoryVisiable"
+      width="60%"
+      title="批量执行任务"
+    >
+      <el-table :data="taskRecordList" height="600px">
+        <el-table-column label="执行名称" prop="taskName"></el-table-column>
+        <el-table-column label="执行状态" prop="status">
+          <template slot-scope="scope">
+            <el-tag :type="scope.row.status | statusFormat">{{
+              scope.row.status | statusName
+            }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="执行时间">
+          <template slot-scope="scope">
+            {{ scope.row.createTime | dateFormat }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="200">
+          <template slot-scope="scope">
+            <el-button
+              @click="queryFeatureHistoryies(scope.row)"
+              type="text"
+              size="small"
+              icon="el-icon-view"
+              >查看详情</el-button
+            >
+            <el-button
+              @click="deleteRecord(scope.row)"
+              type="text"
+              size="small"
+              icon="el-icon-delete"
+              >删除</el-button
+            >
+          </template>
+        </el-table-column>
+      </el-table>
+      <el-pagination
+        @size-change="handleRecordSizeChange"
+        @current-change="handleRecordPageChange"
+        :current-page.sync="recordPage"
+        :page-sizes="[10, 20, 50, 100]"
+        :page-size="recordSize"
+        layout="sizes, prev, pager, next"
+        :total="recordTotal"
+      >
+      </el-pagination>
+    </el-dialog>
+    <!-- 查看批量执行历史结束 -->
+    <!-- 查询任务的用例历史开始 -->
+    <el-dialog :visible.sync="historyVisiable" title="用例执行历史">
+      <history :task="selectRecordId" />
+    </el-dialog>
+    <!-- 查询任务的用例历史结束 -->
   </div>
 </template>
 <script>
 import history from './history.vue'
 import FeatureConfig from './comp/feature-config.vue'
+import textview from '../../components/text-view.vue'
 import featureApi from '../../http/Feature'
+import taskApi from '../../http/Task'
 import testCaseApi from '../../http/TestCase'
 export default {
   components: {
     history,
     FeatureConfig,
+    textview,
   },
   watch: {
     filterText(val) {
@@ -415,6 +570,11 @@ export default {
   },
   data() {
     return {
+      recordTotal: 0,
+      recordSize: 10,
+      recordPage: 1,
+      showCaseDialog: false,
+      caseDetail: {},
       infoForm: null,
       activeName: 'desc',
       filterText: '',
@@ -450,12 +610,94 @@ export default {
         featureName: [
           { required: true, message: '请输入名称', trigger: 'blur' },
         ],
+        description: [
+          { max: 256, message: '用例描述最多256个字符', trigger: 'blur' },
+        ],
       },
       expendList: [],
+      caseRule: {
+        testCaseName: [
+          { required: true, message: '请输入测试集名称', trigger: 'blur' },
+        ],
+        description: [
+          { required: true, message: '请输入详细描述', trigger: 'blur' },
+        ],
+      },
+      batchHistoryVisiable: false,
+      taskRecordList: [],
+      historyList: [],
+      historyVisiable: false,
+      selectRecordId: '',
     }
   },
   methods: {
-    dragNodeEvent(node) {
+    handleRecordSizeChange(size) {
+      this.recordSize = size
+      this.getCaseBatchHistories()
+    },
+    handleRecordPageChange(page) {
+      this.recordPage = page
+      this.getCaseBatchHistories()
+    },
+    deleteRecord(row) {
+      taskApi.deleteTaskRecord(row.recordId).then((res) => {
+        if (res.data) {
+          this.$notify.success('删除记录成功')
+          this.getCaseBatchHistories()
+        } else {
+          this.$notify.error('删除记录失败')
+        }
+      })
+    },
+    queryFeatureHistoryies(row) {
+      this.historyVisiable = true
+      this.selectRecordId = row.recordId
+    },
+    showBatchHistory() {
+      this.batchHistoryVisiable = true
+      this.getCaseBatchHistories()
+    },
+    getCaseBatchHistories() {
+      taskApi
+        .getTriggerTaskRecords(this.caseId, this.recordPage, this.recordSize)
+        .then((res) => {
+          this.taskRecordList = res.data.data
+          this.recordTotal = res.data.total
+        })
+    },
+    submitCase(formName) {
+      this.$refs[formName].validate((valid) => {
+        if (!valid) {
+          return false
+        }
+        testCaseApi.updateTestCase(this.caseDetail).then((res) => {
+          if (res.data) {
+            this.$notify.success('修改测试集成功')
+            this.getCaseDetail()
+            this.showCaseDialog = false
+            return
+          }
+          this.$notify.error('修改测试集失败')
+        })
+      })
+    },
+    startEditCase() {
+      this.showCaseDialog = true
+    },
+    allowDrop(draggingNode, dropEndNode, type) {
+      if (type === 'inner' && dropEndNode.data.featureType == 1) {
+        return false
+      } else {
+        return true
+      }
+    },
+    dragNodeEvent(node, endNode, position) {
+      if (position == 'inner' && endNode.data.featureType != 1) {
+        node.data.parentId = endNode.data.featureId
+      }
+      if (position != 'inner' && node.data.parentId != endNode.data.parentId) {
+        node.data.parentId = endNode.data.parentId
+      }
       let array = []
       this.loadItemFromTree(this.caseFeatures, array)
 
@@ -464,7 +706,6 @@ export default {
         e.sortOrder = index
         index++
       })
-      console.log('drag array ', array, array.length)
       featureApi.batchUpdateFeatures({ featureOrders: array }).then((res) => {
         if (res) {
           this.$notify({
@@ -492,6 +733,56 @@ export default {
       })
     },
     clickCommand(command, data) {
+      if (command == 'open') {
+        featureApi
+          .updateFeature({
+            featureId: data.featureId,
+            parentId: data.parentId,
+            status: 1,
+          })
+          .then((res) => {
+            if (res.data) {
+              this.$notify({
+                title: '成功',
+                message: '用例开启成功!',
+                type: 'success',
+              })
+              this.expendList = [data.featureId]
+              this.requestCaseFeatures(this.caseId)
+            } else {
+              this.$notify({
+                title: '失败',
+                message: '用例开启失败',
+                type: 'danger',
+              })
+            }
+          })
+      }
+      if (command == 'disable') {
+        featureApi
+          .updateFeature({
+            featureId: data.featureId,
+            parentId: data.parentId,
+            status: 2,
+          })
+          .then((res) => {
+            if (res.data) {
+              this.$notify({
+                title: '成功',
+                message: '用例禁用成功!',
+                type: 'success',
+              })
+              this.expendList = [data.featureId]
+              this.requestCaseFeatures(this.caseId)
+            } else {
+              this.$notify({
+                title: '失败',
+                message: '用例禁用失败',
+                type: 'danger',
+              })
+            }
+          })
+      }
       if (command == 'newItem') {
         this.startAddFeature()
         this.createData.type = 1
@@ -520,11 +811,13 @@ export default {
         featureApi
           .deleteFeature(data.featureId)
           .then(() => {
+            this.$notify.success('删除用例成功')
+            this.expendList = []
             this.requestCaseFeatures(this.caseId)
             this.uuid = this.$utils.randomString(20)
           })
           .catch((e) => {
-            this.$message.error(e.response.data.message)
+            this.$notify.error(e.response.data.message)
           })
       }
       if (command == 'copyFeature') {
@@ -549,7 +842,6 @@ export default {
         } else {
           featureIds.push(data.featureId)
         }
-        console.log('copy', featureIds)
         localStorage.setItem(
           'copyFeature',
           JSON.stringify({
@@ -609,20 +901,28 @@ export default {
         let array = res.data
         array.push({ paramType: 'String' })
         this.configData = array
+        let contextKeys = []
+        array.forEach((e) => {
+          if (e && e.paramKey) {
+            contextKeys.push(e.paramKey)
+          }
+        })
+        this.$store.commit('UPDATE_CASE_CONTEXT', {
+          key: this.caseId,
+          value: contextKeys,
+        })
       })
     },
     startEditParam(row) {
-      row.isEdit = true
-      this.uuid = this.$utils.randomString(20)
+      this.$set(row, 'isEdit', true)
     },
     cancelEditParam(row) {
-      this.uuid = this.$utils.randomString(20)
-      row.isEdit = false
+      this.$set(row, 'isEdit', false)
     },
     handleSave(row) {
       if (row.configId) {
         testCaseApi.updateConfig(row).then(() => {
-          this.$message.success('修改配置成功')
+          this.$notify.success('修改配置成功')
           this.getTestCaseConfigs()
         })
         return
@@ -630,13 +930,13 @@ export default {
 
       row.unionId = this.caseId
       testCaseApi.addConfigs([row]).then(() => {
-        this.$message.success('添加配置成功')
+        this.$notify.success('添加配置成功')
         this.getTestCaseConfigs()
       })
     },
     handleDelete(row) {
       testCaseApi.deleteConfig(row.configId).then(() => {
-        this.$message.success('删除配置成功')
+        this.$notify.success('删除配置成功')
         this.getTestCaseConfigs()
       })
     },
@@ -702,8 +1002,6 @@ export default {
         }
 
         let request = JSON.parse(JSON.stringify(this.featureForm))
-        request.author = '古月澜'
-        request.modify = '古月澜'
         request.featureType = 1
         request.testCaseId = this.caseId
         request.testFeatures = []
@@ -714,18 +1012,17 @@ export default {
         request.testStep = str.substring(0, str.length - 1)
         request.tags = JSON.parse(JSON.stringify(this.dynamicTags))
         request.featureType = this.createData.type
-        request.parentId = this.createData.parentId
         if (this.isEditFeature) {
           featureApi.updateFeature(request).then(() => {
-            this.$message.success(`修改成功`)
+            this.$notify.success(`修改成功`)
             this.showFeatureDialog = !this.showFeatureDialog
             this.requestCaseFeatures(this.caseId)
           })
           return
         }
-
+        request.parentId = this.createData.parentId
         featureApi.createFeature(request).then(() => {
-          this.$message.success(`添加成功`)
+          this.$notify.success(`添加成功`)
           this.showFeatureDialog = !this.showFeatureDialog
           this.requestCaseFeatures(this.caseId)
         })
@@ -734,18 +1031,32 @@ export default {
     startDebug() {
       let res = this.$refs.tree.getCheckedNodes()
       if (res.length == 0) {
-        this.$message.warning('请选择服务与用例～')
+        this.$message.warning('请选择要执行的用例～')
         return
       }
 
-      this.tableData = []
-      featureApi.startFeature(this.infoForm.featureId).then((res) => {
-        if (res.data) {
-          this.$message.success('开始执行，请查看运行日志')
-        } else {
-          this.$message.error('执行失败')
+      if (res.length > 10) {
+        this.$notify.warning('批量执行的用例个数不能超过10个')
+        return
+      }
+      let array = []
+      res.forEach((e) => {
+        if (e.featureType == 1) {
+          array.push(e.featureId)
         }
       })
+
+      testCaseApi
+        .startBatchFeatures(this.caseId, {
+          featureIds: array,
+        })
+        .then((res) => {
+          if (res.data) {
+            this.$notify.success('开始执行，请查看运行日志')
+          } else {
+            this.$notify.error('执行失败')
+          }
+        })
     },
     tabChange() {
       if (this.activeName == 'history') {
@@ -773,7 +1084,7 @@ export default {
       this.getTestCaseConfigs()
     },
     goBack() {
-      this.$router.go(-1)
+      this.$router.push('/case')
     },
     requestCaseFeatures(caseId) {
       featureApi.getFeatureTree(caseId).then((res) => {
@@ -784,18 +1095,19 @@ export default {
       testCaseApi.getTestCaseDetail(this.caseId).then((res) => {
         this.caseName = res.data.testCaseName
         this.serviceId = res.data.serviceId
+        this.caseDetail = res.data
       })
     },
   },
   created() {
     this.caseId = this.$route.query.caseId
+    this.getTestCaseConfigs()
     this.getCaseDetail()
     this.requestCaseFeatures(this.caseId)
   },
 }
 </script>
-
-<style scoped>
+<style lang="less" scoped>
 .step-line {
   font-size: 14px;
 }
@@ -814,8 +1126,6 @@ export default {
   margin-left: 10px;
   vertical-align: bottom;
 }
-</style>
-<style scoped>
 .name {
   margin-left: 20px;
 }
@@ -829,7 +1139,21 @@ export default {
 .content {
   margin: 5px;
   position: relative;
+
+  .feature-name-title {
+    position: absolute;
+    top: 0px;
+    right: 40px;
+    line-height: 40px;
+    font-size: 13px;
+
+    span {
+      font-size: 14px;
+      font-weight: 900;
+    }
+  }
 }
+
 .info-line {
   margin: 20px 10px;
 }
@@ -937,5 +1261,12 @@ export default {
 .folder-Text i {
   color: #70c745;
   font-size: 16px;
+}
+.edit-name-icon {
+  margin-right: 10px;
+  cursor: pointer;
+}
+.disable-feature {
+  color: #c0c4cc;
 }
 </style>

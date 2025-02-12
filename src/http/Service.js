@@ -13,9 +13,75 @@ export default {
         })
     })
   },
+  getServiceMembers(serviceId) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/services/${serviceId}/members`
+      http
+        .get(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
+  getServiceStatics(serviceId) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/services/${serviceId}/statics`
+      http
+        .get(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
+
+  removeMember(serviceId, userId) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/services/${serviceId}/members/${userId}`
+      http
+        .delete(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
+  addServiceMembers(data) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/services/${data.serviceId}/members`
+      http
+        .post(url, data)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
   getServices() {
     return new Promise((resolve, reject) => {
       let url = `/v1/devops/services`
+      http
+        .get(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
+  getServicesByIds(idString) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/services/list?serviceIds=${idString}`
       http
         .get(url)
         .then((res) => {

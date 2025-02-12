@@ -14,9 +14,10 @@
           type="primary"
           icon="el-icon-refresh"
           size="mini"
+          :loading="isLoading"
           @click="refresh"
         >
-          刷新状态</el-button
+          刷新监控数据</el-button
         >
       </div>
       <el-divider content-position="left">Master节点</el-divider>
@@ -28,6 +29,7 @@
               <span style="margin-left: 10px">{{ scope.row.ip }}</span>
             </template>
           </el-table-column>
+          <el-table-column label="应用版本" prop="version"> </el-table-column>
           <el-table-column label="cpu" prop="cpu"> </el-table-column>
           <el-table-column label="内存" prop="heap"> </el-table-column>
           <el-table-column label="线程数" prop="threads"> </el-table-column>
@@ -58,6 +60,18 @@
               </el-popover>
             </template>
           </el-table-column>
+          <!-- <el-table-column align="left" label="操作">
+            <template slot-scope="scope">
+              <el-button
+                type="danger"
+                icon="el-icon-refresh-left"
+                plain
+                disabled
+                size="mini"
+                >重启</el-button
+              >
+            </template>
+          </el-table-column> -->
         </el-table>
       </div>
     </div>
@@ -71,6 +85,7 @@
             <span style="margin-left: 10px">{{ scope.row.ip }}</span>
           </template>
         </el-table-column>
+        <el-table-column label="应用版本" prop="version"> </el-table-column>
         <el-table-column label="cpu" prop="cpu"> </el-table-column>
         <el-table-column label="内存" prop="heap"> </el-table-column>
         <el-table-column label="线程数" prop="threads"> </el-table-column>
@@ -101,45 +116,69 @@
             </el-popover>
           </template>
         </el-table-column>
+        <!-- <el-table-column align="left" label="操作">
+          <template slot-scope="scope">
+            <el-button
+              type="danger"
+              icon="el-icon-refresh-left"
+              plain
+              disabled
+              size="mini"
+              >重启</el-button
+            >
+          </template>
+        </el-table-column> -->
       </el-table>
     </div>
   </div>
 </template>
 <script>
-import systemApi from "../../http/System";
+import systemApi from '../../http/System'
 export default {
   data() {
     return {
       clientData: [],
       masterData: [],
-    };
+      isLoading: false,
+    }
   },
   methods: {
     refresh() {
-      this.getMonitor();
+      this.getMonitor()
     },
     getMonitor() {
-      this.clientData = [];
-      this.masterData = [];
+      this.isLoading = true
       systemApi.getMonitor().then((res) => {
-        res.data.clients.forEach((e) => {
-          let item = e.physics;
-          item.size = e.waitQuerySize;
-          this.clientData.push(item);
-        });
-
-        res.data.masters.forEach((e) => {
-          let item = e.physics;
-          item.size = e.taskCount;
-          this.masterData.push(item);
-        });
-      });
+        this.clientData = []
+        if (res.data.clients) {
+          res.data.clients.forEach((e) => {
+            if (e) {
+              let item = e.physics
+              item.size = e.waitQuerySize
+              item.version = e.version
+              this.clientData.push(item)
+            }
+          })
+        }
+        this.masterData = []
+        if (res.data.masters) {
+          res.data.masters.forEach((e) => {
+            if (e) {
+              let item = e.physics
+              item.size = e.taskCount
+              item.version = e.version
+              this.masterData.push(item)
+            }
+          })
+        }
+        this.isLoading = false
+      })
     },
   },
   created() {
-    this.getMonitor();
+    this.getMonitor()
   },
-};
+}
 </script>
 <style scoped>
 .content {

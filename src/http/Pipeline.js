@@ -26,6 +26,19 @@ export default {
         })
     })
   },
+  getBranchCommits(serviceId, branchName) {
+    return new Promise((resolve, reject) => {
+      let url = `/v1/devops/pipeline/services/${serviceId}/${branchName}/commits`
+      http
+        .get(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
   savePipeline(data) {
     return new Promise((resolve, reject) => {
       let url = `/v1/devops/pipeline`
