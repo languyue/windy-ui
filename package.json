@@ -10,6 +10,7 @@
   "dependencies": {
     "@wangeditor/editor-for-vue": "^1.0.2",
     "axios": "^0.23.0",
+    "echarts": "^5.6.0",
     "element-ui": "^2.15.6",
     "js-cookie": "^3.0.5",
     "vue": "^2.6.11",

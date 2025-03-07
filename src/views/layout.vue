@@ -133,6 +133,10 @@
             监控</el-menu-item
           >
         </el-submenu>
+        <el-menu-item index="/metrics/demand" v-auth="'m10011'">
+          <i class="el-icon-pie-chart"></i>
+          效能</el-menu-item
+        >
       </el-menu>
       <div class="github-icon">
         <a
@@ -268,7 +272,7 @@ body {
   padding: 0px !important;
 }
 .title-menu {
-  width: 800px;
+  width: 900px;
   left: 50%;
   transform: translate(-50%);
 }

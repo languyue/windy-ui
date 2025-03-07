@@ -1,6 +1,9 @@
 import http from '../lib/http'
 export default {
   latestPipelineHistory(serviceId, pipelineId) {
+    if (!pipelineId || this.serviceId) {
+      return
+    }
     return new Promise((resolve, reject) => {
       let url = `/v1/devops/pipeline/${serviceId}/${pipelineId}/latest/history`
       http
@@ -15,7 +18,7 @@ export default {
   },
   getPipelienStatus(pipelineId) {
     return new Promise((resolve, reject) => {
-      let url = `/v1/devops/pipeline/${pipelineId}/status`
+      let url = `/v1/devops/pipeline/histories/${pipelineId}/status`
       http
         .get(url)
         .then((res) => {
