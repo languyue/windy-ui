@@ -11,6 +11,7 @@
         <el-select
           v-model="serviceId"
           size="mini"
+          filterable
           @change="selectService"
           placeholder="选择服务"
         >

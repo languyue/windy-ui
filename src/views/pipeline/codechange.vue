@@ -6,6 +6,7 @@
           <el-select
             v-model="service"
             size="small"
+            filterable
             @change="selectService"
             placeholder="选择服务"
           >

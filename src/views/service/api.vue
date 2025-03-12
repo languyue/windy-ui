@@ -9,6 +9,7 @@
               <el-form-item label="服务列表">
                 <el-select
                   v-model="serviceId"
+                  filterable
                   size="mini"
                   @change="selectService"
                   placeholder="选择服务"
