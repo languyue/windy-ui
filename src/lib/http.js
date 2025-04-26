@@ -73,7 +73,7 @@ export default {
       axios
         .get(base + url)
         .then((res) => {
-          if (res.status && res.status == 200) {
+          if (res && res.status && res.status == 200) {
             resolve(res.data)
           } else {
             reject(res.data)

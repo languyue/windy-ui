@@ -27,6 +27,7 @@
             <el-input
               v-model="loginForm.password"
               show-password
+              @keyup.enter.native="handleEnter"
               placeholder="请输入密码"
             ></el-input>
           </el-form-item>
@@ -34,7 +35,7 @@
         <el-button
           class="login-btn"
           @click="login"
-          :loading="false"
+          :loading="isLogin"
           type="primary"
           >登录</el-button
         >
@@ -57,9 +58,13 @@ export default {
       loginForm: {},
       windyImage: imageLogo,
       consoleVersion: '',
+      isLogin: false
     }
   },
   methods: {
+    handleEnter(){
+      this.login()
+    },
     getSystemVersion() {
       systemApi.getSystemVersion().then((res) => {
         this.consoleVersion = res.data.consoleVersion
@@ -77,7 +82,9 @@ export default {
       })
     },
     login() {
+      this.isLogin = true
       userApi.login(this.loginForm).then((res) => {
+        this.isLogin = false
         if (res.data.token) {
           cookies.set('token', res.data.token, {
             path: '/',
@@ -85,6 +92,8 @@ export default {
           })
           this.redirectPage()
         }
+      }).catch(e =>{
+        this.isLogin = false
       })
     },
     redirectPage() {
