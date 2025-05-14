@@ -73,7 +73,7 @@ export default {
       axios
         .get(base + url)
         .then((res) => {
-          if (res.status && res.status == 200) {
+          if (res && res.status && res.status == 200) {
             resolve(res.data)
           } else {
             reject(res.data)
@@ -89,7 +89,7 @@ export default {
       axios
         .delete(base + url, { data: data })
         .then((res) => {
-          if (res && res.status == 200) {
+          if (res && res.status && res.status == 200) {
             resolve(res.data)
           } else {
             reject(res.data)
@@ -109,7 +109,7 @@ export default {
           },
         })
         .then((res) => {
-          if (res && res.status == 200) {
+          if (res && res.status && res.status == 200) {
             resolve(res.data)
           } else {
             reject(res.data)
@@ -125,7 +125,7 @@ export default {
       axios
         .post(base + url, data)
         .then((res) => {
-          if (res && res.status == 200) {
+          if (res && res.status && res.status == 200) {
             resolve(res.data)
           } else {
             reject(res.data)
@@ -141,7 +141,7 @@ export default {
       axios
         .put(base + url, data)
         .then((res) => {
-          if (res && res.status == 200) {
+          if (res && res.status && res.status == 200) {
             resolve(res.data)
           } else {
             reject(res.data)
