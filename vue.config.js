@@ -15,18 +15,16 @@ module.exports = {
     },
   },
   devServer: {
-    host: 'localhost',
+    host: '0.0.0.0',
     open: true,
-    port: 8080,
+    port: 9087,
     overlay: {
       warnings: false,
       errors: false,
     },
     proxy: {
       '/api': {
-        target: 'http://10.202.244.79:9768',
-        // target: 'http://192.168.1.124:9768',
-        // target: 'http://localhost:9768',
+        target: 'http://localhost:9768',
         changeOrigin: true,
         pathRewrite: {
           '^/api': '',

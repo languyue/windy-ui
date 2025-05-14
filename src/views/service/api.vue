@@ -1477,6 +1477,10 @@ export default {
         }
 
         this.selectVersion(this.logRecordId)
+      }).catch(() =>{
+        if(this.logInterval){
+          clearInterval(this.logInterval)
+        }
       })
     },
     selectVersion(recordId) {
@@ -1486,6 +1490,10 @@ export default {
           this.logForm = e
         }
       })
+      //如果当前构建版本的状态不是处理中，那么久直接取消轮训
+      if(this.logForm.status != 4){
+        clearInterval(this.logInterval)
+      }
     },
     closeLog() {
       this.isShowLog = false
