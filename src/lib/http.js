@@ -33,10 +33,7 @@ axios.interceptors.response.use(
         var basePath = location[0] + '//' + location[2]
         return basePath
       }
-      if (
-        window.location.href.indexOf('/feature') != -1 ||
-        window.location.href.indexOf('/service/resource') != -1
-      ) {
+      if (window.location.href.indexOf('/feature') != -1) {
         //如果正在用例编辑那么就保存当前页面，在新的标签页进行登录
         window.open(gitWinLocHref() + '/#/login?redirect=' + path, '_blank')
         setTimeout(() => {
