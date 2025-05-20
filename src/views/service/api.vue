@@ -611,7 +611,7 @@
                       <el-alert
                         class="class-tips"
                         title="二方包文件生成的方式"
-                        description="Windy 的二方包生成功能会为每一个 API 单独生成一个类文件，因此用户需要提供对应的类名、方法名，以及响应的数据结构信息。"
+                        description="Windy 的二方包生成功能会为每一个 API 单独生成一个类文件，因此用户需要提供对应的类名、方法名，以及响应的数据对象名称。"
                         type="warning"
                         :closable="false"
                       ></el-alert>

@@ -122,7 +122,7 @@ export default {
               text: "需求状态比例",
             },
             legend: {
-              top: "top",
+              top: "bottom",
             },
             toolbox: {
               show: true,
@@ -245,6 +245,9 @@ export default {
         this.charts.delay.setOption(
           {
             title: { text: "需求搁置时长 vs 完整周期" },
+            legend: {
+              top: "bottom",
+            },
             tooltip: { trigger: "axis" },
             xAxis: { type: "category", data: xAxis },
             yAxis: { type: "value" },

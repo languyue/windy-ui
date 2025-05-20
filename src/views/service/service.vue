@@ -85,7 +85,7 @@
     >
       <el-form
         :model="serviceForm"
-        :rules="rules"
+        :rules="serviceRules"
         ref="serviceForm"
         size="mini"
         label-width="120px"
@@ -145,51 +145,60 @@
             </el-popover>
           </div>
         </el-form-item>
-        <el-collapse accordion>
-          <el-collapse-item title="服务配置">
-            <el-form-item label="部署方式" prop="deployType">
-              <el-radio-group v-model="contextForm.deployType">
-                <el-radio :label="2">Kubernetes部署</el-radio>
-                <el-radio :label="1">SSH部署</el-radio>
-              </el-radio-group>
-            </el-form-item>
-            <el-form-item label="开发语言">
-              <el-radio-group
-                v-model="contextForm.code"
-                @change="selectCodeType"
-              >
-                <el-radio label="Java">Java</el-radio>
-                <el-radio label="Go">Go</el-radio>
-                <!-- <el-radio label="Python">Python</el-radio>
-                <el-radio label="Vue">Vue</el-radio> -->
-              </el-radio-group>
-            </el-form-item>
-            <el-form-item label="构建版本">
-              <el-radio-group v-model="contextForm.buildVersion">
-                <el-radio
-                  :label="version.installPath"
-                  v-for="(version, index) in codeVersions"
-                  :key="index"
-                  >{{ version.name }}</el-radio
+        <el-collapse v-model="configindex" accordion>
+          <el-collapse-item title="服务配置" name = "config">
+            <el-form
+              :model="contextForm"
+              :rules="configRules"
+              ref="configForm"
+              size="mini"
+              label-width="120px"
+            >
+              <el-form-item label="部署方式" prop="deployType">
+                <el-radio-group v-model="contextForm.deployType">
+                  <el-radio :label="1">SSH部署</el-radio>
+                  <el-radio :label="2">Kubernetes部署</el-radio>
+                </el-radio-group>
+              </el-form-item>
+              <el-form-item label="开发语言">
+                <el-radio-group
+                  v-model="contextForm.code"
+                  @change="selectCodeType"
                 >
-              </el-radio-group>
-            </el-form-item>
-            <el-form-item label="主干分支">
-              <el-input
-                type="text"
-                v-model="contextForm.mainBranch"
-                placeholder="请输入服务主干分支名称"
-              />
-            </el-form-item>
-            <el-form-item label="服务端口" v-if="contextForm.deployType == 1">
-              <el-input-number
-                type="text"
-                controls-position="right"
-                :min="1"
-                v-model="contextForm.servicePort"
-                placeholder="请输入服务启动端口"
-              />
-            </el-form-item>
+                  <el-radio label="Java">Java</el-radio>
+                  <el-radio label="Go">Go</el-radio>
+                  <!-- <el-radio label="Python">Python</el-radio>
+                <el-radio label="Vue">Vue</el-radio> -->
+                </el-radio-group>
+              </el-form-item>
+              <el-form-item label="构建版本" prop="buildVersion">
+                <el-radio-group v-model="contextForm.buildVersion">
+                  <el-radio
+                    :label="version.installPath"
+                    v-for="(version, index) in codeVersions"
+                    :key="index"
+                    >{{ version.name }}</el-radio
+                  >
+                </el-radio-group>
+              </el-form-item>
+              <el-form-item label="主干分支">
+                <el-input
+                  type="text"
+                  v-model="contextForm.mainBranch"
+                  placeholder="请输入服务主干分支名称"
+                />
+              </el-form-item>
+              <el-form-item label="服务端口" v-if="contextForm.deployType == 1">
+                <el-input-number
+                  type="text"
+                  controls-position="right"
+                  :min="1"
+                  class="port_input"
+                  v-model="contextForm.servicePort"
+                  placeholder="请输入服务启动端口"
+                />
+              </el-form-item>
+            </el-form>
           </el-collapse-item>
           <el-collapse-item>
             <template slot="title">
@@ -248,7 +257,7 @@
               />
             </el-form-item>
           </el-collapse-item>
-          <el-collapse-item>
+          <el-collapse-item v-if="contextForm.deployType == 2">
             <template slot="title">
               Kubernetes配置
               <el-tooltip content="配置服务在k8s中部署信息" placement="top">
@@ -411,8 +420,8 @@
           </el-collapse-item>
         </el-collapse>
 
-        <el-form-item>
-          <el-button type="primary" @click="submit('serviceForm')"
+        <el-form-item class="config_line">
+          <el-button type="primary" @click="submitService('serviceForm')"
             >确认</el-button
           >
           <el-button type="info" @click="closeDialog">取消</el-button>
@@ -445,12 +454,12 @@
   </div>
 </template>
 <script>
-import serviceApi from '../../http/Service'
-import envApi from '../../http/Environment'
-import systemApi from '../../http/System'
-import userApi from '../../http/User'
-import userSearch from '../../components/user-search.vue'
-import textView from '../../components/text-view.vue'
+import serviceApi from "../../http/Service";
+import envApi from "../../http/Environment";
+import systemApi from "../../http/System";
+import userApi from "../../http/User";
+import userSearch from "../../components/user-search.vue";
+import textView from "../../components/text-view.vue";
 export default {
   components: {
     userSearch,
@@ -458,79 +467,94 @@ export default {
   },
   data() {
     return {
-      activeName: 'first',
+      activeName: "first",
       serviceData: [],
       currentPage: 1,
       totalSize: 0,
-      queryName: '',
-      dialogTitle: '创建服务',
+      queryName: "",
+      dialogTitle: "创建服务",
       showServiceDialog: false,
       serviceForm: {},
       isEdit: false,
-      rules: {
+      configRules: {
+        buildVersion: [
+          {
+            required: true,
+            message: "请选择服务构建工具版本",
+            trigger: "change",
+          },
+        ],
+      },
+      serviceRules: {
         serviceName: [
-          { required: true, message: '请输入服务名称', trigger: 'blur' },
+          { required: true, message: "请输入服务名称", trigger: "blur" },
           {
             validator: (rule, value, callback) => {
               // 检查是否包含非英文、数字、中划线或下划线的字符
               if (/[^a-zA-Z0-9-_]/.test(value)) {
-                callback(new Error('只能输入英文、数字、中划线或下划线'))
+                callback(new Error("只能输入英文、数字、中划线或下划线"));
               } else {
-                callback()
+                callback();
               }
             },
-            trigger: 'blur',
+            trigger: "blur",
           },
         ],
         description: [
-          { required: true, message: '请输入服务描述', trigger: 'blur' },
+          { required: true, message: "请输入服务描述", trigger: "blur" },
         ],
         gitUrl: [
-          { required: true, message: '请输入服务的git地址', trigger: 'blur' },
+          { required: true, message: "请输入服务的git地址", trigger: "blur" },
         ],
       },
       notConfigGit: false,
       envList: [{}],
       volumeList: [{}],
       portList: [{}],
-      deploymentName: '',
+      deploymentName: "",
       showChooseNode: false,
       nodeList: [],
       deployEnvList: [],
-      selectEnv: '',
-      selectWay: '',
-      selectNode: '',
-      strategy: '',
+      selectEnv: "",
+      selectWay: "",
+      selectNode: "",
+      strategy: "",
       replicas: 1,
       members: [],
       selectedUser: null,
       showPop: false,
       gitForm: {},
       contextForm: {},
-      gitOwner: '',
+      gitOwner: "",
       buildVersions: {},
       codeVersions: [],
-    }
+      configindex:""
+    };
   },
   methods: {
     selectCodeType(codeType) {
-      this.codeVersions = []
+      this.codeVersions = [];
       this.buildVersions.forEach((e) => {
-        if (codeType == 'Java' && e.type == 'Maven') {
-          this.codeVersions.push(e)
+        if (codeType == "Java" && e.type == "Maven") {
+          this.codeVersions.push(e);
         }
 
-        if (codeType == 'Go' && e.type == 'Go') {
-          this.codeVersions.push(e)
+        if (codeType == "Go" && e.type == "Go") {
+          this.codeVersions.push(e);
         }
-      })
+      });
     },
     changeGit(type) {
-      if (type == 'Gitlab') {
-        this.gitOwner = 'oauth2'
+      if (type == "Github") {
+        this.$set(this.gitForm, "gitDomain", "https://api.github.com");
+      } else {
+        this.$set(this.gitForm, "gitDomain", "");
       }
-      if (type != 'Gitlab' && this.gitOwner == 'oauth2') {
-        this.gitOwner = ''
+      if (type == "Gitlab") {
+        this.gitOwner = "oauth2";
+      }
+      if (type != "Gitlab" && this.gitOwner == "oauth2") {
+        this.gitOwner = "";
       }
     },
     deleteMember(userId) {
@@ -538,19 +562,19 @@ export default {
         .removeMember(this.serviceForm.serviceId, userId)
         .then((res) => {
           if (res.data) {
-            this.getserviceMember(this.serviceForm.serviceId)
+            this.getserviceMember(this.serviceForm.serviceId);
           }
-        })
+        });
     },
     querySearchAsync(queryString, cb) {
       userApi.queryUserByName(queryString).then((res) => {
-        let array = []
+        let array = [];
         res.data.forEach((e) => {
-          e.value = e.userName
-          array.push(e)
-        })
-        cb(array)
-      })
+          e.value = e.userName;
+          array.push(e);
+        });
+        cb(array);
+      });
     },
     handleSelect(users) {
       users.forEach((e) => {
@@ -561,170 +585,194 @@ export default {
           })
           .then((res) => {
             if (res.data) {
-              this.selectedUser = ''
-              this.getserviceMember(this.serviceForm.serviceId)
+              this.selectedUser = "";
+              this.getserviceMember(this.serviceForm.serviceId);
             }
-          })
-      })
-      this.showPop = !this.showPop
+          });
+      });
+      this.showPop = !this.showPop;
     },
     clickNode(row) {
-      this.selectNode = row.nodeName
-      this.showChooseNode = false
-      this.nodeList = []
-      this.selectEnv = ''
+      this.selectNode = row.nodeName;
+      this.showChooseNode = false;
+      this.nodeList = [];
+      this.selectEnv = "";
     },
     chooseEnv(envId) {
       envApi.getNodeList(envId).then((res) => {
-        this.nodeList = res.data
-      })
+        this.nodeList = res.data;
+      });
     },
     chooseNode() {
-      this.showChooseNode = true
-      this.deployEnvList = []
+      this.showChooseNode = true;
+      this.deployEnvList = [];
       envApi.getAllEnvs().then((res) => {
         res.data.forEach((e) => {
           this.deployEnvList.push({
             label: e.envName,
             value: e.envId,
-          })
-        })
-      })
+          });
+        });
+      });
     },
     delPort(index) {
       if (this.portList.length == 1 && index == 0) {
-        return
+        return;
       }
-      this.portList.splice(index, 1)
+      this.portList.splice(index, 1);
     },
     delEnv(index) {
       if (this.envList.length == 1 && index == 0) {
-        return
+        return;
       }
-      this.envList.splice(index, 1)
+      this.envList.splice(index, 1);
     },
     delVolume(index) {
       if (this.volumeList.length == 1 && index == 0) {
-        return
+        return;
       }
-      this.volumeList.splice(index, 1)
+      this.volumeList.splice(index, 1);
     },
     addPort() {
-      this.portList.push({ protocol: 'TCP' })
+      this.portList.push({ protocol: "TCP" });
     },
     addEnv() {
-      this.envList.push({})
+      this.envList.push({});
     },
     addVolume() {
-      this.volumeList.push({})
+      this.volumeList.push({});
     },
     getserviceMember(serviceId) {
       serviceApi.getServiceMembers(serviceId).then((res) => {
-        this.members = res.data
-      })
+        this.members = res.data;
+      });
     },
     startEdit(row) {
-      this.getBuildVersions()
-      this.getserviceMember(row.serviceId)
-      this.dialogTitle = '修改服务'
-      this.isEdit = true
-      this.showPop = false
-      this.showServiceDialog = true
-      this.serviceForm = JSON.parse(JSON.stringify(row))
-      let config = row.serviceConfig
-      this.replicas = config.replicas
-      this.gitOwner = config.gitAccessInfo.owner
-      this.deploymentName = config.appName
-      this.gitForm = config.gitAccessInfo ? config.gitAccessInfo : {}
-      this.contextForm = config.serviceContext ? config.serviceContext : {}
+      this.getBuildVersions();
+      this.getserviceMember(row.serviceId);
+      this.dialogTitle = "修改服务";
+      this.isEdit = true;
+      this.showPop = false;
+      this.showServiceDialog = true;
+      this.serviceForm = JSON.parse(JSON.stringify(row));
+      let config = row.serviceConfig;
+      this.replicas = config.replicas;
+      this.gitOwner = config.gitAccessInfo.owner;
+      this.deploymentName = config.appName;
+      this.gitForm = config.gitAccessInfo ? config.gitAccessInfo : {};
+      this.contextForm = config.serviceContext ? config.serviceContext : {};
       if (!config) {
-        return
+        return;
       }
       if (config.envParams && config.envParams.length > 0) {
-        this.envList = config.envParams
+        this.envList = config.envParams;
       }
 
       if (config.ports && config.ports.length > 0) {
-        this.portList = config.ports
+        this.portList = config.ports;
       }
 
       if (config.volumes && config.volumes.length > 0) {
-        this.volumeList = config.volumes
+        this.volumeList = config.volumes;
       }
 
-      this.selectWay = config.nodeStrategy.type
-      this.selectNode = config.nodeStrategy.value
-      this.strategy = config.strategy.type
+      this.selectWay = config.nodeStrategy.type;
+      this.selectNode = config.nodeStrategy.value;
+      this.strategy = config.strategy.type;
     },
     startDelete(row) {
-      this.$confirm(`确认删除服务【${row.serviceName}】?`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
+      this.$confirm(`确认删除服务【${row.serviceName}】?`, "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
       }).then(() => {
         serviceApi.deleteService(row.serviceId).then((res) => {
           if (res.data == 1) {
-            this.$notify.success('删除服务成功')
-            this.closeDialog()
-            this.getServices(1)
-            return
+            this.$notify.success("删除服务成功");
+            this.closeDialog();
+            this.getServices(1);
+            return;
           }
-          this.$message.warning('删除服务失败')
-        })
-      })
+          this.$message.warning("删除服务失败");
+        });
+      });
     },
     startQuery() {
-      this.getServices(1)
+      this.getServices(1);
     },
     startCreate() {
-      this.getBuildVersions()
-      this.dialogTitle = '添加服务'
-      this.isEdit = false
-      this.showServiceDialog = true
+      this.getBuildVersions();
+      this.dialogTitle = "添加服务";
+      this.isEdit = false;
+      this.showServiceDialog = true;
       this.contextForm = {
         deployType: 2,
-        code: 'Java',
-        mainBranch: 'main',
-      }
+        code: "Java",
+        mainBranch: "main",
+      };
     },
     closeDialog() {
-      this.isEdit = false
-      this.showServiceDialog = false
-      this.gitForm = {}
-      this.contextForm = {}
-      this.envList = [{}]
-      this.portList = [{}]
-      this.volumeList = [{}]
-      this.serviceForm = {}
-      this.selectedUser = ''
-      this.replicas = 1
-      this.deploymentName = ''
-      this.members = []
-      this.gitOwner = ''
+      this.isEdit = false;
+      this.showServiceDialog = false;
+      this.gitForm = {};
+      this.contextForm = {};
+      this.envList = [{}];
+      this.portList = [{}];
+      this.volumeList = [{}];
+      this.serviceForm = {};
+      this.selectedUser = "";
+      this.replicas = 1;
+      this.deploymentName = "";
+      this.members = [];
+      this.gitOwner = "";
+      this.configindex = ""
     },
     pageChange(page) {
-      this.getServices(page)
+      this.getServices(page);
     },
     getServices(page) {
-      let name = this.queryName
+      let name = this.queryName;
       if (name == null || name == undefined) {
-        name = ''
+        name = "";
       }
       serviceApi.getServicesPage(page, 10, name).then((res) => {
-        this.totalSize = res.data.total
-        this.currentPage = page
-        this.serviceData = res.data.data
-      })
+        this.totalSize = res.data.total;
+        this.currentPage = page;
+        this.serviceData = res.data.data;
+      });
     },
-    submit(serviceForm) {
-      this.$refs[serviceForm].validate((valid) => {
-        if (!valid) {
+    submitService(serviceForm) {
+      Promise.all([
+        new Promise((resolve) => {
+          this.$refs[serviceForm].validate((valid) =>
+            resolve(valid)
+          );
+        }),
+        new Promise((resolve) => {
+          this.$refs.configForm.validate((valid) =>
+            resolve(valid,)
+          );
+        }),
+      ]).then(([mainValid, configValid]) => {
+        if (!mainValid ) {
+          return false;
+        }
+        if(!configValid){
+          this.$notify.warning("服务配置参数错误，请检查!")
+          this.configindex = "config"
           return false
         }
-        let git = {}
+        let git = {};
         if (this.isConfigGit()) {
-          git = this.gitForm
-          git.owner = this.gitOwner
+          git = this.gitForm;
+          git.owner = this.gitOwner;
+        }
+        if (!this.deploymentName) {
+          console.log("this.serviceForm", this.serviceForm);
+          this.deploymentName = this.serviceForm.serviceName.replace(
+            /[A-Z]/g,
+            (match) => match.toLowerCase()
+          );
         }
         let config = {
           gitAccessInfo: git,
@@ -741,22 +789,23 @@ export default {
           strategy: {
             type: this.strategy,
           },
-        }
-        this.serviceForm.serviceConfig = config
+        };
+        this.serviceForm.serviceConfig = config;
         if (this.isEdit) {
           serviceApi.updateService(this.serviceForm).then(() => {
-            this.$notify.success('修改成功！')
-            this.closeDialog()
-            this.getServices(1)
-          })
-          return
+            this.$notify.success("修改成功！");
+            this.closeDialog();
+            this.getServices(1);
+          });
+          return;
         }
         serviceApi.createService(this.serviceForm).then(() => {
-          this.$notify.success('添加成功！')
-          this.closeDialog()
-          this.getServices(1)
-        })
-      })
+          this.$notify.success("添加成功！");
+          this.closeDialog();
+          this.getServices(1);
+        });
+
+      });
     },
     isConfigGit() {
       if (
@@ -764,32 +813,32 @@ export default {
         this.gitForm.accessToken &&
         this.gitForm.gitType
       ) {
-        return true
+        return true;
       }
-      return false
+      return false;
     },
     getBuildVersions() {
       systemApi.getBuildTools().then((res) => {
-        this.buildVersions = res.data
+        this.buildVersions = res.data;
         if (this.contextForm.code) {
-          this.selectCodeType(this.contextForm.code)
+          this.selectCodeType(this.contextForm.code);
         }
-      })
+      });
     },
     getGitEnv() {
       systemApi.requestGitConfig().then((res) => {
-        this.notConfigGit = this.$utils.isEmpty(res.data.accessToken)
-      })
+        this.notConfigGit = this.$utils.isEmpty(res.data.accessToken);
+      });
     },
     goEnv() {
-      this.$router.push({ path: '/system' })
+      this.$router.push({ path: "/system" });
     },
   },
   created() {
-    this.getGitEnv()
-    this.getServices(1)
+    this.getGitEnv();
+    this.getServices(1);
   },
-}
+};
 </script>
 <style scoped>
 .all {
@@ -841,5 +890,11 @@ export default {
 }
 .tag-item {
   margin-left: 10px;
+}
+.port_input {
+  min-width: 200px;
+}
+.config_line {
+  margin-top: 10px;
 }
 </style>
