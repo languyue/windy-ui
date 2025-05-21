@@ -1,8 +1,8 @@
 import http from '../lib/http'
 export default {
-  getUserDemands(page, size) {
+  getUserDemands(page, size, name="") {
     return new Promise((resolve, reject) => {
-      let url = `/v1/devops/user/demands?page=${page}&size=${size}`
+      let url = `/v1/devops/user/demands?page=${page}&size=${size}&name=${name}`
       http
         .get(url)
         .then((res) => {
@@ -16,6 +16,19 @@ export default {
   getIterationDemandList(iterationId) {
     return new Promise((resolve, reject) => {
       let url = `/v1/devops/iterations/${iterationId}/demands`
+      http
+        .get(url)
+        .then((res) => {
+          resolve(res)
+        })
+        .catch((e) => {
+          reject(e)
+        })
+    })
+  },
+  getCustomerValue(){
+     return new Promise((resolve, reject) => {
+      let url = `/v1/devops/demand/customer/values`
       http
         .get(url)
         .then((res) => {

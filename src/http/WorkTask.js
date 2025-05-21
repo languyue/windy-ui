@@ -1,8 +1,8 @@
 import http from '../lib/http'
 export default {
-  getTaskPaage(page, size) {
+  getTaskPage(page, size, name="") {
     return new Promise((resolve, reject) => {
-      let url = `/v1/devops/work/tasks?page=${page}&size=${size}`
+      let url = `/v1/devops/work/tasks?page=${page}&size=${size}&name=${name}`
       http
         .get(url)
         .then((res) => {

@@ -305,7 +305,7 @@ export default {
       showDemandDetail: false,
       demandTitle: '创建需求',
       tagList: [],
-      abilityList: ['用户体验', '功能增强', '性能', '可靠性', '安全', '运维'],
+      abilityList: [],
       currentPage: 1,
       currentSize: 10,
       total: 0,
@@ -437,6 +437,12 @@ export default {
     },
     createDemand() {
       this.showDemandDialog = true
+      this.abilityList = []
+      demandApi.getCustomerValue().then(res =>{
+        res.data.forEach(e =>{
+          this.abilityList.push(e.statusName)
+        })
+      })
     },
     handlePageChange(page) {
       this.currentPage = page

@@ -1,8 +1,8 @@
 import http from '../lib/http'
 export default {
-  getUserbugs(page, size) {
+  getUserbugs(page, size, name = "") {
     return new Promise((resolve, reject) => {
-      let url = `/v1/devops/user/bugs?page=${page}&size=${size}`
+      let url = `/v1/devops/user/bugs?page=${page}&size=${size}&name=${name}`
       http
         .get(url)
         .then((res) => {

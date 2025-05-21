@@ -77,7 +77,7 @@
             type="textarea"
             :autosize="{ minRows: 4, maxRows: 10 }"
             v-model="spaceForm.description"
-            placeholder="请输入空间名称"
+            placeholder="请输入空间描述信息"
           />
         </el-form-item>
       </el-form>

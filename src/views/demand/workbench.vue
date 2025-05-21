@@ -596,7 +596,7 @@ export default {
       })
     },
     getTasks() {
-      workTask.getTaskPaage(this.taskPage, this.taskSize).then((res) => {
+      workTask.getTaskPage(this.taskPage, this.taskSize).then((res) => {
         this.taskTotal = res.data.total
         this.taskData = res.data.data
       })
