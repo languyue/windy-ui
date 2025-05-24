@@ -22,6 +22,7 @@ import Monitor from '../views/service/monitor.vue'
 import Pipeline from '../views/pipeline/pipeline.vue'
 import PipeAction from '../views/pipeline/action.vue'
 import CodeChange from '../views/pipeline/codechange.vue'
+import DemandMetrics from '../views/metrics/demand-metrics.vue'
 
 Vue.use(VueRouter)
 const subRoutes = [
@@ -127,6 +128,12 @@ const subRoutes = [
     name: 'Monitor',
     auth: 'm10014',
     component: Monitor,
+  },
+  {
+    path: 'metrics/demand',
+    name: 'DemandMetrics',
+    auth: 'm10015',
+    component: DemandMetrics,
   },
 ]
 

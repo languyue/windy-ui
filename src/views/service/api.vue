@@ -9,6 +9,7 @@
               <el-form-item label="服务列表">
                 <el-select
                   v-model="serviceId"
+                  filterable
                   size="mini"
                   @change="selectService"
                   placeholder="选择服务"
@@ -53,7 +54,7 @@
                           >删除</el-dropdown-item
                         >
                         <el-dropdown-item command="generate" v-clickOnce
-                          >生成二方包</el-dropdown-item
+                          >构建API二方包</el-dropdown-item
                         >
                         <el-dropdown-item command="import"
                           >API导入</el-dropdown-item
@@ -598,37 +599,62 @@
                     </div>
                   </el-tree>
 
-                  <h4 class="title-bar">二方包代码生成配置</h4>
-                  <el-form-item label="Controller名称" label-width="120px">
-                    <div>
-                      <el-input
-                        placeholder="请输入类名"
-                        v-model="apiForm.className"
+                  <el-collapse>
+                    <el-collapse-item>
+                      <template slot="title">
+                        高级配置<i
+                          class="el-icon-setting"
+                          style="margin-left: 10px"
+                        ></i>
+                      </template>
+                      <h4 class="title-bar">二方包代码生成配置</h4>
+                      <el-alert
+                        class="class-tips"
+                        title="二方包文件生成的方式"
+                        description="Windy 的二方包生成功能会为每一个 API 单独生成一个类文件，因此用户需要提供对应的类名、方法名，以及响应的数据对象名称。"
+                        type="warning"
+                        :closable="false"
+                      ></el-alert>
+                      <el-row>
+                        <el-col :span="16">
+                          <el-form-item
+                            label="接口文件类名"
+                            label-width="120px"
+                          >
+                            <el-input
+                              placeholder="请输入类名"
+                              v-model="apiForm.className"
+                            >
+                            </el-input>
+                          </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                          <el-form-item label="接口方法名" label-width="120px">
+                            <el-input
+                              placeholder="请输入接口方法名称"
+                              v-model="apiForm.classMethod"
+                            ></el-input>
+                          </el-form-item>
+                        </el-col>
+                      </el-row>
+
+                      <el-form-item
+                        label="body请求体类名"
+                        label-width="120px"
+                        v-if="isHaveBody && apiForm.method != 'GET'"
                       >
                         <el-input
-                          slot="append"
-                          placeholder="请输入接口方法名称"
-                          v-model="apiForm.classMethod"
+                          placeholder="请输入body请求体类名"
+                          v-model="apiForm.bodyClass"
                         ></el-input>
-                      </el-input>
-                    </div>
-                  </el-form-item>
-                  <el-form-item
-                    label="body请求体类名"
-                    label-width="120px"
-                    v-if="isHaveBody && apiForm.method != 'GET'"
-                  >
-                    <el-input
-                      placeholder="请输入body请求体类名"
-                      v-model="apiForm.bodyClass"
-                    ></el-input>
-                  </el-form-item>
-                  <el-form-item label="响应体类名" label-width="120px">
-                    <el-input
-                      placeholder="请输入接口响应类名"
-                      v-model="apiForm.resultClass"
-                    ></el-input>
-                  </el-form-item>
+                      </el-form-item>
+                      <el-form-item label="响应参数类名" label-width="120px">
+                        <el-input
+                          placeholder="请输入接口响应类名"
+                          v-model="apiForm.resultClass"
+                        ></el-input>
+                      </el-form-item> </el-collapse-item
+                  ></el-collapse>
                 </el-form>
               </el-tab-pane>
               <!-- 接口配置结束 -->
@@ -707,12 +733,19 @@
       </span>
     </el-dialog>
     <el-dialog
-      title="构建Maven二方包"
+      title="构建API二方包"
       :visible.sync="showGenerateApi"
       @open="getBuildParam"
       @close="cancelGenerate"
       width="60%"
     >
+      <el-alert
+        class="pkg-tips"
+        title="API二方包的作用"
+        show-icon
+        :closable="false"
+        description="在传统开发模式下，接口API直接在代码中实现，这种自由化的实现方式容易导致实际开发与原始API设计产生偏差。为解决这一问题，Windy通过Maven二方包机制实现API强约束：系统将Windy平台维护的API规范自动生成标准化接口文件（相同类名的API会被合并到同一个Java类文件中）并发布至Maven仓库。业务开发方必须通过引用该二方包来调用API，从而严格确保实现与设计规范保持完全一致，同时保持代码结构的整洁性。"
+      ></el-alert>
       <el-form
         :model="generateForm"
         label-width="80px"
@@ -744,7 +777,42 @@
             placeholder="请输入二方包版本号,例如: 1.0.0"
           ></el-input>
         </el-form-item>
+        <el-form-item label="版本描述" prop="description">
+          <el-input
+            type="textarea"
+            :autosize="{ minRows: 2, maxRows: 4 }"
+            v-model="generateForm.description"
+            placeholder="请输入版本功能描述"
+          ></el-input>
+        </el-form-item>
       </el-form>
+      <div>
+        <h4>勾选需要生成的API列表</h4>
+        <el-scrollbar
+          style="height: 300px"
+          wrap-style="overflow-y: auto; overflow-x: hidden;"
+        >
+          <el-tree
+            :data="apiTreeData"
+            show-checkbox
+            node-key="apiId"
+            :props="apiProps"
+            :default-checked-keys="defaultApiList"
+            :default-expanded-keys="defaultApiList"
+            ref="apiList"
+          >
+            <div class="tree-node" slot-scope="{ node, data }">
+              <i
+                v-if="data.apiType == 0"
+                class="el-icon-folder-opened folder-icon"
+              />
+              <span class="api-name">
+                {{ node.label }}
+              </span>
+            </div>
+          </el-tree>
+        </el-scrollbar>
+      </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="cancelGenerate" size="mini">取 消</el-button>
         <el-button
@@ -787,7 +855,8 @@
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="节点状态"
+
+        <el-form-item label="构建状态"
           ><el-tag :type="logForm.status | statusFormat">{{
             logForm.status | statusName
           }}</el-tag></el-form-item
@@ -795,6 +864,7 @@
         <el-form-item label="执行时间">{{
           logForm.time | dateFormat
         }}</el-form-item>
+        <el-form-item label="版本描述">{{ logForm.description }}</el-form-item>
       </el-form>
       <el-divider><i class="el-icon-receiving"></i></el-divider>
       <h4>运行日志</h4>
@@ -840,8 +910,8 @@
   </div>
 </template>
 <script>
-import serviceApi from '../../http/Service'
-import textView from '../../components/text-view.vue'
+import serviceApi from "../../http/Service";
+import textView from "../../components/text-view.vue";
 export default {
   components: {
     textView,
@@ -849,28 +919,28 @@ export default {
   data() {
     return {
       logInterval: null,
-      logRecordId: '',
+      logRecordId: "",
       logVersions: [],
       isShowLog: false,
       logForm: {},
       generateForm: {},
       showGenerateApi: false,
-      activeName: 'preview',
-      filterText: '',
+      activeName: "preview",
+      filterText: "",
       apiForm: {
-        type: 'http',
+        type: "http",
       },
       editDir: false,
       paramData: [],
       responseData: [],
       apiTreeData: [],
       defaultProps: {
-        children: 'children',
-        label: 'paramKey',
+        children: "children",
+        label: "paramKey",
       },
       apiProps: {
-        children: 'children',
-        label: 'apiName',
+        children: "children",
+        label: "apiName",
       },
       pathData: [],
       headerData: [],
@@ -878,33 +948,36 @@ export default {
       previewRes: [],
       uuid: 1,
       serviceList: [],
-      serviceId: '',
-      currentApi: '',
+      serviceId: "",
+      currentApi: "",
       showCreateApi: false,
-      dataForm: { type: 'http' },
+      dataForm: { type: "http" },
       apiRule: {
-        apiName: [{ required: true, message: '请输入名称', trigger: 'blur' }],
-        type: [{ required: true, message: '请选择接口类型', trigger: 'blur' }],
+        apiName: [{ required: true, message: "请输入名称", trigger: "blur" }],
+        type: [{ required: true, message: "请选择接口类型", trigger: "blur" }],
         resource: [
-          { required: true, message: '请输入api', trigger: 'blur' },
+          { required: true, message: "请输入api", trigger: "blur" },
           {
             validator: this.validApi,
-            message: '请填写方法',
-            trigger: 'blur',
+            message: "请填写方法",
+            trigger: "blur",
           },
         ],
       },
       generateRule: {
         packageName: [
-          { required: true, message: '请输入包路径', trigger: 'blur' },
+          { required: true, message: "请输入包路径", trigger: "blur" },
         ],
         groupId: [
-          { required: true, message: '请输入groupId', trigger: 'blur' },
+          { required: true, message: "请输入groupId", trigger: "blur" },
         ],
         artifactId: [
-          { required: true, message: '请输入artifactId', trigger: 'blur' },
+          { required: true, message: "请输入artifactId", trigger: "blur" },
         ],
-        version: [{ required: true, message: '请输入版本号', trigger: 'blur' }],
+        version: [{ required: true, message: "请输入版本号", trigger: "blur" }],
+        description: [
+          { required: true, message: "请输入发布版本描述", trigger: "blur" },
+        ],
       },
       createDir: false,
       selectNodes: [],
@@ -914,32 +987,33 @@ export default {
       importForm: {},
       importRule: {
         type: [
-          { required: true, message: '请选择导入文件类型', trigger: 'blur' },
+          { required: true, message: "请选择导入文件类型", trigger: "blur" },
         ],
       },
       loading: null,
       expendKeys: [],
-      apiTitle: '创建接口',
+      apiTitle: "创建接口",
       headerList: [],
       defaultHeaderList: [
-        { value: 'Accept' },
-        { value: 'Accept-Charset' },
-        { value: 'Accept-Encoding' },
-        { value: 'Accept-Language' },
-        { value: 'Authorization' },
-        { value: 'Content-Length' },
-        { value: 'Content-Type' },
+        { value: "Accept" },
+        { value: "Accept-Charset" },
+        { value: "Accept-Encoding" },
+        { value: "Accept-Language" },
+        { value: "Authorization" },
+        { value: "Content-Length" },
+        { value: "Content-Type" },
       ],
-    }
+      defaultApiList: [],
+    };
   },
   watch: {
     filterText(val) {
-      this.$refs.apiTree.filter(val)
+      this.$refs.apiTree.filter(val);
     },
     apiForm: {
       handler(val, old) {
         if (old && old.apiName) {
-          this.updateApi = true
+          this.updateApi = true;
         }
       },
       deep: true,
@@ -948,7 +1022,7 @@ export default {
     paramData: {
       handler(val, old) {
         if (old && old.length > 0) {
-          this.updateApi = true
+          this.updateApi = true;
         }
       },
       deep: true,
@@ -957,7 +1031,7 @@ export default {
     headerList: {
       handler(val, old) {
         if (old && old.length > 0) {
-          this.updateApi = true
+          this.updateApi = true;
         }
       },
       deep: true,
@@ -965,578 +1039,609 @@ export default {
     },
   },
   methods: {
+    getAllKeys(data) {
+      const keys = [];
+      const traverse = (nodes) => {
+        nodes.forEach((node) => {
+          keys.push(node.apiId);
+          if (node.children) {
+            traverse(node.children);
+          }
+        });
+      };
+      traverse(data);
+      return keys;
+    },
     deleteHeader(index) {
-      this.headerList.splice(index, 1)
+      this.headerList.splice(index, 1);
     },
     queryHeaderKey(queryString, cb) {
-      var restaurants = this.defaultHeaderList
+      var restaurants = this.defaultHeaderList;
       var results = queryString
         ? restaurants.filter(this.createFilter(queryString))
-        : restaurants
-      cb(results)
+        : restaurants;
+      cb(results);
     },
     createFilter(queryString) {
       return (key) => {
-        return key.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0
-      }
+        return key.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0;
+      };
     },
     addHeader() {
-      this.headerList.push({})
+      this.headerList.push({});
     },
     copyToClipboard(text) {
       // 创建一个临时的 textarea 元素
-      const textarea = document.createElement('textarea')
-      textarea.value = text
-      document.body.appendChild(textarea)
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      document.body.appendChild(textarea);
       // 选中文本并执行复制命令
-      textarea.select()
-      document.execCommand('copy')
+      textarea.select();
+      document.execCommand("copy");
       // 清理临时元素
-      document.body.removeChild(textarea)
+      document.body.removeChild(textarea);
       // 提示复制成功
-      this.$notify.success('复制成功')
+      this.$notify.success("复制成功");
     },
     httpRequest(param) {
-      const formData = new FormData()
-      formData.append(`file`, param.file)
-      formData.append(`type`, this.importForm.type)
-      formData.append(`serviceId`, this.serviceId)
-      this.showLoading()
+      const formData = new FormData();
+      formData.append(`file`, param.file);
+      formData.append(`type`, this.importForm.type);
+      formData.append(`serviceId`, this.serviceId);
+      this.showLoading();
       serviceApi.importApi(formData).then((res) => {
-        this.closeLoading()
+        this.closeLoading();
         if (res.data.apiList) {
-          this.$notify.success('导入api成功')
-          this.showImportDialog = false
-          this.selectService()
+          this.$notify.success("导入api成功");
+          this.showImportDialog = false;
+          this.selectService();
         } else {
-          this.$notify.error('导入api失败')
-          this.showImportDialog = false
+          this.$notify.error("导入api失败");
+          this.showImportDialog = false;
         }
-      })
+      });
     },
     showLoading() {
       this.loading = this.$loading({
         lock: true,
-        text: '文件导入中...',
-        spinner: 'el-icon-loading',
-        background: 'rgba(0, 0, 0, 0.7)',
-      })
+        text: "文件导入中...",
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)",
+      });
     },
     closeLoading() {
-      this.loading.close()
+      this.loading.close();
     },
     allowApiDrop(draggingNode, targetNode, type) {
-      let resource = targetNode.data
-      if (type == 'inner' && resource.apiType != 0) {
-        return false
+      let resource = targetNode.data;
+      if (type == "inner" && resource.apiType != 0) {
+        return false;
       }
-      return true
+      return true;
     },
     handleApiDragEnd(draggingNode, targetNode) {
-      let resource = JSON.parse(JSON.stringify(draggingNode.data))
-      resource.parentId = targetNode.data.apiId
+      let resource = JSON.parse(JSON.stringify(draggingNode.data));
+      resource.parentId = targetNode.data.apiId;
       if (targetNode.data.apiType != 0) {
-        resource.parentId = null
+        resource.parentId = null;
       }
-      serviceApi.updateApi(resource)
+      serviceApi.updateApi(resource);
     },
     beforeLeave(activeName, oldActiveName) {
-      if (oldActiveName == 'edit' && !this.isLeaving && this.updateApi) {
+      if (oldActiveName == "edit" && !this.isLeaving && this.updateApi) {
         this.$confirm(
-          '当前页面存在数据变更，离开后数据可能丢失，确认离开?',
-          '提示',
+          "当前页面存在数据变更，离开后数据可能丢失，确认离开?",
+          "提示",
           {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'warning',
+            confirmButtonText: "确定",
+            cancelButtonText: "取消",
+            type: "warning",
           }
         )
           .then(() => {
-            this.isLeaving = true
-            this.updateApi = false
-            this.activeName = activeName
+            this.isLeaving = true;
+            this.updateApi = false;
+            this.activeName = activeName;
             serviceApi.getApi(this.apiForm.apiId).then((res) => {
-              this.treeNodeSelect(res.data)
-            })
+              this.treeNodeSelect(res.data);
+            });
           })
-          .catch(() => {})
-        return false
+          .catch(() => {});
+        return false;
       }
-      return true
+      return true;
     },
     selectTreeNode(data, checked) {
       if (checked) {
-        this.selectNodes.push(data.apiId)
+        this.selectNodes.push(data.apiId);
       } else {
-        let index = this.selectNodes.indexOf(data.apiId)
+        let index = this.selectNodes.indexOf(data.apiId);
         if (index != -1) {
-          this.selectNodes.splice(index, 1)
+          this.selectNodes.splice(index, 1);
         }
       }
     },
     validApi(rule, value, callback) {
-      if (this.dataForm.method == '' || this.dataForm.method == null) {
-        callback(new Error())
+      if (this.dataForm.method == "" || this.dataForm.method == null) {
+        callback(new Error());
       } else {
-        callback()
+        callback();
       }
     },
     selectItemCommand(command, data) {
-      if (command == 'dir') {
-        this.apiTitle = '创建目录'
-        this.addFolder(data)
-        return
+      if (command == "dir") {
+        this.apiTitle = "创建目录";
+        this.addFolder(data);
+        return;
       }
-      if (command == 'dir_edit') {
-        this.apiTitle = '编辑目录'
-        this.updateFolder(data)
-        return
+      if (command == "dir_edit") {
+        this.apiTitle = "编辑目录";
+        this.updateFolder(data);
+        return;
       }
-      if (command == 'api') {
-        this.apiTitle = '创建接口'
-        this.addApi(data)
-        return
+      if (command == "api") {
+        this.apiTitle = "创建接口";
+        this.addApi(data);
+        return;
       }
-      if (command == 'delete') {
+      if (command == "delete") {
         serviceApi.deleteApi(data.apiId).then((res) => {
           if (res.data) {
-            this.$notify.success('删除成功')
-            this.selectService()
+            this.$notify.success("删除成功");
+            this.selectService();
           } else {
-            this.$notify.error('删除失败')
+            this.$notify.error("删除失败");
           }
-        })
+        });
       }
     },
     treeNodeSelect(data) {
       if (data.apiType == 0) {
-        return
+        return;
       }
-      this.apiForm = JSON.parse(JSON.stringify(data))
+      this.apiForm = JSON.parse(JSON.stringify(data));
       if (data.header) {
         Object.keys(data.header).forEach((key) => {
-          this.headerList.push({ key: key, value: data.header[key] })
-        })
+          this.headerList.push({ key: key, value: data.header[key] });
+        });
       } else {
-        this.headerList = []
+        this.headerList = [];
       }
 
-      this.paramData = data.requestParams
+      this.paramData = data.requestParams;
       if (!this.paramData) {
-        this.paramData = []
+        this.paramData = [];
       }
       this.paramData.forEach((e) => {
         if (
           (e.objectName =
-            'Array' &&
+            "Array" &&
             e.children &&
             e.children[0] &&
-            e.children[0].objectName == 'Object')
+            e.children[0].objectName == "Object")
         ) {
-          e.children[0].hide = true
-          e.children[0].freezed = true
+          e.children[0].hide = true;
+          e.children[0].freezed = true;
         }
 
         if (!e.objectName) {
-          e.objectName = ''
+          e.objectName = "";
         }
-      })
+      });
 
-      this.responseData = data.responseParams
+      this.responseData = data.responseParams;
       if (!this.responseData) {
-        this.responseData = []
+        this.responseData = [];
       }
-      this.currentApi = data.apiId
-      this.updateApi = false
-      this.selectTab()
+      this.currentApi = data.apiId;
+      this.updateApi = false;
+      this.selectTab();
     },
     addFolder(node) {
-      this.createDir = true
-      this.showCreateApi = true
-      this.dataForm.parentId = node.apiId
-      this.dataForm.apiType = 0
+      this.createDir = true;
+      this.showCreateApi = true;
+      this.dataForm.parentId = node.apiId;
+      this.dataForm.apiType = 0;
     },
     updateFolder(node) {
-      this.editDir = true
-      this.createDir = true
-      this.showCreateApi = true
-      this.dataForm.apiId = node.apiId
-      this.$set(this.dataForm, 'apiName', node.apiName)
-      this.dataForm.apiType = 0
+      this.editDir = true;
+      this.createDir = true;
+      this.showCreateApi = true;
+      this.dataForm.apiId = node.apiId;
+      this.$set(this.dataForm, "apiName", node.apiName);
+      this.dataForm.apiType = 0;
     },
     addApi(node) {
-      this.createDir = false
-      this.showCreateApi = true
-      this.dataForm.parentId = node.apiId
-      this.dataForm.apiType = 1
+      this.createDir = false;
+      this.showCreateApi = true;
+      this.dataForm.parentId = node.apiId;
+      this.dataForm.apiType = 1;
     },
     cancelGenerate() {
-      this.generateForm = {}
-      this.showGenerateApi = false
+      this.generateForm = {};
+      this.showGenerateApi = false;
     },
     getBuildParam() {
       if (!this.serviceId) {
-        return
+        return;
       }
       serviceApi.getGenerate(this.serviceId).then((res) => {
         if (!res.data) {
-          return
+          return;
         }
-        this.generateForm = res.data
-      })
+        this.generateForm = res.data;
+      });
     },
     submitGenerate(formName) {
       this.$refs[formName].validate((valid) => {
         if (!valid) {
-          return false
+          return false;
         }
-        this.generateForm.serviceId = this.serviceId
+        let apiKeys = this.$refs.apiList.getCheckedKeys();
+        if (!apiKeys || apiKeys.length < 1) {
+          this.$notify.warning("选择的api列表为空,无法生成二方包");
+          return;
+        }
+        this.generateForm.apiIds = apiKeys;
+        this.generateForm.serviceId = this.serviceId;
         serviceApi.buildGenerate(this.generateForm).then((res) => {
           if (res.data) {
-            this.$notify.success('开始构建')
-            this.showGenerateApi = false
-            this.isShowLog = true
-            this.queryHistory()
+            this.$notify.success("开始构建");
+            this.showGenerateApi = false;
+            this.isShowLog = true;
+            this.queryHistory();
           } else {
-            this.$notify.error('触发构建任务失败')
+            this.$notify.error("触发构建任务失败");
           }
-        })
-      })
+        });
+      });
     },
     submitApi(formName) {
       this.$refs[formName].validate((valid) => {
         if (!valid) {
-          return false
+          return false;
         }
 
-        this.dataForm.serviceId = this.serviceId
+        this.dataForm.serviceId = this.serviceId;
         if (this.editDir) {
           serviceApi.updateApi(this.dataForm).then((res) => {
             if (res.data) {
-              this.$notify.success('修改目录成功')
-              this.selectService()
-              this.cancelCreate()
+              this.$notify.success("修改目录成功");
+              this.selectService();
+              this.cancelCreate();
             } else {
-              this.$notify.error('添修改失败')
+              this.$notify.error("添修改失败");
             }
-          })
-          return
+          });
+          return;
         }
 
         serviceApi.createApi(this.dataForm).then((res) => {
           if (res.data) {
-            this.$notify.success('添加成功')
-            this.selectService()
-            this.cancelCreate()
+            this.$notify.success("添加成功");
+            this.selectService();
+            this.cancelCreate();
           } else {
-            this.$notify.error('添加失败')
+            this.$notify.error("添加失败");
           }
-        })
-      })
+        });
+      });
     },
     selectCommand(command) {
-      if (command == 'generate') {
-        this.showGenerateApi = true
-        return
+      if (command == "generate") {
+        this.defaultApiList = this.getAllKeys(this.apiTreeData);
+        this.showGenerateApi = true;
+        return;
       }
 
-      if (command == 'import') {
-        let serviceName = ''
+      if (command == "import") {
+        let serviceName = "";
         this.serviceList.forEach((e) => {
           if (e.serviceId == this.serviceId) {
-            serviceName = e.serviceName
+            serviceName = e.serviceName;
           }
-        })
-        this.importForm.serviceName = serviceName
-        this.showImportDialog = true
-        return
+        });
+        this.importForm.serviceName = serviceName;
+        this.showImportDialog = true;
+        return;
       }
 
-      if (command == 'delete') {
+      if (command == "delete") {
         if (!this.selectNodes.length) {
-          this.$notify.warning('请先选择要删除的API')
-          return
+          this.$notify.warning("请先选择要删除的API");
+          return;
         }
         serviceApi.batchDeleteApi(this.selectNodes).then((res) => {
           if (res.data) {
-            this.$notify.success('删除成功')
-            this.selectService()
+            this.$notify.success("删除成功");
+            this.selectService();
           } else {
-            this.$notify.error('删除失败')
+            this.$notify.error("删除失败");
           }
-        })
-        return
+        });
+        return;
       }
-      if (command == 'dir') {
-        this.apiTitle = '创建目录'
+      if (command == "dir") {
+        this.apiTitle = "创建目录";
       }
 
-      if (command == 'api') {
-        this.apiTitle = '创建接口'
+      if (command == "api") {
+        this.apiTitle = "创建接口";
       }
-      this.createDir = command == 'dir'
-      this.showCreateApi = true
-      this.dataForm.apiType = this.createDir ? 0 : 1
+      this.createDir = command == "dir";
+      this.showCreateApi = true;
+      this.dataForm.apiType = this.createDir ? 0 : 1;
     },
     cancelCreate() {
-      this.editDir = false
-      this.showCreateApi = false
-      this.dataForm = { type: 'http' }
+      this.editDir = false;
+      this.showCreateApi = false;
+      this.dataForm = { type: "http" };
     },
     saveApi() {
-      let data = this.apiForm
-      data.serviceId = this.serviceId
-      this.recursionName(this.paramData)
-      this.recursionName(this.responseData)
-      data.requestParams = this.paramData
-      data.responseParams = this.responseData
+      let data = this.apiForm;
+      data.serviceId = this.serviceId;
+      this.recursionName(this.paramData);
+      this.recursionName(this.responseData);
+      data.requestParams = this.paramData;
+      data.responseParams = this.responseData;
       if (this.headerList) {
-        let header = {}
+        let header = {};
         this.headerList.forEach((e) => {
-          header[e.key] = e.value
-        })
-        data.header = header
+          header[e.key] = e.value;
+        });
+        data.header = header;
       }
-      if (this.currentApi != '') {
+      if (this.currentApi != "") {
         serviceApi.updateApi(data).then((res) => {
           if (res.data) {
-            this.$notify.success({ showClose: true, message: '修改接口成功' })
-            this.expendKeys = [data.apiId]
-            this.selectService()
-            this.updateApi = false
+            this.$notify.success({ showClose: true, message: "修改接口成功" });
+            this.expendKeys = [data.apiId];
+            this.selectService();
+            this.updateApi = false;
           }
-        })
-        return
+        });
+        return;
       }
       serviceApi.createApi(data).then((res) => {
         if (res.data) {
-          this.$notify.success('添加接口成功')
-          this.updateApi = false
-          this.expendKeys = [data.apiId]
-          this.selectService()
+          this.$notify.success("添加接口成功");
+          this.updateApi = false;
+          this.expendKeys = [data.apiId];
+          this.selectService();
         } else {
-          this.$notify.error('添加接口失败')
+          this.$notify.error("添加接口失败");
         }
-      })
+      });
     },
     recursionName(array) {
       array.forEach((e) => {
         if (this.$utils.isEmpty(e.objectName)) {
-          e.objectName = e.type
+          e.objectName = e.type;
         }
         if (e.children && e.children.length > 0) {
-          this.recursionName(e.children)
+          this.recursionName(e.children);
         }
-      })
+      });
     },
     selectTab() {
-      this.isLeaving = false
-      if (this.activeName == 'preview') {
-        this.pathData = []
-        this.headerData = []
-        this.bodyData = []
-        this.traverseTree(this.paramData)
+      this.isLeaving = false;
+      if (this.activeName == "preview") {
+        this.pathData = [];
+        this.headerData = [];
+        this.bodyData = [];
+        this.traverseTree(this.paramData);
         this.paramData.forEach((e) => {
-          if (e.position == 'Path' || e.position == 'Query') {
-            this.pathData.push(e)
+          if (e.position == "Path" || e.position == "Query") {
+            this.pathData.push(e);
           }
-          if (e.position == 'Header') {
-            this.headerData.push(e)
+          if (e.position == "Header") {
+            this.headerData.push(e);
           }
-          if (e.position == 'Body') {
-            this.bodyData.push(e)
+          if (e.position == "Body") {
+            this.bodyData.push(e);
           }
-        })
-        let array = JSON.parse(JSON.stringify(this.responseData))
-        this.traverseTree(array)
-        this.previewRes = array
+        });
+        let array = JSON.parse(JSON.stringify(this.responseData));
+        this.traverseTree(array);
+        this.previewRes = array;
       }
     },
     traverseTree(nodes) {
       for (const node of nodes) {
-        node.id = this.$utils.randomString()
+        node.id = this.$utils.randomString();
       }
 
       for (const node of nodes) {
         if (node.children && node.children.length > 0) {
-          this.traverseTree(node.children)
+          this.traverseTree(node.children);
         }
       }
     },
     filterNode(value, data) {
-      if (!value) return true
-      return data.apiName.indexOf(value) !== -1
+      if (!value) return true;
+      return data.apiName.indexOf(value) !== -1;
     },
     removeParam(node, data) {
-      const parent = node.parent
-      const children = parent.data.children || parent.data
-      const index = children.findIndex((d) => d.id === data.id)
-      children.splice(index, 1)
+      const parent = node.parent;
+      const children = parent.data.children || parent.data;
+      const index = children.findIndex((d) => d.id === data.id);
+      children.splice(index, 1);
     },
     paramTypeChange(type, item) {
-      if (type == 'Array') {
+      if (type == "Array") {
         item.children = [
           {
-            type: 'String',
-            paramKey: ' ',
+            type: "String",
+            paramKey: " ",
             position: item.position,
             require: true,
             hide: true,
             freezed: true,
             children: [],
           },
-        ]
+        ];
       } else {
         if (item.children) {
-          item.children = []
+          item.children = [];
         }
       }
     },
     addParam() {
       this.paramData.push({
         id: this.$utils.randomString(),
-        paramKey: '',
+        paramKey: "",
         children: [],
-      })
-      this.uuid++
+      });
+      this.uuid++;
     },
     addSubParam(data) {
       if (data.children) {
         data.children.push({
           id: this.uuid,
-          paramKey: '',
+          paramKey: "",
           children: [],
           position: data.position,
           freezed: true,
-        })
-        this.uuid++
-        return
+        });
+        this.uuid++;
+        return;
       }
       data.children = [
         {
           id: this.uuid,
-          paramKey: '',
+          paramKey: "",
           children: [],
           position: data.position,
           freezed: true,
         },
-      ]
-      this.uuid++
+      ];
+      this.uuid++;
     },
     addResParam() {
-      this.responseData.push({ id: this.uuid, paramKey: '', children: [] })
-      this.uuid++
+      this.responseData.push({ id: this.uuid, paramKey: "", children: [] });
+      this.uuid++;
     },
     selectService() {
-      this.$store.commit('UPDATE_SERVICE_ID', this.serviceId)
+      this.$store.commit("UPDATE_SERVICE_ID", this.serviceId);
       serviceApi.getApiList(this.serviceId).then((res) => {
-        this.apiTreeData = this.buildTree(res.data)
+        this.apiTreeData = this.buildTree(res.data);
         setTimeout(() => {
-          this.$refs.apiTree.filter(this.filterText)
-        }, 100)
-      })
+          this.$refs.apiTree.filter(this.filterText);
+        }, 100);
+      });
     },
     buildTree(data, parentId = null) {
-      let tree = []
+      let tree = [];
       for (let item of data) {
         if (item.parentId === parentId) {
-          let children = this.buildTree(data, item.apiId)
+          let children = this.buildTree(data, item.apiId);
           if (children.length > 0) {
-            item.children = children
+            item.children = children;
           }
           if (!item.children) {
-            item.children = []
+            item.children = [];
           }
-          tree.push(item)
+          tree.push(item);
         }
       }
-      return tree
+      return tree;
     },
     openLog() {
       this.logInterval = setInterval(() => {
-        this.queryHistory()
-      }, 2000)
+        this.queryHistory();
+      }, 2000);
     },
     queryHistory() {
-      serviceApi.getGenerateLog(this.serviceId).then((res) => {
-        let array = []
-        res.data.forEach((e) => {
-          let params = e.generateParams
-          params.time = e.updateTime
-          params.status = e.status
-          params.label = params.version
-          params.value = e.recordId
-          params.messageList = e.generateResult
-          array.push(params)
-        })
-        this.logVersions = array
-        this.isShowLog = true
-        if (!this.logRecordId && this.logVersions.length > 0) {
-          this.logRecordId = this.logVersions[0].value
-        }
+      serviceApi
+        .getGenerateLog(this.serviceId)
+        .then((res) => {
+          let array = [];
+          res.data.forEach((e) => {
+            let params = e.generateParams;
+            params.time = e.updateTime;
+            params.status = e.status;
+            params.label = params.version;
+            params.value = e.recordId;
+            params.messageList = e.generateResult;
+            array.push(params);
+          });
+          this.logVersions = array;
+          this.isShowLog = true;
+          if (!this.logRecordId && this.logVersions.length > 0) {
+            this.logRecordId = this.logVersions[0].value;
+          }
 
-        this.selectVersion(this.logRecordId)
-      })
+          this.selectVersion(this.logRecordId);
+        })
+        .catch(() => {
+          if (this.logInterval) {
+            clearInterval(this.logInterval);
+          }
+        });
     },
     selectVersion(recordId) {
-      this.logForm = {}
+      this.logForm = {};
       this.logVersions.forEach((e) => {
         if (e.value == recordId) {
-          this.logForm = e
+          this.logForm = e;
         }
-      })
+      });
+      //如果当前构建版本的状态不是处理中，那么久直接取消轮训
+      if (this.logForm.status != 4) {
+        clearInterval(this.logInterval);
+      }
     },
     closeLog() {
-      this.isShowLog = false
-      this.logVersions = []
-      this.logForm = {}
-      this.logRecordId = null
+      this.isShowLog = false;
+      this.logVersions = [];
+      this.logForm = {};
+      this.logRecordId = null;
       if (this.logInterval) {
-        clearInterval(this.logInterval)
+        clearInterval(this.logInterval);
       }
     },
     getServices() {
-      this.serviceList = []
+      this.serviceList = [];
       serviceApi.getServices().then((res) => {
-        this.serviceList = res.data
+        this.serviceList = res.data;
         if (!this.serviceId) {
-          this.serviceId = this.serviceList[0].serviceId
+          this.serviceId = this.serviceList[0].serviceId;
         }
-        let apiId = this.$route.query.apiId
+        let apiId = this.$route.query.apiId;
         if (apiId) {
-          this.expendKeys = [apiId]
-          this.$refs.apiTree.setCheckedKeys(this.expendKeys)
+          this.expendKeys = [apiId];
+          this.$refs.apiTree.setCheckedKeys(this.expendKeys);
         }
-        let serviceId = this.$route.query.serviceId
+        let serviceId = this.$route.query.serviceId;
         if (serviceId) {
-          this.serviceId = serviceId
+          this.serviceId = serviceId;
         }
 
-        this.selectService()
-      })
+        this.selectService();
+      });
     },
   },
   computed: {
     isHaveBody: function () {
-      let flag = false
+      let flag = false;
       this.paramData.forEach((e) => {
-        if (e.position == 'Body') {
-          flag = true
+        if (e.position == "Body") {
+          flag = true;
         }
-      })
-      return flag
+      });
+      return flag;
     },
   },
   created() {
-    this.serviceId = this.$store.state.serviceId
-    this.getServices()
+    this.serviceId = this.$store.state.serviceId;
+    this.getServices();
   },
   beforeDestroy() {
     if (this.logInterval) {
-      clearInterval(this.logInterval)
+      clearInterval(this.logInterval);
     }
   },
-}
+};
 </script>
 <style scoped>
 .uri-text {
@@ -1670,5 +1775,12 @@ export default {
 .delete-icon {
   color: #f56c6c;
   cursor: pointer;
+}
+.class-tips {
+  margin: 10px 20px;
+}
+
+.pkg-tips{
+  margin: 20px 10px;
 }
 </style>

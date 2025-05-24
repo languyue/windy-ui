@@ -6,6 +6,7 @@
           <el-select
             v-model="service"
             size="small"
+            filterable
             @change="selectService"
             placeholder="选择服务"
           >
@@ -56,13 +57,31 @@
             "
             size="mini"
             stripe
+            height="400"
             style="width: 100%"
           >
             <el-table-column prop="changeName" label="变更"> </el-table-column>
             <el-table-column prop="changeBranch" label="分支">
             </el-table-column>
-            <el-table-column prop="changeDesc" label="描述"> </el-table-column>
-            <el-table-column prop="relationId" label="需求/缺陷Id">
+            <el-table-column prop="changeDesc" label="描述">
+              <template slot-scope="scope">
+                <TextView :text="scope.row.changeDesc"></TextView>
+              </template>
+            </el-table-column>
+            <el-table-column prop="relationId" label="需求/缺陷名称">
+              <template slot-scope="scope">
+                {{ scope.row.relationName }}
+                <el-tooltip
+                  effect="dark"
+                  content="点击查看详情"
+                  placement="right-start"
+                >
+                  <i
+                    class="el-icon-connection link-icon"
+                    @click="showRelationView(scope.row)"
+                  />
+                </el-tooltip>
+              </template>
             </el-table-column>
             <el-table-column prop="createTime" label="创建时间">
               <template slot-scope="scope">
@@ -89,10 +108,23 @@
             </el-table-column>
           </el-table>
         </div>
+        <div class="pagination">
+          <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handlePageChange"
+            :current-page.sync="currentPage"
+            :page-sizes="[10, 20, 50]"
+            :page-size="10"
+            :hide-on-single-page="false"
+            layout="sizes, prev, pager, next"
+            :total="codeTotal"
+          >
+          </el-pagination>
+        </div>
       </div>
     </div>
     <el-dialog
-      title="创建变更"
+      title="变更"
       :visible.sync="dialogFormVisible"
       @close="closeDialog"
     >
@@ -135,22 +167,22 @@
             autocomplete="off"
           ></el-input>
         </el-form-item>
-        <el-form-item label="关联需求/bug" prop="relationId">
+        <el-form-item label="变更关联类型" prop="relationType">
+          <el-radio-group v-model="changeForm.relationType">
+            <el-radio :label="1">需求</el-radio>
+            <el-radio :label="2">缺陷</el-radio>
+            <el-radio :label="3">工作项</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="选择关联资源" prop="relationId">
           <el-autocomplete
             style="width: 100%"
-            v-model="selectItem.name"
+            v-model="selectItemName"
             :fetch-suggestions="querySearchAsync"
             placeholder="请输入关联的需求、缺陷、任务名称"
             @select="handleSelect"
           >
             <template slot-scope="{ item }">
-              <div class="query-type demand" v-if="item.relationType == 1">
-                需求
-              </div>
-              <div class="query-type bug" v-else-if="item.relationType == 2">
-                缺陷
-              </div>
-              <div class="query-type work" v-else>任务</div>
               <span>{{ item.value }}</span>
             </template>
           </el-autocomplete>
@@ -169,163 +201,247 @@
         >
       </div>
     </el-dialog>
+    <el-dialog
+      title="关联详情"
+      :visible.sync="showRelation"
+      width="90%"
+      @close="closeRelationView"
+    >
+      <demandView v-if="showDetailType == 1" :demand="demandId"></demandView>
+      <bugView v-else :edit="false" :bug="bugId"></bugView>
+    </el-dialog>
   </div>
 </template>
 <script>
-import requestApi from '../../http/CodeChange'
-import serviceApi from '../../http/Service'
+import requestApi from "../../http/CodeChange";
+import serviceApi from "../../http/Service";
+import TextView from "../../components/text-view.vue";
+import demandView from "../demand/detail.vue";
+import bugView from "../demand/bug-detail.vue";
+import DemandApi from "../../http/DemandApi";
+import BugApi from "../../http/BugApi";
+import WorkTask from "../../http/WorkTask";
 export default {
+  components: {
+    demandView,
+    TextView,
+    bugView,
+  },
   data() {
     return {
-      service: '',
-      filterText: '',
+      currentSize: 10,
+      codeTotal: 0,
+      currentPage: 1,
+      showRelation: false,
+      showDetailType: 1,
+      demandId: "",
+      bugId: "",
+      service: "",
+      filterText: "",
       serviceList: [],
       changeList: [],
       changeForm: {
-        branchType: 'custom',
+        branchType: "custom",
       },
-      selectItem: {},
+      selectItemName: "",
       dialogFormVisible: false,
       loading: false,
       disableBranch: false,
       rule: {
         changeName: [
-          { required: true, message: '请输入变更描述', trigger: 'blur' },
+          { required: true, message: "请输入变更描述", trigger: "blur" },
         ],
         changeBranch: [
-          { required: true, message: '请输入分支名称', trigger: 'blur' },
+          { required: true, message: "请输入分支名称", trigger: "blur" },
         ],
         relationId: [
           {
             required: true,
-            message: '请选关联的需求或缺陷',
-            trigger: 'change',
+            message: "请选关联的需求或缺陷",
+            trigger: "change",
           },
         ],
       },
       isProcessing: false,
-    }
+    };
   },
   methods: {
+    showRelationView(row) {
+      this.showDetailType = row.relationType;
+      this.showRelation = true;
+      if (row.relationType == 1) {
+        this.demandId = row.relationId;
+      }
+      if (row.relationType == 2) {
+        this.bugId = row.relationId;
+      }
+    },
+    closeRelationView() {
+      this.demandId = "";
+      this.bugId = "";
+    },
     startEdit(row) {
-      this.dialogFormVisible = true
-      this.changeForm = JSON.parse(JSON.stringify(row))
-      this.changeForm.relationId = row.relationId
-      this.querySearchAsync('', (array) => {
+      console.log(row);
+      this.dialogFormVisible = true;
+      this.changeForm = JSON.parse(JSON.stringify(row));
+      this.querySearchAsync("", (array) => {
         array.forEach((e) => {
           if (e.relationId == row.relationId) {
-            this.selectItem = e
+            console.log("aaa", array);
+            this.selectItemId = e.name;
           }
-        })
-      })
+        });
+      });
     },
     querySearchAsync(text, cb) {
       if (!text) {
-        text = ''
+        text = "";
       }
-      requestApi.relationList(text).then((res) => {
-        let array = []
-        res.data.forEach((e) => {
-          e.value = e.name
-          array.push(e)
-        })
-        cb(array)
-      })
+      if (this.changeForm.relationType == 1) {
+        DemandApi.getUserDemands(1, 1000, text).then((res) => {
+          let array = [];
+          res.data.data.forEach((e) => {
+            e.value = e.demandName;
+            e.relationId = e.demandId;
+            array.push(e);
+          });
+          cb(array);
+        });
+        return;
+      }
+      if (this.changeForm.relationType == 2) {
+        BugApi.getUserbugs(1, 1000, text).then((res) => {
+          let array = [];
+          res.data.data.forEach((e) => {
+            e.relationId = e.bugId;
+            e.value = e.bugName;
+            array.push(e);
+          });
+          cb(array);
+        });
+        return;
+      }
+      if (this.changeForm.relationType == 3) {
+        WorkTask.getTaskPage(1, 1000, text).then((res) => {
+          let array = [];
+          res.data.data.forEach((e) => {
+            e.relationId = e.taskId;
+            e.value = e.taskName;
+            array.push(e);
+          });
+          cb(array);
+        });
+      }
     },
     handleSelect(item) {
-      this.selectItem = item
-      this.changeForm.relationId = item.relationId
+      if (this.changeForm.relationType == 1) {
+        this.changeForm.relationId = item.demandId;
+      }
+      if (this.changeForm.relationType == 2) {
+        this.changeForm.relationId = item.bugId;
+      }
+      if (this.changeForm.relationType == 3) {
+        this.changeForm.relationId = item.taskId;
+      }
     },
     getServices() {
-      this.serviceList = []
+      this.serviceList = [];
       serviceApi.getServices().then((res) => {
-        this.serviceList = res.data
+        this.serviceList = res.data;
         if (!this.service) {
-          this.service = this.serviceList[0].serviceId
+          this.service = this.serviceList[0].serviceId;
         }
-        this.getCodeChangeList()
-      })
+        this.getCodeChangeList();
+      });
     },
     addChangeCode() {
-      this.dialogFormVisible = true
+      this.dialogFormVisible = true;
     },
     selectService() {
-      this.$store.commit('UPDATE_SERVICE_ID', this.service)
-      this.getCodeChangeList()
+      this.$store.commit("UPDATE_SERVICE_ID", this.service);
+      this.getCodeChangeList();
     },
     selectBranchType(value) {
-      if (value == 'default') {
-        let branchName = 'develop_'
-        var today = new Date()
-        var DD = String(today.getDate()).padStart(2, '0')
-        var MM = String(today.getMonth() + 1).padStart(2, '0')
-        var yyyy = today.getFullYear()
-        branchName += yyyy + MM + DD + '_' + this.$utils.randomString(6)
-        this.changeForm.changeBranch = branchName
-        this.disableBranch = true
+      if (value == "default") {
+        let branchName = "develop_";
+        var today = new Date();
+        var DD = String(today.getDate()).padStart(2, "0");
+        var MM = String(today.getMonth() + 1).padStart(2, "0");
+        var yyyy = today.getFullYear();
+        branchName += yyyy + MM + DD + "_" + this.$utils.randomString(6);
+        this.changeForm.changeBranch = branchName;
+        this.disableBranch = true;
       } else {
-        this.disableBranch = false
-        this.changeForm.changeBranch = ''
+        this.disableBranch = false;
+        this.changeForm.changeBranch = "";
       }
-      this.$forceUpdate()
+      this.$forceUpdate();
     },
     removeChange(item) {
-      this.$confirm('变更删除后会将关联的分支也删除,确认删除？').then(() => {
+      this.$confirm("变更删除后会将关联的分支也删除,确认删除？").then(() => {
         requestApi.deleteCodeChange(this.service, item.changeId).then(() => {
           this.$message({
-            message: '删除变更成功',
-            type: 'success',
-          })
-          this.getCodeChangeList()
-        })
-      })
+            message: "删除变更成功",
+            type: "success",
+          });
+          this.getCodeChangeList();
+        });
+      });
     },
     closeDialog() {
-      this.dialogFormVisible = false
+      this.selectItemName = "";
+      this.dialogFormVisible = false;
       this.changeForm = {
-        branchType: 'custom',
-      }
-      this.selectItem = {}
-      this.isProcessing = false
-      this.$refs.changeForm.resetFields()
+        branchType: "custom",
+      };
+      this.isProcessing = false;
+      this.$refs.changeForm.resetFields();
     },
     confirmChange(confirmChange) {
       this.$refs[confirmChange].validate((valid) => {
         if (!valid) {
-          return false
+          return false;
         }
-        this.changeForm.relationId = this.selectItem.relationId
-        this.changeForm.relationType = this.selectItem.relationType
-        this.changeForm.serviceId = this.service
-        this.isProcessing = true
+        this.changeForm.serviceId = this.service;
+        this.changeForm.relationName = this.selectItemName;
+        this.isProcessing = true;
         requestApi
           .saveCodeChange(this.changeForm)
           .then(() => {
             this.$message({
-              message: '创建变更成功',
-              type: 'success',
-            })
-            this.closeDialog()
-            this.getCodeChangeList()
+              message: "创建变更成功",
+              type: "success",
+            });
+            this.closeDialog();
+            this.getCodeChangeList();
           })
           .catch(() => {
-            this.isProcessing = false
-          })
-      })
+            this.isProcessing = false;
+          });
+      });
+    },
+    handlePageChange(page) {
+      this.currentPage = page
+      this.getCodeChangeList()
+    },
+    handleSizeChange(size) {
+      this.currentSize = size
+      this.getCodeChangeList()
     },
     getCodeChangeList() {
-      requestApi.codeChangeList(this.service).then((res) => {
-        this.changeList = res.data
-      })
+      requestApi.codeChangeList(this.service, this.currentPage, this.currentSize).then((res) => {
+        this.changeList = res.data.data;
+        this.codeTotal = res.data.total;
+      });
     },
   },
   created() {
-    this.service = this.$store.state.serviceId
-    this.getServices()
+    this.service = this.$store.state.serviceId;
+    this.getServices();
   },
-}
+};
 </script>
-<style scoped>
+<style lang="less" scoped>
 .add-btn {
   position: absolute;
   right: 20px;
@@ -370,5 +486,17 @@ export default {
 }
 .work {
   background-color: #909399;
+}
+.link-icon {
+  margin-left: 10px;
+  font-size: 16px;
+  cursor: pointer;
+
+  &:hover {
+    color: #409eff;
+  }
+}
+.pagination{
+  margin: 10px
 }
 </style>
