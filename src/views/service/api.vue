@@ -54,7 +54,7 @@
                           >删除</el-dropdown-item
                         >
                         <el-dropdown-item command="generate" v-clickOnce
-                          >生成二方包</el-dropdown-item
+                          >构建API二方包</el-dropdown-item
                         >
                         <el-dropdown-item command="import"
                           >API导入</el-dropdown-item
@@ -629,16 +629,12 @@
                           </el-form-item>
                         </el-col>
                         <el-col :span="8">
-                          <el-form-item
-                            label="接口方法名"
-                            label-width="120px">
+                          <el-form-item label="接口方法名" label-width="120px">
                             <el-input
-                            
-                            placeholder="请输入接口方法名称"
-                            v-model="apiForm.classMethod"
-                          ></el-input>
+                              placeholder="请输入接口方法名称"
+                              v-model="apiForm.classMethod"
+                            ></el-input>
                           </el-form-item>
-                          
                         </el-col>
                       </el-row>
 
@@ -737,12 +733,19 @@
       </span>
     </el-dialog>
     <el-dialog
-      title="构建Maven二方包"
+      title="构建API二方包"
       :visible.sync="showGenerateApi"
       @open="getBuildParam"
       @close="cancelGenerate"
       width="60%"
     >
+      <el-alert
+        class="pkg-tips"
+        title="API二方包的作用"
+        show-icon
+        :closable="false"
+        description="在传统开发模式下，接口API直接在代码中实现，这种自由化的实现方式容易导致实际开发与原始API设计产生偏差。为解决这一问题，Windy通过Maven二方包机制实现API强约束：系统将Windy平台维护的API规范自动生成标准化接口文件（相同类名的API会被合并到同一个Java类文件中）并发布至Maven仓库。业务开发方必须通过引用该二方包来调用API，从而严格确保实现与设计规范保持完全一致，同时保持代码结构的整洁性。"
+      ></el-alert>
       <el-form
         :model="generateForm"
         label-width="80px"
@@ -772,6 +775,14 @@
           <el-input
             v-model="generateForm.version"
             placeholder="请输入二方包版本号,例如: 1.0.0"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="版本描述" prop="description">
+          <el-input
+            type="textarea"
+            :autosize="{ minRows: 2, maxRows: 4 }"
+            v-model="generateForm.description"
+            placeholder="请输入版本功能描述"
           ></el-input>
         </el-form-item>
       </el-form>
@@ -844,7 +855,8 @@
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="节点状态"
+
+        <el-form-item label="构建状态"
           ><el-tag :type="logForm.status | statusFormat">{{
             logForm.status | statusName
           }}</el-tag></el-form-item
@@ -852,6 +864,7 @@
         <el-form-item label="执行时间">{{
           logForm.time | dateFormat
         }}</el-form-item>
+        <el-form-item label="版本描述">{{ logForm.description }}</el-form-item>
       </el-form>
       <el-divider><i class="el-icon-receiving"></i></el-divider>
       <h4>运行日志</h4>
@@ -962,6 +975,9 @@ export default {
           { required: true, message: "请输入artifactId", trigger: "blur" },
         ],
         version: [{ required: true, message: "请输入版本号", trigger: "blur" }],
+        description: [
+          { required: true, message: "请输入发布版本描述", trigger: "blur" },
+        ],
       },
       createDir: false,
       selectNodes: [],
@@ -1762,5 +1778,9 @@ export default {
 }
 .class-tips {
   margin: 10px 20px;
+}
+
+.pkg-tips{
+  margin: 20px 10px;
 }
 </style>

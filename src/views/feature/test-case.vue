@@ -65,7 +65,7 @@
               suffix="%"
             >
               <span slot="suffix">
-                <span> {{ statics.apiCoverage ? '%' : '' }}</span>
+                <span> {{ statics.apiCoverage ? "%" : "" }}</span>
               </span>
             </el-statistic>
           </el-col>
@@ -216,6 +216,8 @@
         </el-form-item>
         <el-form-item label="测试集描述" prop="description">
           <el-input
+            type="textarea"
+            :autosize="{ minRows: 2, maxRows: 4 }"
             v-model="caseForm.description"
             placeholder="请输入测试集描述"
           ></el-input>
@@ -330,18 +332,18 @@
   </div>
 </template>
 <script>
-import serviceApi from '../../http/Service'
-import testCaseApi from '../../http/TestCase'
-import featureApi from '../../http/Feature'
+import serviceApi from "../../http/Service";
+import testCaseApi from "../../http/TestCase";
+import featureApi from "../../http/Feature";
 export default {
   data() {
     return {
-      service: '',
+      service: "",
       serviceList: [],
-      activeName: '1',
+      activeName: "1",
       tableData: [],
       showHistory: false,
-      direction: 'rtl',
+      direction: "rtl",
       featureData: [],
       currentPage: 1,
       totalSize: 0,
@@ -352,7 +354,7 @@ export default {
       checkAll: false,
       isIndeterminate: true,
       copyCase: {},
-      filterTag: '',
+      filterTag: "",
       filterTagList: [],
       treeData: [],
       allKeys: [],
@@ -360,212 +362,212 @@ export default {
       statics: {},
       rule: {
         testCaseName: [
-          { required: true, message: '请输入测试集名称', trigger: 'blur' },
+          { required: true, message: "请输入测试集名称", trigger: "blur" },
         ],
         description: [
-          { required: true, message: '请输入详细描述', trigger: 'blur' },
+          { required: true, message: "请输入详细描述", trigger: "blur" },
         ],
         serviceId: [
-          { required: true, message: '请选择关联的服务', trigger: 'select' },
+          { required: true, message: "请选择关联的服务", trigger: "select" },
         ],
       },
-      serviceName: '',
-    }
+      serviceName: "",
+    };
   },
   computed: {
     logoName() {
       if (!this.serviceName) {
-        return ''
+        return "";
       }
-      return this.serviceName.substring(0, 1)
+      return this.serviceName.substring(0, 1);
     },
   },
   methods: {
     clickApiRow(row) {
       var getWinLocHref = function () {
-        var location = window.location.href.split('/')
-        var basePath = location[0] + '//' + location[2]
-        return basePath
-      }
+        var location = window.location.href.split("/");
+        var basePath = location[0] + "//" + location[2];
+        return basePath;
+      };
 
       let url =
         getWinLocHref() +
-        `/#/service/resource?apiId=${row.apiId}&serviceId=${row.serviceId}`
-      window.open(url, '_black')
+        `/#/service/resource?apiId=${row.apiId}&serviceId=${row.serviceId}`;
+      window.open(url, "_black");
     },
     treeNodeClick(data) {
       featureApi.getFeatureDetail(data.featureId).then((res) => {
-        this.featureForm = res.data
-      })
+        this.featureForm = res.data;
+      });
     },
     cancellCopy() {
-      this.showCopyDialog = false
-      this.filterTagList = []
-      this.filterTag = ''
-      this.copyCase = {}
-      this.checkAll = false
-      this.featureForm = {}
+      this.showCopyDialog = false;
+      this.filterTagList = [];
+      this.filterTag = "";
+      this.copyCase = {};
+      this.checkAll = false;
+      this.featureForm = {};
     },
     confirmCopy() {
-      let array = this.$refs.tree.getCheckedKeys()
+      let array = this.$refs.tree.getCheckedKeys();
       if (!array || array.length == 0) {
-        this.$message.warning('请选择需要复制的用例')
-        return
+        this.$message.warning("请选择需要复制的用例");
+        return;
       }
 
       let data = {
         testCaseId: this.copyCase.testCaseId,
         featureIds: array,
-      }
+      };
 
       featureApi.copyCaseFeature(data).then((res) => {
         if (res.data) {
-          this.$notify.success('复制成功！')
-          this.selectService()
-          this.cancellCopy()
-          return
+          this.$notify.success("复制成功！");
+          this.selectService();
+          this.cancellCopy();
+          return;
         }
 
-        this.$notify.error('复制失败！')
-      })
+        this.$notify.error("复制失败！");
+      });
     },
     handleClose(tag) {
-      this.filterTagList.splice(this.filterTagList.indexOf(tag), 1)
-      this.refreshTag()
+      this.filterTagList.splice(this.filterTagList.indexOf(tag), 1);
+      this.refreshTag();
     },
     confimFilter() {
       if (!this.filterTag) {
-        return
+        return;
       }
 
       if (this.filterTagList.length >= 5) {
-        this.$message.danger('过滤数超过上限')
-        return
+        this.$message.danger("过滤数超过上限");
+        return;
       }
 
-      this.filterTagList.push(this.filterTag)
-      this.filterTag = ''
-      this.refreshTag()
+      this.filterTagList.push(this.filterTag);
+      this.filterTag = "";
+      this.refreshTag();
     },
     refreshTag() {
       if (this.filterTagList == 0) {
         featureApi.getFeatureTree(this.copyCase.testCaseId).then((res) => {
-          this.treeData = res.data
-        })
-        return
+          this.treeData = res.data;
+        });
+        return;
       }
 
       let item = {
         tags: this.filterTagList,
         testCaseId: this.copyCase.testCaseId,
-      }
+      };
       featureApi.filterFeatureByTag(item).then((res) => {
-        this.treeData = res.data
-      })
+        this.treeData = res.data;
+      });
     },
     handleCheckAllChange(val) {
       if (val) {
-        this.$refs.tree.setCheckedNodes(this.treeData)
-        this.isIndeterminate = false
+        this.$refs.tree.setCheckedNodes(this.treeData);
+        this.isIndeterminate = false;
       } else {
-        this.$refs.tree.setCheckedNodes([])
-        this.isIndeterminate = true
+        this.$refs.tree.setCheckedNodes([]);
+        this.isIndeterminate = true;
       }
     },
     startCopy(row) {
-      this.showCopyDialog = true
-      this.copyCase = row
+      this.showCopyDialog = true;
+      this.copyCase = row;
       featureApi.getFeatureTree(row.testCaseId).then((res) => {
-        this.treeData = res.data
-      })
+        this.treeData = res.data;
+      });
     },
     closeDialog() {
-      this.showDialog = false
-      this.caseForm = {}
+      this.showDialog = false;
+      this.caseForm = {};
     },
     submit(caseForm) {
       this.$refs[caseForm].validate((valid) => {
         if (!valid) {
-          return false
+          return false;
         }
-        this.caseForm.serviceId = this.service
+        this.caseForm.serviceId = this.service;
         testCaseApi.createTestCase(this.caseForm).then((res) => {
-          this.closeDialog()
+          this.closeDialog();
           if (res.data) {
-            this.$notify.success('添加测试集成功')
-            this.getTestCaseList(1)
-            return
+            this.$notify.success("添加测试集成功");
+            this.getTestCaseList(1);
+            return;
           }
-          this.$notify.error('添加测试集失败')
-        })
-      })
+          this.$notify.error("添加测试集失败");
+        });
+      });
     },
     startCreate() {
-      this.showDialog = true
+      this.showDialog = true;
     },
     getServices() {
-      this.serviceList = []
+      this.serviceList = [];
       serviceApi.getServices().then((res) => {
-        this.serviceList = res.data
+        this.serviceList = res.data;
         if (!this.service) {
-          this.service = this.serviceList[0].serviceId
+          this.service = this.serviceList[0].serviceId;
         }
-        this.selectService()
-      })
+        this.selectService();
+      });
     },
     selectService() {
-      this.$store.commit('UPDATE_SERVICE_ID', this.service)
+      this.$store.commit("UPDATE_SERVICE_ID", this.service);
       this.serviceList.forEach((e) => {
         if (e.serviceId == this.service) {
-          this.serviceName = e.serviceName
+          this.serviceName = e.serviceName;
         }
-      })
+      });
 
-      this.getTestCaseList(1)
-      this.getServiceStatic()
+      this.getTestCaseList(1);
+      this.getServiceStatic();
     },
     pageChange(page) {
-      this.getTestCaseList(page)
+      this.getTestCaseList(page);
     },
     getTestCaseList(page) {
       testCaseApi.getTestCaseList(this.service, page, 10).then((res) => {
-        this.currentPage = page
-        this.totalSize = res.data.total
-        this.featureData = res.data.data
-      })
+        this.currentPage = page;
+        this.totalSize = res.data.total;
+        this.featureData = res.data.data;
+      });
     },
     startEdit(row) {
       this.$router.push({
-        path: '/feature',
+        path: "/feature",
         query: {
           caseId: row.testCaseId,
         },
-      })
+      });
     },
     startDelete(row) {
-      this.$confirm('测试集删除后用例都会删除，确认删除?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
+      this.$confirm("测试集删除后用例都会删除，确认删除?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
       }).then(() => {
         testCaseApi.deleteTestCase(row.testCaseId).then(() => {
-          this.$notify.success('删除测试集成功')
-          this.getTestCaseList(this.currentPage)
-        })
-      })
+          this.$notify.success("删除测试集成功");
+          this.getTestCaseList(this.currentPage);
+        });
+      });
     },
     getServiceStatic() {
       serviceApi.getServiceStatics(this.service).then((res) => {
-        this.statics = res.data
-        this.statics.uncoverSize = res.data.notCoveredApi.length
-      })
+        this.statics = res.data;
+        this.statics.uncoverSize = res.data.notCoveredApi.length;
+      });
     },
   },
   created() {
-    this.service = this.$store.state.serviceId
-    this.getServices()
+    this.service = this.$store.state.serviceId;
+    this.getServices();
   },
-}
+};
 </script>
 <style lang="less" scoped>
 .service {

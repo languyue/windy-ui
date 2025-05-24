@@ -57,6 +57,7 @@
             "
             size="mini"
             stripe
+            height="400"
             style="width: 100%"
           >
             <el-table-column prop="changeName" label="变更"> </el-table-column>
@@ -70,10 +71,16 @@
             <el-table-column prop="relationId" label="需求/缺陷名称">
               <template slot-scope="scope">
                 {{ scope.row.relationName }}
-                <i
-                  class="el-icon-connection link-icon"
-                  @click="showRelationView(scope.row)"
-                />
+                <el-tooltip
+                  effect="dark"
+                  content="点击查看详情"
+                  placement="right-start"
+                >
+                  <i
+                    class="el-icon-connection link-icon"
+                    @click="showRelationView(scope.row)"
+                  />
+                </el-tooltip>
               </template>
             </el-table-column>
             <el-table-column prop="createTime" label="创建时间">
@@ -101,10 +108,23 @@
             </el-table-column>
           </el-table>
         </div>
+        <div class="pagination">
+          <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handlePageChange"
+            :current-page.sync="currentPage"
+            :page-sizes="[10, 20, 50]"
+            :page-size="10"
+            :hide-on-single-page="false"
+            layout="sizes, prev, pager, next"
+            :total="codeTotal"
+          >
+          </el-pagination>
+        </div>
       </div>
     </div>
     <el-dialog
-      title="创建变更"
+      title="变更"
       :visible.sync="dialogFormVisible"
       @close="closeDialog"
     >
@@ -187,8 +207,8 @@
       width="90%"
       @close="closeRelationView"
     >
-      <demandView :demand="demandId"></demandView>
-      <bugView :edit="false" :bug="bugId"></bugView>
+      <demandView v-if="showDetailType == 1" :demand="demandId"></demandView>
+      <bugView v-else :edit="false" :bug="bugId"></bugView>
     </el-dialog>
   </div>
 </template>
@@ -209,7 +229,11 @@ export default {
   },
   data() {
     return {
+      currentSize: 10,
+      codeTotal: 0,
+      currentPage: 1,
       showRelation: false,
+      showDetailType: 1,
       demandId: "",
       bugId: "",
       service: "",
@@ -243,6 +267,7 @@ export default {
   },
   methods: {
     showRelationView(row) {
+      this.showDetailType = row.relationType;
       this.showRelation = true;
       if (row.relationType == 1) {
         this.demandId = row.relationId;
@@ -256,13 +281,13 @@ export default {
       this.bugId = "";
     },
     startEdit(row) {
-      console.log(row)
+      console.log(row);
       this.dialogFormVisible = true;
       this.changeForm = JSON.parse(JSON.stringify(row));
       this.querySearchAsync("", (array) => {
         array.forEach((e) => {
           if (e.relationId == row.relationId) {
-            console.log("aaa", array)
+            console.log("aaa", array);
             this.selectItemId = e.name;
           }
         });
@@ -277,7 +302,7 @@ export default {
           let array = [];
           res.data.data.forEach((e) => {
             e.value = e.demandName;
-            e.relationId = e.demandId
+            e.relationId = e.demandId;
             array.push(e);
           });
           cb(array);
@@ -288,7 +313,7 @@ export default {
         BugApi.getUserbugs(1, 1000, text).then((res) => {
           let array = [];
           res.data.data.forEach((e) => {
-            e.relationId = e.bugId
+            e.relationId = e.bugId;
             e.value = e.bugName;
             array.push(e);
           });
@@ -300,7 +325,7 @@ export default {
         WorkTask.getTaskPage(1, 1000, text).then((res) => {
           let array = [];
           res.data.data.forEach((e) => {
-            e.relationId = e.taskId
+            e.relationId = e.taskId;
             e.value = e.taskName;
             array.push(e);
           });
@@ -309,13 +334,13 @@ export default {
       }
     },
     handleSelect(item) {
-      if(this.changeForm.relationType == 1){
+      if (this.changeForm.relationType == 1) {
         this.changeForm.relationId = item.demandId;
       }
-      if(this.changeForm.relationType == 2){
+      if (this.changeForm.relationType == 2) {
         this.changeForm.relationId = item.bugId;
       }
-      if(this.changeForm.relationType == 3){
+      if (this.changeForm.relationType == 3) {
         this.changeForm.relationId = item.taskId;
       }
     },
@@ -364,6 +389,7 @@ export default {
       });
     },
     closeDialog() {
+      this.selectItemName = "";
       this.dialogFormVisible = false;
       this.changeForm = {
         branchType: "custom",
@@ -377,6 +403,7 @@ export default {
           return false;
         }
         this.changeForm.serviceId = this.service;
+        this.changeForm.relationName = this.selectItemName;
         this.isProcessing = true;
         requestApi
           .saveCodeChange(this.changeForm)
@@ -393,9 +420,18 @@ export default {
           });
       });
     },
+    handlePageChange(page) {
+      this.currentPage = page
+      this.getCodeChangeList()
+    },
+    handleSizeChange(size) {
+      this.currentSize = size
+      this.getCodeChangeList()
+    },
     getCodeChangeList() {
-      requestApi.codeChangeList(this.service).then((res) => {
-        this.changeList = res.data;
+      requestApi.codeChangeList(this.service, this.currentPage, this.currentSize).then((res) => {
+        this.changeList = res.data.data;
+        this.codeTotal = res.data.total;
       });
     },
   },
@@ -459,5 +495,8 @@ export default {
   &:hover {
     color: #409eff;
   }
+}
+.pagination{
+  margin: 10px
 }
 </style>

@@ -82,206 +82,426 @@ export default {
       window.addEventListener("resize", this.resizeHandler);
     },
 
-    updateDemand() {
-      metricApi.getDemandStatistics().then((res) => {
-        const list = res.data || [];
-        const types = [...new Set(list.map((i) => i.demandType))];
-        const map = {};
-        list.forEach(({ dataType, demandType, dataValue }) => {
-          map[dataType] = map[dataType] || {};
-          map[dataType][demandType] = dataValue;
-        });
-        const series = Object.entries(map).map(([name, m]) => ({
-          name,
-          type: "bar",
-          data: types.map((t) => m[t] || 0),
-        }));
-        this.charts.demand.setOption(
-          {
-            title: { text: "需求 Top 统计" },
-            tooltip: { trigger: "axis" },
-            xAxis: { type: "value" },
-            yAxis: { type: "category", data: types },
-            series,
+    // 显示空状态（保留坐标轴）
+    showEmptyStateWithAxis(
+      chart,
+      title,
+      emptyText = "暂无数据",
+      axisConfig = {}
+    ) {
+      const baseOption = {
+        title: {
+          text: title,
+          textStyle: {
+            color: "#333",
+            fontSize: 16,
           },
-          false
-        );
-      });
+        },
+        graphic: [
+          {
+            type: "text",
+            left: "center",
+            top: "middle",
+            style: {
+              text: emptyText,
+              fill: "#999",
+              fontSize: 16,
+              fontWeight: "normal",
+            },
+            z: 100,
+          },
+        ],
+        series: [],
+      };
+
+      // 合并传入的坐标轴配置
+      if (axisConfig.xAxis) {
+        baseOption.xAxis = axisConfig.xAxis;
+      }
+      if (axisConfig.yAxis) {
+        baseOption.yAxis = axisConfig.yAxis;
+      }
+
+      chart.setOption(baseOption, false);
+    },
+
+    updateDemand() {
+      metricApi
+        .getDemandStatistics()
+        .then((res) => {
+          const list = res.data || [];
+          if (list.length === 0) {
+            return this.showEmptyStateWithAxis(
+              this.charts.demand,
+              "需求 Top 统计",
+              "暂无需求数据"
+            );
+          }
+
+          const types = [...new Set(list.map((i) => i.demandType))];
+          const map = {};
+          list.forEach(({ dataType, demandType, dataValue }) => {
+            map[dataType] = map[dataType] || {};
+            map[dataType][demandType] = dataValue;
+          });
+          const series = Object.entries(map).map(([name, m]) => ({
+            name,
+            type: "bar",
+            data: types.map((t) => m[t] || 0),
+            barMaxWidth: 40,
+          }));
+
+          this.charts.demand.setOption(
+            {
+              title: {
+                text: "需求 Top 统计",
+                left: "center",
+              },
+              tooltip: {
+                trigger: "axis",
+                axisPointer: {
+                  type: "shadow",
+                },
+              },
+              xAxis: {
+                type: "value",
+                name: "数量",
+                nameLocation: "middle",
+                nameGap: 25,
+              },
+              yAxis: {
+                type: "category",
+                data: types,
+                axisLabel: {
+                  interval: 0,
+                  rotate: types.length > 5 ? 30 : 0,
+                },
+              },
+              series,
+              grid: {
+                left: "3%",
+                right: "4%",
+                bottom: "3%",
+                containLabel: true,
+              },
+            },
+            false
+          );
+        })
+        .catch(() => {
+          this.showEmptyStateWithAxis(
+            this.charts.demand,
+            "需求 Top 统计",
+            "数据加载失败"
+          );
+        });
     },
 
     updateStatus() {
-      metricApi.getDemandStatusStatistics().then((res) => {
-        const data = (res.data || []).map((e) => ({
-          name: e.statusName,
-          value: e.percent,
-        }));
+      metricApi
+        .getDemandStatusStatistics()
+        .then((res) => {
+          const data = (res.data || []).map((e) => ({
+            name: e.statusName,
+            value: e.percent,
+          }));
 
-        this.charts.status.setOption(
-          {
-            title: {
-              text: "需求状态比例",
-            },
-            legend: {
-              top: "bottom",
-            },
-            toolbox: {
-              show: true,
-              feature: {
-                mark: { show: true },
+          if (data.length === 0) {
+            return this.showEmptyStateWithAxis(
+              this.charts.status,
+              "需求状态比例",
+              "暂无状态数据"
+            );
+          }
+
+          this.charts.status.setOption(
+            {
+              title: {
+                text: "需求状态比例",
+                left: "center",
               },
-            },
-            series: [
-              {
-                name: "Nightingale Chart",
-                type: "pie",
-                radius: [0, 100],
-                center: ["50%", "50%"],
-                roseType: "area",
-                itemStyle: {
-                  borderRadius: 8,
+              legend: {
+                top: "bottom",
+                type: "scroll",
+              },
+              toolbox: {
+                show: true,
+                feature: {
+                  saveAsImage: { show: true },
                 },
-                data,
               },
-            ],
-          },
-          false
-        );
-      });
+              series: [
+                {
+                  name: "需求状态",
+                  type: "pie",
+                  radius: [0, 100],
+                  center: ["50%", "50%"],
+                  roseType: "area",
+                  itemStyle: {
+                    borderRadius: 8,
+                  },
+                  label: {
+                    formatter: "{b}: {d}%",
+                  },
+                  data,
+                },
+              ],
+            },
+            false
+          );
+        })
+        .catch(() => {
+          this.showEmptyStateWithAxis(
+            this.charts.status,
+            "需求状态比例",
+            "数据加载失败"
+          );
+        });
     },
 
     updateGauge() {
-      metricApi.getSystemHealthy().then((res) => {
-        this.charts.gauge.setOption(
-          {
-            series: [
-              {
-                type: "gauge",
-                startAngle: 180,
-                endAngle: 0,
-                center: ["50%", "75%"],
-                radius: "90%",
-                min: 0,
-                max: 1,
-                splitNumber: 8,
-                axisLine: {
-                  lineStyle: {
-                    width: 6,
-                    color: [
-                      [0.25, "#FF6E76"],
-                      [0.5, "#FDDD60"],
-                      [0.75, "#58D9F9"],
-                      [1, "#7CFFB2"],
-                    ],
+      metricApi
+        .getSystemHealthy()
+        .then((res) => {
+          if (!res.data || res.data.healthyValue === undefined) {
+            return this.showEmptyStateWithAxis(
+              this.charts.gauge,
+              "",
+              "暂无健康度数据"
+            );
+          }
+
+          this.charts.gauge.setOption(
+            {
+              series: [
+                {
+                  type: "gauge",
+                  startAngle: 180,
+                  endAngle: 0,
+                  center: ["50%", "75%"],
+                  radius: "90%",
+                  min: 0,
+                  max: 1,
+                  splitNumber: 8,
+                  axisLine: {
+                    lineStyle: {
+                      width: 6,
+                      color: [
+                        [0.25, "#FF6E76"],
+                        [0.5, "#FDDD60"],
+                        [0.75, "#58D9F9"],
+                        [1, "#7CFFB2"],
+                      ],
+                    },
                   },
-                },
-                pointer: {
-                  icon: "path://M12.8,0.7l12,40.1H0.7L12.8,0.7z",
-                  length: "12%",
-                  width: 20,
-                  offsetCenter: [0, "-60%"],
-                  itemStyle: {
-                    color: "auto",
+                  pointer: {
+                    icon: "path://M12.8,0.7l12,40.1H0.7L12.8,0.7z",
+                    length: "12%",
+                    width: 20,
+                    offsetCenter: [0, "-60%"],
+                    itemStyle: {
+                      color: "auto",
+                    },
                   },
-                },
-                axisTick: {
-                  length: 12,
-                  lineStyle: {
-                    color: "auto",
-                    width: 2,
+                  axisTick: {
+                    length: 12,
+                    lineStyle: {
+                      color: "auto",
+                      width: 2,
+                    },
                   },
-                },
-                splitLine: {
-                  length: 20,
-                  lineStyle: {
-                    color: "auto",
-                    width: 5,
+                  splitLine: {
+                    length: 20,
+                    lineStyle: {
+                      color: "auto",
+                      width: 5,
+                    },
                   },
-                },
-                axisLabel: {
-                  color: "#464646",
-                  fontSize: 20,
-                  distance: -60,
-                  rotate: "tangential",
-                  formatter: function (value) {
-                    if (value === 0.875) {
-                      return "健康";
-                    } else if (value === 0.625) {
-                      return "正常";
-                    } else if (value === 0.375) {
-                      return "阻塞";
-                    } else if (value === 0.125) {
-                      return "低效";
-                    }
-                    return "";
+                  axisLabel: {
+                    color: "#464646",
+                    fontSize: 20,
+                    distance: -60,
+                    rotate: "tangential",
+                    formatter: function (value) {
+                      if (value === 0.875) {
+                        return "健康";
+                      } else if (value === 0.625) {
+                        return "正常";
+                      } else if (value === 0.375) {
+                        return "阻塞";
+                      } else if (value === 0.125) {
+                        return "低效";
+                      }
+                      return "";
+                    },
                   },
-                },
-                title: {
-                  offsetCenter: [0, "-10%"],
-                  fontSize: 20,
-                },
-                detail: {
-                  fontSize: 30,
-                  offsetCenter: [0, "-35%"],
-                  valueAnimation: true,
-                  formatter: function (value) {
-                    return Math.round(value * 100) + "";
+                  title: {
+                    offsetCenter: [0, "-10%"],
+                    fontSize: 20,
                   },
-                  color: "inherit",
+                  detail: {
+                    fontSize: 30,
+                    offsetCenter: [0, "-35%"],
+                    valueAnimation: true,
+                    formatter: function (value) {
+                      return Math.round(value * 100) + "";
+                    },
+                    color: "inherit",
+                  },
+                  data: [
+                    { value: res.data.healthyValue / 100, name: "健康评估" },
+                  ],
                 },
-                data: [
-                  { value: res.data.healthyValue / 100, name: "健康评估" },
-                ],
-              },
-            ],
-          },
-          false
-        );
-      });
+              ],
+            },
+            false
+          );
+        })
+        .catch(() => {
+          this.showEmptyStateWithAxis(
+            this.charts.gauge,
+            "健康评估",
+            "数据加载失败"
+          );
+        });
     },
 
     updateDelay() {
-      metricApi.getDemandDelayWorkload(this.queryTime).then((res) => {
-        const { xAxis, series } = this.transformMetricData(res.data);
-        this.charts.delay.setOption(
-          {
-            title: { text: "需求搁置时长 vs 完整周期" },
-            legend: {
-              top: "bottom",
+      metricApi
+        .getDemandDelayWorkload(this.queryTime)
+        .then((res) => {
+          if (!res.data || res.data.length === 0) {
+            return this.showEmptyStateWithAxis(
+              this.charts.delay,
+              "需求搁置时长 vs 完整周期",
+              `当前时间段${this.getTimeRangeText()}无数据`
+            );
+          }
+
+          const { xAxis, series } = this.transformMetricData(res.data);
+          this.charts.delay.setOption(
+            {
+              title: {
+                text: "需求搁置时长 vs 完整周期",
+                left: "center",
+              },
+              legend: {
+                top: "bottom",
+                type: "scroll",
+              },
+              tooltip: {
+                trigger: "axis",
+                formatter: function (params) {
+                  let result = params[0].axisValue + "<br/>";
+                  params.forEach((param) => {
+                    result += `${param.seriesName}: ${param.value}<br/>`;
+                  });
+                  return result;
+                },
+              },
+              xAxis: {
+                type: "category",
+                data: xAxis,
+                axisLabel: {
+                  rotate: xAxis.length > 7 ? 45 : 0,
+                },
+                name: "日期",
+                nameLocation: "middle",
+                nameGap: 25,
+              },
+              yAxis: {
+                type: "value",
+                name: "时长(天)",
+              },
+              series,
+              grid: {
+                left: "3%",
+                right: "4%",
+                bottom: "15%",
+                containLabel: true,
+              },
             },
-            tooltip: { trigger: "axis" },
-            xAxis: { type: "category", data: xAxis },
-            yAxis: { type: "value" },
-            series,
-          },
-          false
-        );
-      });
+            false
+          );
+        })
+        .catch(() => {
+          this.showEmptyStateWithAxis(
+            this.charts.delay,
+            "需求搁置时长 vs 完整周期",
+            "数据加载失败"
+          );
+        });
     },
 
     updateBug() {
-      metricApi.getBugStatusStatistics(this.queryTime).then((res) => {
-        const { formattedData, typeList } = this.transformBugData(res.data);
-        const opt = this.buildTrendOption(
-          "缺陷变化趋势图",
-          formattedData,
-          typeList,
-          "个数"
-        );
-        this.charts.bug.setOption(opt, false);
-      });
+      metricApi
+        .getBugStatusStatistics(this.queryTime)
+        .then((res) => {
+          if (!res.data || res.data.length === 0) {
+            return this.showEmptyStateWithAxis(
+              this.charts.bug,
+              "缺陷变化趋势图",
+              `当前时间段${this.getTimeRangeText()}无数据`
+            );
+          }
+
+          const { formattedData, typeList } = this.transformBugData(res.data);
+          const opt = this.buildTrendOption(
+            "缺陷变化趋势图",
+            formattedData,
+            typeList,
+            "个数"
+          );
+          this.charts.bug.setOption(opt, false);
+        })
+        .catch(() => {
+          this.showEmptyStateWithAxis(
+            this.charts.bug,
+            "缺陷变化趋势图",
+            "数据加载失败"
+          );
+        });
     },
 
     updateGaugeAnalysis() {
-      metricApi.getHealthyStatistics(this.queryTime).then((res) => {
-        const { formattedData, typeList } = this.transformHealthyData(res.data);
-        const opt = this.buildTrendOption(
-          "系统健康度变化趋势图",
-          formattedData,
-          typeList,
-          "健康度"
-        );
-        this.charts.gaugeAnalysis.setOption(opt, false);
-      });
+      metricApi
+        .getHealthyStatistics(this.queryTime)
+        .then((res) => {
+          if (!res.data || res.data.length === 0) {
+            return this.showEmptyStateWithAxis(
+              this.charts.gaugeAnalysis,
+              "系统健康度变化趋势图",
+              `当前时间段${this.getTimeRangeText()}无数据`
+            );
+          }
+
+          const { formattedData, typeList } = this.transformHealthyData(
+            res.data
+          );
+          const opt = this.buildTrendOption(
+            "系统健康度变化趋势图",
+            formattedData,
+            typeList,
+            "健康度"
+          );
+          this.charts.gaugeAnalysis.setOption(opt, false);
+        })
+        .catch(() => {
+          this.showEmptyStateWithAxis(
+            this.charts.gaugeAnalysis,
+            "系统健康度变化趋势图",
+            "数据加载失败"
+          );
+        });
+    },
+
+    // 获取时间范围文本
+    getTimeRangeText() {
+      const days = this.selectTime;
+      if (days === 7) return "（最近一周）";
+      if (days === 30) return "（最近一个月）";
+      if (days === 90) return "（最近三个月）";
+      return `（最近${days}天）`;
     },
 
     // ——— 数据转换方法 ———
@@ -310,6 +530,7 @@ export default {
         name: metric,
         type: "bar",
         data: sortedDates.map((date) => grouped[date][metric] || 0),
+        barMaxWidth: 40,
       }));
 
       return { xAxis: sortedDates, series };
@@ -388,14 +609,52 @@ export default {
         datasetId: `ds_${t}`,
         showSymbol: false,
         encode: { x: "时间", y: yName },
+        lineStyle: {
+          width: 3,
+        },
+        emphasis: {
+          focus: "series",
+        },
       }));
       return {
         animationDuration: 800,
         dataset: [{ id: "raw", source }, ...filters],
-        title: { text: title },
-        tooltip: { trigger: "axis" },
-        xAxis: { type: "category", name: "时间" },
-        yAxis: { name: yName },
+        title: {
+          text: title,
+          left: "center",
+        },
+        tooltip: {
+          trigger: "axis",
+          axisPointer: {
+            type: "cross",
+          },
+        },
+        legend: {
+          type: "scroll",
+          bottom: 10,
+        },
+        grid: {
+          left: "3%",
+          right: "4%",
+          bottom: "15%",
+          containLabel: true,
+        },
+        xAxis: {
+          type: "category",
+          name: "时间",
+          axisLabel: {
+            rotate: source.length > 10 ? 45 : 0,
+          },
+        },
+        yAxis: {
+          type: "value",
+          name: yName,
+          axisLabel: {
+            formatter: function (value) {
+              return Number.isInteger(value) ? value : value.toFixed(1);
+            },
+          },
+        },
         series,
       };
     },
@@ -427,6 +686,10 @@ export default {
   position: relative;
   padding-top: 10px;
   min-height: 300px;
+
+  .shadow-area {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
 
   .controll-line {
     width: 450px;

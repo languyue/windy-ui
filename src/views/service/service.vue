@@ -217,7 +217,7 @@
               show-icon
             >
               <template slot="title">
-                此处可不配置。在系统变量中统一配置
+                此处仅用于配置非统一 Git 仓库（如外部或其他来源的代码库），通用 Git 访问配置应在系统中统一管理。
                 <el-link type="primary" @click="goEnv"
                   >前往配置>></el-link
                 ></template
@@ -233,6 +233,7 @@
             <el-form-item label="Git域名" prop="gitDomain">
               <el-input
                 type="text"
+                clearable
                 v-model="gitForm.gitDomain"
                 placeholder="请输入git域名,例如: https://gitlab.cn 、http://192.168.1.114:8888"
               />
@@ -244,6 +245,7 @@
             >
               <el-input
                 type="text"
+                clearable
                 v-model="gitOwner"
                 placeholder="请输入git拥有者"
               />
@@ -252,6 +254,7 @@
               <el-input
                 type="text"
                 show-password
+                clearable
                 v-model="gitForm.accessToken"
                 placeholder="请输入git访问token"
               />
@@ -763,7 +766,7 @@ export default {
           return false
         }
         let git = {};
-        if (this.isConfigGit()) {
+        if (this.gitForm.gitDomain && this.gitForm.gitType) {
           git = this.gitForm;
           git.owner = this.gitOwner;
         }
@@ -806,16 +809,6 @@ export default {
         });
 
       });
-    },
-    isConfigGit() {
-      if (
-        this.gitForm.gitDomain &&
-        this.gitForm.accessToken &&
-        this.gitForm.gitType
-      ) {
-        return true;
-      }
-      return false;
     },
     getBuildVersions() {
       systemApi.getBuildTools().then((res) => {

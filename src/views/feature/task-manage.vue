@@ -191,6 +191,8 @@
         <el-form-item label="任务描述" prop="description">
           <el-input
             v-model="taskForm.description"
+            type="textarea"
+            :autosize="{ minRows: 2, maxRows: 4 }"
             placeholder="请输入任务描述"
           ></el-input>
         </el-form-item>
